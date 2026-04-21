@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>750</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>TARDIS</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">
+    QMainWindow { 
+        background: transparent; 
+    }
+    QWidget#centralwidget {
+        background: #16161a; /* Creates a solid unified background for the whole app */
+        border: 1px solid #3a3a40;
+        border-radius: 12px;
+    }
+    QFrame#headerr, QFrame#footer { 
+        background: transparent; 
+        border: none; 
+    }
+    QFrame#selectionframe, QFrame#generate_frame { 
+        background: #202025; /* Lighter color for the panels to make them pop */
+        border: 1px solid #3a3a40; 
+        border-radius: 8px; 
+    }
+    QPushButton {
+        background: #0085ca;
+        color: white;
+        border-radius: 5px;
+        font-weight: bold;
+        min-height: 28px;
+    }
+    QPushButton:hover { background: #3c649f; }
+    QLineEdit {
+        background: #1a1a1e;
+        color: #e0e0e0;
+        border-radius: 4px;
+        padding-left: 5px;
+        border: 1px solid #3a3a40;
+    }
+    QListWidget {
+        background: #121214;
+        color: #f0f0f0;
+        border: 1px solid #3a3a40;
+        border-radius: 5px;
+    }
+    QLabel { color: white; border: none; }
+   </string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_main">
+    <property name="spacing"><number>0</number></property>
+    <property name="margin"><number>0</number></property>
+    <item>
+     <widget class="QFrame" name="headerr">
+      <property name="minimumSize"><size><width>0</width><height>50</height></size></property>
+      <layout class="QHBoxLayout" name="horizontalLayout_header">
+       <item><widget class="QLabel" name="power_integrations_icon"><property name="maximumSize"><size><width>35</width><height>35</height></size></property><property name="pixmap"><pixmap resource="resource.qrc">:/icons/resources/icons/POWI.D-16de9fb7.png</pixmap></property><property name="scaledContents"><bool>true</bool></property></widget></item>
+       <item><widget class="QLabel" name="data_exporter"><property name="font"><font><family>Bahnschrift</family><pointsize>16</pointsize><bold>true</bold></font></property><property name="text"><string>T.A.R.D.I.S.</string></property></widget></item>
+       <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+       <item><widget class="QPushButton" name="minimize_button"><property name="maximumSize"><size><width>30</width><height>30</height></size></property><property name="text"><string>—</string></property></widget></item>
+       <item><widget class="QPushButton" name="maximize_button"><property name="maximumSize"><size><width>30</width><height>30</height></size></property><property name="text"><string>▢</string></property></widget></item>
+       <item><widget class="QPushButton" name="exit_button"><property name="maximumSize"><size><width>30</width><height>30</height></size></property><property name="text"><string>✕</string></property></widget></item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_body">
+      <property name="margin"><number>15</number></property>
+      <property name="spacing"><number>15</number></property>
+      <item>
+       <widget class="QFrame" name="selectionframe">
+        <layout class="QGridLayout" name="gridLayout_selection">
+         <property name="margin"><number>15</number></property>
+         <property name="horizontalSpacing"><number>20</number></property>
+         <item row="0" column="0"><widget class="QLabel" name="l1"><property name="font"><font><bold>true</bold><pointsize>11</pointsize></font></property><property name="text"><string>PERFORMANCE DATA</string></property></widget></item>
+         <item row="0" column="2"><widget class="QLabel" name="l2"><property name="font"><font><bold>true</bold><pointsize>11</pointsize></font></property><property name="text"><string>WAVEFORMS</string></property></widget></item>
+         <item row="1" column="0"><widget class="QPushButton" name="performancedata_sel"><property name="text"><string>Select Folder</string></property></widget></item>
+         <item row="1" column="1"><widget class="QLineEdit" name="performancedata_path"></widget></item>
+         <item row="1" column="2"><widget class="QPushButton" name="waveforms_sel"><property name="text"><string>Select Folder</string></property></widget></item>
+         <item row="1" column="3"><widget class="QLineEdit" name="waveforms_path"></widget></item>
+         <item row="2" column="0" colspan="2"><widget class="QListWidget" name="performancedata_list"><property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>1</horstretch><verstretch>0</verstretch></sizepolicy></property></widget></item>
+         <item row="2" column="2" colspan="2"><widget class="QListWidget" name="waveforms_list"><property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>1</horstretch><verstretch>0</verstretch></sizepolicy></property></widget></item>
+         <item row="3" column="0"><widget class="QPushButton" name="performancedata_add"><property name="text"><string>Add Item</string></property></widget></item>
+         <item row="3" column="1"><widget class="QPushButton" name="performancedata_delete"><property name="text"><string>Delete Item</string></property></widget></item>
+         <item row="3" column="2"><widget class="QPushButton" name="waveforms_add"><property name="text"><string>Add Item</string></property></widget></item>
+         <item row="3" column="3"><widget class="QPushButton" name="waveforms_delete"><property name="text"><string>Delete Item</string></property></widget></item>
+         <item row="4" column="0" colspan="2"><widget class="QListWidget" name="available_data_list_performance"><property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>1</horstretch><verstretch>0</verstretch></sizepolicy></property></widget></item>
+         <item row="4" column="2" colspan="2"><widget class="QListWidget" name="available_data_list__waveforms"><property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>1</horstretch><verstretch>0</verstretch></sizepolicy></property></widget></item>
+         <item row="5" column="0" colspan="4">
+          <layout class="QHBoxLayout" name="h_btn">
+           <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+           <item><widget class="QPushButton" name="load_files_button">
+            <property name="minimumSize"><size><width>160</width><height>35</height></size></property>
+            <property name="maximumSize"><size><width>200</width><height>35</height></size></property>
+            <property name="text"><string>LOAD TESTS</string></property>
+           </widget></item>
+           <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+           <item><widget class="QPushButton" name="refresh_button">
+            <property name="minimumSize"><size><width>160</width><height>35</height></size></property>
+            <property name="maximumSize"><size><width>200</width><height>35</height></size></property>
+            <property name="text"><string>REFRESH LIST</string></property>
+           </widget></item>
+           <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="generate_frame">
+        <property name="maximumSize"><size><width>400</width><height>16777215</height></size></property>
+        <layout class="QVBoxLayout" name="verticalLayout_gen">
+         <property name="margin"><number>15</number></property>
+         <item><widget class="QLabel" name="images_preview_text">
+          <property name="font"><font><bold>true</bold><pointsize>11</pointsize></font></property>
+          <property name="text"><string>PREVIEW</string></property>
+          <property name="alignment"><set>Qt::AlignCenter</set></property>
+          <property name="maximumSize"><size><width>16777215</width><height>20</height></size></property>
+         </widget></item>
+         <item><widget class="QLabel" name="file_view">
+          <property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>0</horstretch><verstretch>1</verstretch></sizepolicy></property>
+          <property name="minimumSize"><size><width>0</width><height>220</height></size></property>
+          <property name="styleSheet"><string>background: #0b0b0d; border-radius: 4px; border: 1px solid #3a3a40;</string></property>
+         </widget></item>
+         <item>
+          <layout class="QGridLayout" name="gridLayout_crop">
+           <item row="0" column="0"><widget class="QLabel" name="tl"><property name="text"><string>Up/Down:</string></property></widget></item>
+           <item row="0" column="1"><widget class="QLineEdit" name="upper_input"></widget></item>
+           <item row="0" column="2"><widget class="QLineEdit" name="lower_input"></widget></item>
+           <item row="1" column="0"><widget class="QLabel" name="tr"><property name="text"><string>Left/Right:</string></property></widget></item>
+           <item row="1" column="1"><widget class="QLineEdit" name="left_input"></widget></item>
+           <item row="1" column="2"><widget class="QLineEdit" name="right_input"></widget></item>
+           <item row="0" column="3" rowspan="2"><widget class="QPushButton" name="crop_button"><property name="minimumSize"><size><width>55</width><height>55</height></size></property><property name="text"><string>CROP</string></property></widget></item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="layout_template">
+           <item><widget class="QLabel" name="template_label"><property name="text"><string>Template:</string></property></widget></item>
+           <item><widget class="QComboBox" name="template_dropdown">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize"><size><width>0</width><height>30</height></size></property>
+            <property name="styleSheet"><string>
+              QComboBox { background: #1a1a1e; color: white; border: 1px solid #3a3a40; border-radius: 4px; padding-left: 5px; }
+              QComboBox::drop-down { border: none; }
+            </string></property>
+           </widget></item>
+          </layout>
+         </item>
+         <item><widget class="QPushButton" name="generate_document_button"><property name="minimumSize"><size><width>0</width><height>50</height></size></property><property name="font"><font><bold>true</bold></font></property><property name="text"><string>Generate Document</string></property></widget></item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QFrame" name="footer">
+      <property name="minimumSize"><size><width>0</width><height>30</height></size></property>
+      <layout class="QHBoxLayout" name="horizontalLayout_footer">
+       <item><widget class="QLabel" name="l_copy"><property name="styleSheet"><string>color: #777;</string></property><property name="text"><string>© 2025 Power Integrations</string></property></widget></item>
+       <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

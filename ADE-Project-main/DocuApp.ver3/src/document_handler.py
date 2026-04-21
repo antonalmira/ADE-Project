@@ -1,7 +1,7 @@
 import os
 import pythoncom
 from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtWidgets import QProgressDialog, QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QProgressDialog, QMessageBox
 from document_generator import DocGenerator
 from chart_extractor import save_chart_screenshots
 from utils import log_message
@@ -16,20 +16,17 @@ class DocumentWorker(QThread):
         self.is_update = is_update
 
     def run(self):
-        # Mandatory for Excel COM to work in a thread
         pythoncom.CoInitialize()
         try:
-            # 1. Start Extraction (Reports progress 0-50)
             save_chart_screenshots(
                 self.app, 
                 headless=True, 
                 progress_callback=self.progress_signal.emit
             )
             
-            # 2. Start Generation (Reports progress 50-100)
             self.progress_signal.emit(50, "Generating Word document...")
-            output_path = self.app.generated_document_path.text()
-            update_path = self.app.update_document_path.toolTip() if self.is_update else ""
+            output_path = getattr(self.app, 'final_save_destination', "Generated_Document.docx")
+            update_path = getattr(self.app, 'update_document_path', "") if self.is_update else ""
             
             generator = DocGenerator(self.app, output_path, update_path)
             generator.generate(progress_callback=self.progress_signal.emit)
@@ -65,7 +62,30 @@ def _finish_ui(app, success, message):
         QMessageBox.critical(app, "Error", f"Failed: {message}")
 
 def generate_document(app):
-    run_document_job(app, is_update=False)
+    selected_template = app.template_dropdown.currentText()
+    
+    # Validate the selection
+    if not selected_template or selected_template in ["No templates found", "Templates folder missing!", ""]:
+        QMessageBox.warning(app, "Missing Template", "Please choose a valid template (.docx) from the dropdown.")
+        return
+
+    # Build the full absolute path to the selected template
+    templates_folder = os.path.join(os.path.dirname(__file__), "templates")
+    full_template_path = os.path.join(templates_folder, selected_template)
+    
+    app.selected_template_path = full_template_path
+
+    save_path, _ = QFileDialog.getSaveFileName(
+        app, 
+        "Save Generated Document", 
+        "Generated_Document.docx", 
+        "Word Documents (*.docx)"
+    )
+
+    if save_path:
+        # Save the destination to the app instance so the worker can access it
+        app.final_save_destination = save_path 
+        run_document_job(app, is_update=False)
 
 def update_document(app):
     run_document_job(app, is_update=True)

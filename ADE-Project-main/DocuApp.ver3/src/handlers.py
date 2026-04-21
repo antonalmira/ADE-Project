@@ -4,6 +4,46 @@ from PyQt5.QtWidgets import QListWidgetItem, QFileDialog, QInputDialog
 from PyQt5.QtGui import QFont
 from list_updater import performancedata_testnames, waveform_testnames, save_performance_dict, save_waveform_dict
 
+def select_template_file(app):
+    """Opens a file dialog starting automatically in the project's template folder"""
+    
+    # 1. Get the directory where handlers.py is located
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # 2. Point to the templates folder (assuming it's in the same folder as your scripts)
+    # If templates is one level up, use: os.path.join(current_dir, "..", "templates")
+    default_path = os.path.join(current_dir, "templates")
+    
+    # Ensure the path exists, otherwise default to Desktop
+    if not os.path.exists(default_path):
+        default_path = os.path.join(os.path.expanduser("~"), "Desktop")
+
+    file, _ = QFileDialog.getOpenFileName(
+        app, 
+        "Select Word Template", 
+        default_path, # This is the starting directory
+        "Word Documents (*.docx)"
+    )
+    
+    if file:
+        app.template_path_display.setText(file)
+        app.template_path_display.setToolTip(file)
+        print(f"Selected template: {file}")
+
+def select_performance_folder(app):
+    """Opens a folder dialog for Performance Data"""
+    folder = QFileDialog.getExistingDirectory(app, "Select Performance Data Folder")
+    if folder:
+        app.performancedata_path.setText(folder)
+        print(f"Selected performance folder: {folder}")
+
+def select_waveform_folder(app):
+    """Opens a folder dialog for Waveforms"""
+    folder = QFileDialog.getExistingDirectory(app, "Select Waveforms Folder")
+    if folder:
+        app.waveforms_path.setText(folder)
+        print(f"Selected waveform folder: {folder}")
+
 def add_performance_item(app):
     item_name, ok = QInputDialog.getText(app, "Add Performance Item", "Enter the test name:")
     if ok and item_name.strip():
@@ -15,16 +55,12 @@ def add_performance_item(app):
             # Add to list with consistent formatting
             item = QListWidgetItem(item_name.strip())
             item_font = QFont()
-            item_font.setPointSize(16)
+            item_font.setPointSize(12)
             item.setFont(item_font)
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(Qt.Checked)
             app.performancedata_list.addItem(item)
-            print(f"Added performance item: {item_name} with filename prefix: {filename_prefix}")
-        else:
-            print("No filename prefix entered; performance item not added")
-    else:
-        print("No test name entered; performance item not added")
+            print(f"Added performance item: {item_name}")
 
 def add_waveform_item(app):
     item_name, ok = QInputDialog.getText(app, "Add Waveform Item", "Enter the test name:")
@@ -37,16 +73,12 @@ def add_waveform_item(app):
             # Add to list with consistent formatting
             item = QListWidgetItem(item_name.strip())
             item_font = QFont()
-            item_font.setPointSize(16)
+            item_font.setPointSize(12)
             item.setFont(item_font)
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(Qt.Checked)
             app.waveforms_list.addItem(item)
-            print(f"Added waveform item: {item_name} with filename prefix: {filename_prefix}")
-        else:
-            print("No filename prefix entered; waveform item not added")
-    else:
-        print("No test name entered; waveform item not added")
+            print(f"Added waveform item: {item_name}")
 
 def delete_performance_item(app):
     selected_items = app.performancedata_list.selectedItems()
@@ -74,34 +106,8 @@ def delete_waveform_item(app):
         save_waveform_dict()
         print(f"Permanently deleted waveform item: {item_text}")
 
-def select_performance_folder(app):
-    folder = QFileDialog.getExistingDirectory(app, "Select Performance Data Folder")
-    if folder:
-        app.performancedata_path.setText(folder)
-    print(f"Selected performance folder: {folder}")
-
-def select_waveform_folder(app):
-    folder = QFileDialog.getExistingDirectory(app, "Select Waveforms Folder")
-    if folder:
-        app.waveforms_path.setText(folder)
-    print(f"Selected waveform folder: {folder}")
-
-def select_generate_document_folder(app):
-    folder = QFileDialog.getExistingDirectory(app, "Select Output Folder for Generated Document")
-    if folder:
-        app.generated_document_path.setText(folder)
-    print(f"Selected output folder for generated document: {folder}")
-
-def select_update_document(app):
-    file, _ = QFileDialog.getOpenFileName(app, "Select Document to Update", "", "Word Documents (*.docx)")
-    if file:
-        app.update_document_path.setText(os.path.basename(file))
-        app.update_document_path.setToolTip(file)
-    print(f"Selected document to update: {file}")
-
 def toggle_maximize(app):
     if app.isMaximized():
         app.showNormal()
     else:
         app.showMaximized()
-    print(f"Toggled maximize state to {'Normal' if not app.isMaximized() else 'Maximized'}")
