@@ -1,7 +1,7 @@
 # src/main.py
 import sys
 import os
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets,QtCore
 from app import DocuApp
 
 

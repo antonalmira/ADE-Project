@@ -1,69 +1,67 @@
 import os
-from PyQt5.QtCore import pyqtSignal, QThread
-from PyQt5.QtWidgets import QProgressDialog, QMessageBox
-from chart_extractor import save_chart_screenshots
-from document_generator import DocGenerator
-from utils import log_message
+import shutil
+import time
+from pathlib import Path
+from PyQt5.QtCore import Qt
+import win32com.client
+from PIL import Image
 
-class DocumentWorker(QThread): 
-    progress_signal = pyqtSignal(int, str)
-    finished_signal = pyqtSignal(bool, str)
+def save_chart_screenshots(app, headless=True, progress_callback=None):
+    excel = None
+    try:
+        excel = win32com.client.Dispatch("Excel.Application")
+        excel.Visible = not headless
+        excel.DisplayAlerts = False
 
-    def __init__(self, app, is_update=False):
-        super().__init__()
-        self.app = app
-        self.is_update = is_update
+        base_folder = app.performancedata_path.text()
+        charts_base_dir = os.path.join(base_folder, "Performance Data Charts")
+        if os.path.exists(charts_base_dir):
+            shutil.rmtree(charts_base_dir)
+        os.makedirs(charts_base_dir, exist_ok=True)
 
-    def run(self):
-        try:
-            # 1. Extraction (takes 0% -> 50% of progress)
-            save_chart_screenshots(
-                self.app, 
-                headless=True, 
-                progress_callback=self.progress_signal.emit
-            ) 
-            
-            # 2. Document Generation (takes 50% -> 90%)
-            self.progress_signal.emit(60, "Building Word document...")
-            output_path = self.app.generated_document_path.text()
-            update_path = self.app.update_document_path.toolTip()
-            
-            generator = DocGenerator(self.app, output_path, update_path)
-            generator.generate()
-            
-            # 3. Finalize (100%)
-            self.progress_signal.emit(100, "Done!")
-            self.finished_signal.emit(True, "Document generated successfully!")
-            
-        except Exception as e:
-            log_message(f"Fatal Error: {str(e)}")
-            self.finished_signal.emit(False, str(e))
+        performance_items = [app.performancedata_list.item(i).text() 
+                            for i in range(app.performancedata_list.count()) 
+                            if app.performancedata_list.item(i).checkState() == Qt.Checked]
 
-# UI Helper Functions
-def run_document_job(app, is_update=False):
-    # Create the dialog
-    app.progress_dialog = QProgressDialog("Initializing...", None, 0, 100, app) 
-    app.progress_dialog.setWindowTitle("Please Wait")
-    app.progress_dialog.setWindowModality(2) # Modal
-    app.progress_dialog.show()
+        # Filter selected files
+        selected_files = {}
+        current_item = None
+        for index in range(app.available_data_list_performance.count()):
+            item = app.available_data_list_performance.item(index)
+            if item.text() in performance_items:
+                current_item = item.text()
+                selected_files[current_item] = []
+            elif current_item and item.checkState() == Qt.Checked:
+                if item.text().lower().endswith(('.xlsx', '.xls')):
+                    selected_files[current_item].append(item.text())
 
-    # Setup the background thread
-    app.worker = DocumentWorker(app, is_update)
-    
-    # Connect signals to UI updates
-    app.worker.progress_signal.connect(lambda val, text: update_progress(app, val, text))
-    app.worker.finished_signal.connect(lambda success, msg: finish_processing(app, success, msg))
-    
-    # Launch thread
-    app.worker.start()
+        total_files = sum(len(files) for files in selected_files.values())
+        if total_files == 0: return
+        
+        processed_count = 0
+        for item_name, files in selected_files.items():
+            item_folder = os.path.join(charts_base_dir, f"{item_name} Charts")
+            os.makedirs(item_folder, exist_ok=True)
 
-def update_progress(app, value, text):
-    app.progress_dialog.setValue(value)
-    app.progress_dialog.setLabelText(text)
+            for file_name in files:
+                processed_count += 1
+                if progress_callback:
+                    progress_callback(int((processed_count/total_files)*50), f"Excel: {file_name}")
 
-def finish_processing(app, success, msg):
-    app.progress_dialog.close()
-    if success:
-        QMessageBox.information(app, "Success", msg)
-    else:
-        QMessageBox.critical(app, "Error", f"An error occurred:\n{msg}")
+                file_path = os.path.abspath(os.path.join(base_folder, file_name))
+                file_subfolder = os.path.join(item_folder, os.path.splitext(file_name)[0])
+                os.makedirs(file_subfolder, exist_ok=True)
+
+                wb = excel.Workbooks.Open(file_path, ReadOnly=True)
+                chart_sheets = [s for s in wb.Sheets if s.Type in [-4169, 3]]
+                
+                for sheet in chart_sheets:
+                    temp_image = os.path.join(file_subfolder, f"{sheet.Name}.png")
+                    try:
+                        sheet.Export(temp_image, "PNG")
+                    except:
+                        continue
+                wb.Close(SaveChanges=False)
+    finally:
+        if excel:
+            excel.Quit()
