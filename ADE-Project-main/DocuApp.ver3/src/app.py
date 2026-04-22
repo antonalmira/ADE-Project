@@ -1,6 +1,6 @@
 import os
 import sys
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, uic, QtCore
 from PyQt5.QtCore import Qt, QPoint
 import resource_rc
 
@@ -8,13 +8,13 @@ import resource_rc
 from handlers import (
     select_performance_folder, 
     select_waveform_folder, 
-    add_performance_item, 
+    add_performance_item,
     delete_performance_item, 
     add_waveform_item, 
     delete_waveform_item
 )
 
-from document_handler import generate_document
+from document_handler import generate_document, update_document_prompt
 from utils import get_resource_path
 from preview import show_file_preview, crop_and_update_preview
 from list_updater import update_available_data_list, refresh_data_lists
@@ -64,9 +64,21 @@ class DocuApp(QtWidgets.QMainWindow):
         # Generate button opens the Save dialog and starts processing
         self.generate_document_button.clicked.connect(lambda: generate_document(self))
 
-        # 6. LIST SELECTION CONNECTIONS (Preview Updates)
+        # 6. LIST SELECTION CONNECTIONS (Preview Updates & Custom Functions)
         self.available_data_list_performance.itemSelectionChanged.connect(lambda: show_file_preview(self))
         self.available_data_list__waveforms.itemSelectionChanged.connect(lambda: show_file_preview(self))
+
+        # ENABLE DRAG AND DROP REORDERING
+        self.available_data_list_performance.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        self.available_data_list__waveforms.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+
+        # ENABLE DOUBLE CLICK FOR CUSTOM CAPTIONS
+        self.available_data_list_performance.itemDoubleClicked.connect(self.set_custom_caption)
+        self.available_data_list__waveforms.itemDoubleClicked.connect(self.set_custom_caption)
+
+        # CONNECT THE NEW UPDATE DOCUMENT BUTTON
+        if hasattr(self, 'update_document_button'):
+            self.update_document_button.clicked.connect(lambda: update_document_prompt(self))
 
         # 7. POPULATE TEMPLATE DROPDOWN
         self.populate_templates_dropdown()
@@ -91,8 +103,27 @@ class DocuApp(QtWidgets.QMainWindow):
             self.template_dropdown.addItem("Templates folder missing!")
             self.template_dropdown.setEnabled(False)
 
-    # --- HELPER METHODS ---
+    # --- CUSTOM CAPTIONS METHOD ---
+    def set_custom_caption(self, item):
+        # Ensure we are editing a file, not a non-selectable header
+        if item.flags() & Qt.ItemIsUserCheckable:
+            current_caption = item.data(Qt.UserRole) or ""
+            new_caption, ok = QtWidgets.QInputDialog.getText(
+                self, "Custom Caption", 
+                f"Enter custom caption for '{item.text()}':\n(Leave blank to use default formatting)", 
+                text=current_caption
+            )
+            if ok:
+                item.setData(Qt.UserRole, new_caption.strip())
+                # Show visual feedback that a custom caption exists
+                if new_caption.strip():
+                    item.setToolTip(f"Custom Caption: {new_caption.strip()}")
+                    item.setBackground(QtCore.Qt.darkBlue) # Highlight slightly
+                else:
+                    item.setToolTip("")
+                    item.setBackground(QtCore.Qt.transparent)
 
+    # --- HELPER METHODS ---
     def toggle_maximize(self):
         if self.isMaximized():
             self.showNormal()
@@ -102,7 +133,6 @@ class DocuApp(QtWidgets.QMainWindow):
     # --- MOUSE EVENTS FOR DRAGGING FRAMELESS WINDOW (Restricted to Header) ---
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            # Only allow drag if clicking on the header frame
             if self.headerr.underMouse():
                 self.old_pos = event.globalPos()
 

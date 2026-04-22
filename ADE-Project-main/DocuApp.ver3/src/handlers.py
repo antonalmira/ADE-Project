@@ -63,9 +63,9 @@ def add_performance_item(app):
             print(f"Added performance item: {item_name}")
 
 def add_waveform_item(app):
-    item_name, ok = QInputDialog.getText(app, "Add Waveform Item", "Enter the test name:")
+    item_name, ok = QInputDialog.getText(None, "Add Waveform Item", "Enter the test name:")
     if ok and item_name.strip():
-        filename_prefix, ok = QInputDialog.getText(app, "Filename Prefix", f"Enter the first two words of the filename for '{item_name}' (e.g., 'cc load'):")
+        filename_prefix, ok = QInputDialog.getText(None, "Filename Prefix", f"Enter the first two words of the filename for '{item_name}' (e.g., 'cc load'):")
         if ok and filename_prefix.strip():
             # Add to dictionary permanently
             waveform_testnames[filename_prefix.lower()] = item_name.strip()

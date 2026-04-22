@@ -27,7 +27,7 @@ class DocumentWorker(QThread):
             )
             
             # 2. Setup Generator (50% to 60%)
-            self.progress_signal.emit(55, "Opening Template...")
+            self.progress_signal.emit(55, "Opening Document...")
             output_path = getattr(self.app, 'final_save_destination', "Generated_Document.docx")
             update_path = getattr(self.app, 'update_document_path', "") if self.is_update else ""
             
@@ -164,5 +164,28 @@ def generate_document(app):
         app.final_save_destination = save_path 
         run_document_job(app, is_update=False)
 
-def update_document(app):
-    run_document_job(app, is_update=True)
+def update_document_prompt(app):
+    # Prompt the user for the existing document they want to update
+    update_path, _ = QFileDialog.getOpenFileName(
+        app, 
+        "Select Existing Report to Update", 
+        "", 
+        "Word Documents (*.docx)"
+    )
+    
+    if not update_path:
+        return # User cancelled
+
+    app.update_document_path = update_path
+
+    # Prompt where to save the newly updated document
+    save_path, _ = QFileDialog.getSaveFileName(
+        app, 
+        "Save Updated Report As", 
+        update_path, # Defaults to overwriting the same file
+        "Word Documents (*.docx)"
+    )
+
+    if save_path:
+        app.final_save_destination = save_path 
+        run_document_job(app, is_update=True)

@@ -35,7 +35,8 @@ class PerformanceSection:
             if item.text() in performance_items:
                 current_item = item.text()
             elif current_item and item.checkState() == Qt.Checked and item.text().lower().endswith(('.xlsx', '.xls')):
-                ordered_files.append((current_item, item.text()))
+                custom_cap = item.data(Qt.UserRole)
+                ordered_files.append((current_item, item.text(), custom_cap))
         log_message(f"Ordered performance files from UI: {ordered_files}")
 
         for item_name in performance_items:
@@ -45,7 +46,7 @@ class PerformanceSection:
             
             # Process charts in the order of ordered_files
             if os.path.isdir(item_folder):
-                for ordered_item_name, file_name in ordered_files:
+                for ordered_item_name, file_name, custom_cap in ordered_files:
                     if ordered_item_name != item_name:
                         continue
                     subfolder = os.path.splitext(file_name)[0]
@@ -54,14 +55,14 @@ class PerformanceSection:
                         # Check for Table.png first
                         table_image = os.path.join(subfolder_path, "Table.png")
                         if os.path.exists(table_image):
-                            performance_data[item_name]['charts'].append(table_image)
+                            performance_data[item_name]['charts'].append({'path': table_image, 'custom_cap': custom_cap})
                         # Then collect other chart images (e.g., chart sheets)
                         for file in sorted(os.listdir(subfolder_path)):
                             if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')) and file != "Table.png":
-                                performance_data[item_name]['charts'].append(os.path.join(subfolder_path, file))
+                                performance_data[item_name]['charts'].append({'path': os.path.join(subfolder_path, file), 'custom_cap': custom_cap})
 
             # Process tables in the order of ordered_files
-            for ordered_item_name, file_name in ordered_files:
+            for ordered_item_name, file_name, custom_cap in ordered_files:
                 if ordered_item_name != item_name:
                     continue
                 if self.get_first_two_words(file_name) == prefix:
@@ -74,7 +75,8 @@ class PerformanceSection:
                             performance_data[item_name]['tables'].append({
                                 'file_name': file_name,
                                 'data': table_data,
-                                'merged_cells': merged_cells
+                                'merged_cells': merged_cells,
+                                'custom_cap': custom_cap
                             })
                         wb.close()
                     except Exception as e:
@@ -94,8 +96,11 @@ class PerformanceSection:
             last_element = new_para._element
 
             # Add charts (including Table.png)
-            for image_path in performance_data.get(item, {}).get('charts', []):
+            for chart_data in performance_data.get(item, {}).get('charts', []):
+                image_path = chart_data['path']
+                custom_cap = chart_data.get('custom_cap')
                 cropped_path = crop_and_save(image_path, 2, 2, 2, 2, self.temp_dir)
+                
                 if cropped_path:
                     img_para = doc.add_paragraph()
                     img_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -104,32 +109,37 @@ class PerformanceSection:
                     last_element.getparent().insert(last_element.getparent().index(last_element) + 1, img_para._element)
                     last_element = img_para._element
                     file_name = os.path.basename(image_path).lower()
-                    if 'table' in file_name:
-                        caption_text = f"{item} Table"
+                    
+                    if custom_cap:
+                        caption_text = custom_cap
                     else:
-                        cap = f"{item} Chart"
-                        caption_text = format_value_units(cap)
-                        
-                        edited_name = file_name[:-4].upper()
-                        categories = edited_name.split("_")
-                        current = categories[-1] if categories else ""
-                        volts = categories[-2] if len(categories) > 1 else ""
-                        if 'lnveff' in file_name:
-                            cap = f"Line vs Efficiency, {volts}, {current}"
-                            caption_text = format_value_units(cap)
-                        elif 'ldveff' in file_name:
-                            cap = f"Efficiency vs. Load, {volts}, {current}"
-                            caption_text = format_value_units(cap)
-                        elif 'loadvripple' in file_name:
-                            caption_text = "Load vs. Ripple"
-                        elif 'linereg' in file_name:
-                            cap = f"Full Load Line Regulation, {volts}, {current}"
-                            caption_text = format_value_units(cap)
-                        elif 'loadreg' in file_name:
-                            cap = f"Load Regulation, {volts}, {current}"
-                            caption_text = format_value_units(cap)
+                        if 'table' in file_name:
+                            caption_text = f"{item} Table"
                         else:
-                            caption_text = "No Load Input Power"
+                            cap = f"{item} Chart"
+                            caption_text = format_value_units(cap)
+                            
+                            edited_name = file_name[:-4].upper()
+                            categories = edited_name.split("_")
+                            current = categories[-1] if categories else ""
+                            volts = categories[-2] if len(categories) > 1 else ""
+                            if 'lnveff' in file_name:
+                                cap = f"Line vs Efficiency, {volts}, {current}"
+                                caption_text = format_value_units(cap)
+                            elif 'ldveff' in file_name:
+                                cap = f"Efficiency vs. Load, {volts}, {current}"
+                                caption_text = format_value_units(cap)
+                            elif 'loadvripple' in file_name:
+                                caption_text = "Load vs. Ripple"
+                            elif 'linereg' in file_name:
+                                cap = f"Full Load Line Regulation, {volts}, {current}"
+                                caption_text = format_value_units(cap)
+                            elif 'loadreg' in file_name:
+                                cap = f"Load Regulation, {volts}, {current}"
+                                caption_text = format_value_units(cap)
+                            else:
+                                caption_text = "No Load Input Power"
+                                
                     caption_para = doc.add_paragraph()
                     add_caption_field(caption_para, caption_text, "Figure")
                     last_element.getparent().insert(last_element.getparent().index(last_element) + 1, caption_para._element)
@@ -139,15 +149,22 @@ class PerformanceSection:
             for table_info in performance_data.get(item, {}).get('tables', []):
                 table_data = table_info['data']
                 merged_cells = table_info['merged_cells']
+                custom_cap = table_info.get('custom_cap')
+                
                 rows = len(table_data)
                 cols = max(len(row) for row in table_data) if rows > 0 else 1
                 table = add_styled_table(doc, rows, cols, table_data, merged_cells, header_color='#0078AB', font_name='Calibri', font_size=9)
                 last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
                 last_element = table._element
+                
                 caption_para = doc.add_paragraph()
-                caption_stripped = str(table_info['file_name']).strip(".xlsx")
-                cap = f"Data from {caption_stripped}"
-                caption_text = format_value_units(cap)
+                if custom_cap:
+                    caption_text = custom_cap
+                else:
+                    caption_stripped = str(table_info['file_name']).strip(".xlsx")
+                    cap = f"Data from {caption_stripped}"
+                    caption_text = format_value_units(cap)
+                    
                 add_caption_field(caption_para, caption_text, "Table")
                 last_element.getparent().insert(last_element.getparent().index(last_element) + 1, caption_para._element)
                 last_element = caption_para._element

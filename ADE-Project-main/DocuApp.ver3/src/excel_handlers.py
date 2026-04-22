@@ -163,6 +163,5 @@ def extract_chart_screenshots(app, excel, performance_items, performance_folder,
 
             progress_value += 1
             progress_dialog.setValue(progress_value)
-
     show_popup(app, "Success", "Charts successfully extracted.", "info")
     return True

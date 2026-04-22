@@ -162,6 +162,7 @@
           </layout>
          </item>
          <item><widget class="QPushButton" name="generate_document_button"><property name="minimumSize"><size><width>0</width><height>50</height></size></property><property name="font"><font><bold>true</bold></font></property><property name="text"><string>Generate Document</string></property></widget></item>
+         <item><widget class="QPushButton" name="update_document_button"><property name="minimumSize"><size><width>0</width><height>50</height></size></property><property name="font"><font><bold>true</bold></font></property><property name="text"><string>Update Existing Report</string></property></widget></item>
         </layout>
        </widget>
       </item>

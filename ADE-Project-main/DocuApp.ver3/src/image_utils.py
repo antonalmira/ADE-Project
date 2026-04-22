@@ -17,7 +17,6 @@ def crop_and_save(image_path, crop_left=0, crop_top=0, crop_right=0, crop_bottom
             bottom = max(top + 1, height - crop_bottom)
             
             cropped_img = img.crop((left, top, right, bottom))
-            
             # Use original filename for matching
             cropped_filename = os.path.basename(image_path)
             cropped_path = os.path.join(temp_dir, cropped_filename)
@@ -26,3 +25,4 @@ def crop_and_save(image_path, crop_left=0, crop_top=0, crop_right=0, crop_bottom
     except Exception as e:
         log_message(f"Error cropping image {image_path}: {str(e)}")
         return None
+    
