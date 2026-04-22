@@ -5,7 +5,7 @@ import os
 import re
 import json
 from pathlib import Path
-from utils import get_resource_path, ensure_directory
+from utils import get_resource_path, ensure_directory, show_popup
 
 # Default dictionaries
 DEFAULT_PERFORMANCE = {
@@ -233,7 +233,7 @@ def update_available_data_list(app):
             app.available_data_list__waveforms.addItem(spacer_item)
             print("    Added spacer")
 
-    QMessageBox.information(app, "Data Loaded", "Done")
+    show_popup(app, "Data Loaded", "Successfully loaded data.", "info")
     print("Lists updated")
 
 def refresh_data_lists(app):
