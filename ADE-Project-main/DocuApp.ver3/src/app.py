@@ -107,21 +107,26 @@ class DocuApp(QtWidgets.QMainWindow):
     def set_custom_caption(self, item):
         # Ensure we are editing a file, not a non-selectable header
         if item.flags() & Qt.ItemIsUserCheckable:
-            current_caption = item.data(Qt.UserRole) or ""
-            new_caption, ok = QtWidgets.QInputDialog.getText(
-                self, "Custom Caption", 
-                f"Enter custom caption for '{item.text()}':\n(Leave blank to use default formatting)", 
-                text=current_caption
-            )
-            if ok:
-                item.setData(Qt.UserRole, new_caption.strip())
-                # Show visual feedback that a custom caption exists
-                if new_caption.strip():
-                    item.setToolTip(f"Custom Caption: {new_caption.strip()}")
-                    item.setBackground(QtCore.Qt.darkBlue) # Highlight slightly
-                else:
-                    item.setToolTip("")
-                    item.setBackground(QtCore.Qt.transparent)
+            # Use QTimer to delay the popup slightly so the mouse-release event 
+            # can finish, preventing the drag-and-drop from getting locked/broken.
+            QtCore.QTimer.singleShot(0, lambda: self._prompt_custom_caption(item))
+
+    def _prompt_custom_caption(self, item):
+        current_caption = item.data(Qt.UserRole) or ""
+        new_caption, ok = QtWidgets.QInputDialog.getText(
+            self, "Custom Caption", 
+            f"Enter custom caption for '{item.text()}':\n(Leave blank to use default formatting)", 
+            text=current_caption
+        )
+        if ok:
+            item.setData(Qt.UserRole, new_caption.strip())
+            # Show visual feedback that a custom caption exists
+            if new_caption.strip():
+                item.setToolTip(f"Custom Caption: {new_caption.strip()}")
+                item.setBackground(QtCore.Qt.darkBlue) # Highlight slightly
+            else:
+                item.setToolTip("")
+                item.setBackground(QtCore.Qt.transparent)
 
     # --- HELPER METHODS ---
     def toggle_maximize(self):
