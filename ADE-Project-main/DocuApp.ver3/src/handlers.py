@@ -45,9 +45,9 @@ def select_waveform_folder(app):
         print(f"Selected waveform folder: {folder}")
 
 def add_performance_item(app):
-    item_name, ok = QInputDialog.getText(app, "Add Performance Item", "Enter the test name:")
+    item_name, ok = QInputDialog.getText(None, "Add Performance Item", "Enter the test name:")
     if ok and item_name.strip():
-        filename_prefix, ok = QInputDialog.getText(app, "Filename Prefix", f"Enter the first two words of the filename for '{item_name}' (e.g., 'efficiency test'):")
+        filename_prefix, ok = QInputDialog.getText(None, "Filename Prefix", f"Enter the first two words of the filename for '{item_name}' (e.g., 'efficiency test'):")
         if ok and filename_prefix.strip():
             # Add to dictionary permanently
             performancedata_testnames[filename_prefix.lower()] = item_name.strip()

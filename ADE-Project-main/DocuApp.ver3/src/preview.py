@@ -99,23 +99,24 @@ def show_file_preview(app):
         try:
             with Image.open(file_path) as img:
                 width, height = img.size
-                # Validate crop area
-                if crop_left + crop_right < width and crop_upper + crop_lower < height:
-                    if crop_left > 0 or crop_right > 0 or crop_upper > 0 or crop_lower > 0:
-                        left = crop_left
-                        top = crop_upper
-                        right = width - crop_right
-                        bottom = height - crop_lower
-                        cropped_img = img.crop((left, top, right, bottom))
-                        from tempfile import gettempdir
-                        temp_path = os.path.join(gettempdir(), f"preview_cropped_{os.path.basename(file_path)}")
-                        cropped_img.save(temp_path)
-                        pixmap = QPixmap(temp_path)
-                    else:
-                        pixmap = QPixmap(file_path)
+                
+                if crop_left > 0 or crop_right > 0 or crop_upper > 0 or crop_lower > 0:
+                    # FIX: Safe bounds applied to preview as well
+                    left = min(crop_left, width - 1)
+                    top = min(crop_upper, height - 1)
+                    right = max(left + 1, width - crop_right)
+                    bottom = max(top + 1, height - crop_lower)
+                    
+                    cropped_img = img.crop((left, top, right, bottom))
+                    from tempfile import gettempdir
+                    temp_path = os.path.join(gettempdir(), f"preview_cropped_{os.path.basename(file_path)}")
+                    cropped_img.save(temp_path)
+                    pixmap = QPixmap(temp_path)
                 else:
-                    app.file_view.setText("Cropping area too large for image")
-                    return
+                    pixmap = QPixmap(file_path)
+        except Exception as e:
+            app.file_view.setText(f"Cropping failed: {str(e)}")
+            return
         except Exception as e:
             app.file_view.setText(f"Cropping failed: {str(e)}")
             return

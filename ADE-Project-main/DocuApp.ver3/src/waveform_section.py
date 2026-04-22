@@ -58,12 +58,16 @@ class WaveformSection:
                             waveform_files[item_name].append(cropped_path)
         return waveform_files
 
-    # NEW LOGIC: use current crop values from app for cropping
     def get_images_with_custom_crop(self, waveform_items):
-        crop_upper = getattr(self.app, 'crop_upper', 0)
-        crop_lower = getattr(self.app, 'crop_lower', 0)
-        crop_left = getattr(self.app, 'crop_left', 0)
-        crop_right = getattr(self.app, 'crop_right', 0)
+          try:
+            crop_upper = int(self.app.upper_input.text()) if self.app.upper_input.text() else 0
+            crop_lower = int(self.app.lower_input.text()) if self.app.lower_input.text() else 0
+            crop_left = int(self.app.left_input.text()) if self.app.left_input.text() else 0
+            crop_right = int(self.app.right_input.text()) if self.app.right_input.text() else 0
+        except ValueError:
+            crop_upper = crop_lower = crop_left = crop_right = 0
+
+        waveform_folder = self.app.waveforms_path.text()
         waveform_folder = self.app.waveforms_path.text()
         if not waveform_folder or not os.path.isdir(waveform_folder):
             log_message(f"Invalid waveform folder: {waveform_folder}")
