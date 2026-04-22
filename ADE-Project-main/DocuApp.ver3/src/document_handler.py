@@ -18,21 +18,29 @@ class DocumentWorker(QThread):
     def run(self):
         pythoncom.CoInitialize()
         try:
+            # 1. Start Extraction (0% to 50%)
+            self.progress_signal.emit(5, "Starting chart extraction...")
             save_chart_screenshots(
                 self.app, 
                 headless=True, 
                 progress_callback=self.progress_signal.emit
             )
             
-            self.progress_signal.emit(50, "Generating Word document...")
+            # 2. Setup Generator (50% to 60%)
+            self.progress_signal.emit(55, "Opening Template...")
             output_path = getattr(self.app, 'final_save_destination', "Generated_Document.docx")
             update_path = getattr(self.app, 'update_document_path', "") if self.is_update else ""
             
             generator = DocGenerator(self.app, output_path, update_path)
+            
+            # 3. Generate Content (60% to 90% handled inside generator)
+            self.progress_signal.emit(60, "Configuring Document Sections...")
             generator.generate(progress_callback=self.progress_signal.emit)
             
+            # 4. Finalize (95% to 100%)
+            self.progress_signal.emit(95, "Saving Document...")
             self.progress_signal.emit(100, "Finalizing...")
-            self.finished_signal.emit(True, "Document successfully generated!")
+            self.finished_signal.emit(True, "Document successfully generated and saved!")
         except Exception as e:
             log_message(f"Worker Error: {str(e)}")
             self.finished_signal.emit(False, str(e))
@@ -40,9 +48,40 @@ class DocumentWorker(QThread):
             pythoncom.CoUninitialize()
 
 def run_document_job(app, is_update=False):
+    # Setup the Progress Dialog
     app.progress_dialog = QProgressDialog("Initializing...", None, 0, 100, app)
     app.progress_dialog.setWindowTitle("Processing Document")
     app.progress_dialog.setModal(True)
+    app.progress_dialog.setAutoClose(False)
+    app.progress_dialog.setAutoReset(False)
+    
+    # Force it to show instantly (Default is 4000ms delay)
+    app.progress_dialog.setMinimumDuration(0) 
+    
+    # Fix the invisible text issue by applying a clean Light Mode stylesheet
+    app.progress_dialog.setStyleSheet("""
+        QProgressDialog {
+            background-color: #f5f5f5;
+        }
+        QLabel {
+            color: #000000;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        QProgressBar {
+            border: 1px solid #b0b0b0;
+            border-radius: 4px;
+            text-align: center;
+            color: #000000;
+            background-color: #e0e0e0;
+        }
+        QProgressBar::chunk {
+            background-color: #0085ca;
+            width: 15px;
+        }
+    """)
+    
+    app.progress_dialog.setValue(0)
     app.progress_dialog.show()
 
     app.worker = DocumentWorker(app, is_update)
@@ -51,15 +90,53 @@ def run_document_job(app, is_update=False):
     app.worker.start()
 
 def _update_ui(app, value, text):
-    app.progress_dialog.setValue(value)
-    app.progress_dialog.setLabelText(text)
+    if hasattr(app, 'progress_dialog'):
+        app.progress_dialog.setValue(value)
+        # Force the label text to strictly black using a rich text span
+        black_text = f'<span style="color: black;">{text}</span>'
+        app.progress_dialog.setLabelText(black_text)
 
 def _finish_ui(app, success, message):
-    app.progress_dialog.close()
+    if hasattr(app, 'progress_dialog'):
+        app.progress_dialog.close()
+    
+    # Create a completely custom message box to fix the blank/invisible text bug
+    msg_box = QMessageBox(app)
+    
+    # Apply strict stylesheet so it doesn't inherit the main app's dark mode
+    msg_box.setStyleSheet("""
+        QMessageBox {
+            background-color: #f5f5f5;
+        }
+        QLabel {
+            color: #000000;
+            font-size: 13px;
+        }
+        QPushButton {
+            background-color: #0085ca;
+            color: #ffffff;
+            border-radius: 4px;
+            padding: 6px 20px;
+            font-weight: bold;
+            min-width: 60px;
+        }
+        QPushButton:hover {
+            background-color: #3c649f;
+        }
+    """)
+    
     if success:
-        QMessageBox.information(app, "Success", message)
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setWindowTitle("Success")
+        msg_box.setText("<b>Task Completed Successfully!</b>")
+        msg_box.setInformativeText(message)
     else:
-        QMessageBox.critical(app, "Error", f"Failed: {message}")
+        msg_box.setIcon(QMessageBox.Critical)
+        msg_box.setWindowTitle("Error")
+        msg_box.setText("<b>An Error Occurred.</b>")
+        msg_box.setInformativeText(message)
+        
+    msg_box.exec_()
 
 def generate_document(app):
     selected_template = app.template_dropdown.currentText()
