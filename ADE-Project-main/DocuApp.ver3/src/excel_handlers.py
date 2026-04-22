@@ -4,7 +4,7 @@ from PyQt5 import QtWidgets
 from PIL import Image
 import pyautogui
 import win32com.client
-from utils import ensure_directory, remove_directory
+from utils import ensure_directory, remove_directory, show_popup
 
 def extract_chart_screenshots(app, excel, performance_items, performance_folder, charts_base_dir):
     """Extract charts from Excel files and save as screenshots."""
@@ -20,16 +20,13 @@ def extract_chart_screenshots(app, excel, performance_items, performance_folder,
         elif current_item and item.checkState() == QtWidgets.Qt.Checked:
             if item.text().lower().endswith(('.xlsx', '.xls')):
                 selected_files[current_item].append(item.text())
-    print(f"Selected files: {selected_files}")
 
     if not any(selected_files.values()):
-        QtWidgets.QMessageBox.warning(app, "Warning", "No Excel files selected.")
-        print("Warning: No Excel files selected")
+        show_popup(app, "Warning", "No Excel files selected.", "warning")
         return False
 
     if not performance_folder or not os.path.isdir(performance_folder):
-        QtWidgets.QMessageBox.critical(app, "Error", "Performance data folder is not set or invalid.")
-        print("Error: Invalid or unset performance data folder")
+        show_popup(app, "Error", "Performance data folder is not set or invalid.", "error")
         return False
 
     total_files = sum(len(files) for files in selected_files.values())
@@ -39,27 +36,23 @@ def extract_chart_screenshots(app, excel, performance_items, performance_folder,
     progress_dialog.setCancelButton(None)
     progress_dialog.setMinimumDuration(0)
     progress_value = 0
-    print("Progress dialog initialized")
 
     first_file_processed = False
     for item_name, files in selected_files.items():
         item_folder = os.path.join(charts_base_dir, f"{item_name} Charts")
         remove_directory(item_folder)
         ensure_directory(item_folder)
-        print(f"Created item folder: {item_folder}")
 
         for file_name in files:
             file_path = os.path.join(performance_folder, file_name)
             file_subfolder = os.path.join(item_folder, os.path.splitext(file_name)[0])
             remove_directory(file_subfolder)
             ensure_directory(file_subfolder)
-            print(f"Created file subfolder: {file_subfolder}")
 
             chart_sheets = []
             try:
                 excel_wb = excel.Workbooks.Open(os.path.abspath(file_path))
                 chart_sheets = [sheet.Name for sheet in excel_wb.Sheets if sheet.Type in [-4169, 3]]
-                print(f"Found chart sheets with COM: {chart_sheets}")
 
                 if not chart_sheets:
                     # No charts found, export the first table as formatted screenshot
@@ -84,17 +77,15 @@ def extract_chart_screenshots(app, excel, performance_items, performance_folder,
                             screenshot.save(temp_image)
                             success = True
                         excel.Visible = False
-                        print(f"Exported table screenshot for {file_name} to {temp_image}")
                     except Exception as e:
                         print(f"Table screenshot failed for {file_name}: {str(e)}")
                         excel.Visible = False
+                        
                     if not success:
-                        QtWidgets.QMessageBox.warning(app, "Warning", f"Failed to export table for {file_name}. Skipping.")
-                        print(f"Failed to export table for {file_name}")
+                        print(f"Failed to export table for {file_name}. Skipping silently.")
                     excel_wb.Close(SaveChanges=False)
                     progress_value += 1
                     progress_dialog.setValue(progress_value)
-                    print(f"Progress updated: {progress_value}/{total_files}")
                     continue
 
                 first_chart = True
@@ -116,7 +107,6 @@ def extract_chart_screenshots(app, excel, performance_items, performance_folder,
                                 temp_ws.Export(temp_image, "PNG")
                                 with Image.open(temp_image) as img:
                                     img.save(temp_image, "PNG", quality=95)
-                                print(f"Exported first chart {sheet_name} with Method 2 to {temp_image}")
                                 success = True
                             temp_ws.Delete()
                         except Exception as e:
@@ -132,13 +122,11 @@ def extract_chart_screenshots(app, excel, performance_items, performance_folder,
                                     chart_sheet.Export(temp_image, "PNG")
                                     with Image.open(temp_image) as img:
                                         img.save(temp_image, "PNG", quality=95)
-                                    print(f"Exported chart {sheet_name} with Method 1 to {temp_image}")
                                     success = True
                                     break
                                 except Exception as e:
                                     if attempt < 2:
                                         time.sleep(1)
-                                        print(f"Retry {attempt + 1} for Method 1 ({sheet_name}): {str(e)}")
                                     else:
                                         raise
                         except Exception as e:
@@ -157,28 +145,24 @@ def extract_chart_screenshots(app, excel, performance_items, performance_folder,
                                     width, height = excel_window.width, excel_window.height
                                     screenshot = pyautogui.screenshot(region=(left, top, width, height))
                                     screenshot.save(temp_image)
-                                    print(f"Exported chart {sheet_name} with Method 3 to {temp_image}")
                                     success = True
                             except Exception as e:
                                 print(f"Method 3 failed for {sheet_name}: {str(e)}")
                                 excel.Visible = False
 
                     if not success:
-                        QtWidgets.QMessageBox.warning(app, "Warning", f"Failed to export chart {sheet_name} in {file_name} with all methods. Skipping this chart.")
-                        print(f"All methods failed for {sheet_name}. Skipping.")
+                        print(f"All methods failed for {sheet_name}. Skipping silently.")
 
                     first_chart = False
 
                 excel_wb.Close(SaveChanges=False)
             except Exception as e:
-                QtWidgets.QMessageBox.critical(app, "Error", f"Failed to process {file_name}: {str(e)}")
+                # Silently catch the error and move to the next file instead of triggering a popup
                 print(f"COM processing error for {file_name}: {str(e)}")
                 continue
 
             progress_value += 1
             progress_dialog.setValue(progress_value)
-            print(f"Progress updated: {progress_value}/{total_files}")
 
-    QtWidgets.QMessageBox.information(app, "Success", "Charts successfully extracted.")
-    print("Chart screenshots saved successfully")
+    show_popup(app, "Success", "Charts successfully extracted.", "info")
     return True
