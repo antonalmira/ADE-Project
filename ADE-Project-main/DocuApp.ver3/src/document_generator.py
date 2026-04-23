@@ -1,9 +1,107 @@
 import os
+import pandas as pd
 from docx import Document
+from docx.shared import Pt, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_ALIGN_VERTICAL
+from docx.oxml.shared import OxmlElement, qn
 from PyQt5.QtCore import Qt
 from performance_section import PerformanceSection
 from waveform_section import WaveformSection
 from utils import ensure_directory, remove_directory, get_default_base_folder, get_resource_path
+
+def set_cell_background(cell, hex_color):
+    """Applies a background hex color to a table cell."""
+    tcPr = cell._tc.get_or_add_tcPr()
+    shd = OxmlElement('w:shd')
+    shd.set(qn('w:val'), 'clear')
+    shd.set(qn('w:color'), 'auto')
+    shd.set(qn('w:fill'), hex_color)
+    tcPr.append(shd)
+
+def set_table_inner_borders(table, hex_color):
+    """Applies inner borders to the table according to specifications."""
+    tblPr = table._element.tblPr
+    tblBorders = OxmlElement('w:tblBorders')
+    
+    for border_name in ['insideH', 'insideV']:
+        border = OxmlElement(f'w:{border_name}')
+        border.set(qn('w:val'), 'single')
+        border.set(qn('w:sz'), '4') 
+        border.set(qn('w:space'), '0')
+        border.set(qn('w:color'), hex_color)
+        tblBorders.append(border)
+        
+    tblPr.append(tblBorders)
+
+def add_bom_table(document, excel_path):
+    """Reads the BOM from Excel and inserts a formatted table into the Word document."""
+    try:
+        df = pd.read_excel(excel_path, sheet_name='BOM', skiprows=2)
+        bom_columns = [
+            'Item', 'Quantity', 'Designator', 'Value', 
+            'Description', 'Manufacturer Part Number', 'Manufacturer'
+        ]
+        
+        # Handle variations/typos in the Manufacturer column names from raw files
+        rename_map = {}
+        for col in df.columns:
+            if 'part number' in col.lower() and 'man' in col.lower():
+                rename_map[col] = 'Manufacturer Part Number'
+            elif 'man' in col.lower() and 'part' not in col.lower():
+                rename_map[col] = 'Manufacturer'
+                
+        df = df.rename(columns=rename_map)
+        
+        # Filter only the columns that exist
+        existing_cols = [col for col in bom_columns if col in df.columns]
+        df = df[existing_cols].dropna(how='all')
+        
+        document.add_paragraph("Bill of Materials", style='Heading 2')
+        table = document.add_table(rows=1, cols=len(df.columns))
+        table.autofit = True
+        
+        set_table_inner_borders(table, 'C0C0C0')
+
+        # Format Headers
+        hdr_cells = table.rows[0].cells
+        for i, col_name in enumerate(df.columns):
+            cell = hdr_cells[i]
+            cell.text = str(col_name)
+            set_cell_background(cell, '0085CA')
+            cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            
+            paragraph = cell.paragraphs[0]
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = paragraph.runs[0]
+            run.font.name = 'Calibri'
+            run.font.size = Pt(8)
+            run.font.bold = True
+            run.font.color.rgb = RGBColor(255, 255, 255)
+
+        # Insert Rows
+        for _, row in df.iterrows():
+            row_cells = table.add_row().cells
+            for i, value in enumerate(row):
+                cell_val = "" if pd.isna(value) else str(value)
+                cell = row_cells[i]
+                cell.text = cell_val
+                cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+                
+                paragraph = cell.paragraphs[0]
+                if df.columns[i] == 'Description':
+                    paragraph.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                else:
+                    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    
+                if paragraph.runs:
+                    run = paragraph.runs[0]
+                    run.font.name = 'Calibri'
+                    run.font.size = Pt(8)
+                    run.font.bold = False
+                    run.font.color.rgb = RGBColor(0, 0, 0)
+    except Exception as e:
+        print(f"Failed to load BOM from {excel_path}: {e}")
 
 class DocGenerator:
     # Changed 'output_folder' to 'output_path' since the Save Dialog gives us the full file path
@@ -47,6 +145,11 @@ class DocGenerator:
             if progress_callback: progress_callback(90, "Writing Waveforms...")
             wave_files = self.waveform.get_images_with_custom_crop(waveform_items)
             self.waveform.add_section(doc, doc.element.body[-1], waveform_items, wave_files)
+
+        # --- BOM SECTION (Added after waveforms) ---
+        if hasattr(self.app, 'bom_file_path') and self.app.bom_file_path:
+            if progress_callback: progress_callback(95, "Appending Bill of Materials...")
+            add_bom_table(doc, self.app.bom_file_path)
 
         # Save and open the document
         doc.save(self.output_path)

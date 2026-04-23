@@ -145,6 +145,22 @@ def generate_document(app):
     if not selected_template or selected_template in ["No templates found", "Templates folder missing!", ""]:
         QMessageBox.warning(app, "Missing Template", "Please choose a valid template (.docx) from the dropdown.")
         return
+    # ---> ADD THESE 4 LINES HERE <---
+    # Prompt for BOM Excel File BEFORE generation
+    bom_path, _ = QFileDialog.getOpenFileName(
+        app, "Optional: Select BOM Spreadsheet (Cancel to skip)", "", "Excel Files (*.xlsx *.xls)"
+    )
+    app.bom_file_path = bom_path if bom_path else None
+    # --------------------------------
+
+    # Your existing Save File prompt
+    save_path, _ = QFileDialog.getSaveFileName(
+        app, "Save Generated Document", "Generated_Document.docx", "Word Documents (*.docx)"
+    )
+    
+    if save_path:
+        app.final_save_destination = save_path
+        run_document_job(app, is_update=False)
 
     # Build the full absolute path to the selected template
     templates_folder = os.path.join(os.path.dirname(__file__), "templates")
