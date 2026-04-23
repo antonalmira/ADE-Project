@@ -25,7 +25,6 @@ class PerformanceSection:
         charts_base_dir = os.path.join(performance_folder, "Performance Data Charts")
         performance_data = {}
         
-        # Get the ordered list of files from available_data_list_performance
         ordered_files = []
         current_item = None
         for index in range(self.app.available_data_list_performance.count()):
@@ -44,7 +43,6 @@ class PerformanceSection:
             prefix = next((key for key, value in performancedata_testnames.items() if value == item_name), '')
             item_folder = os.path.join(charts_base_dir, f"{item_name} Charts")
             
-            # Process charts in the order of ordered_files
             if os.path.isdir(item_folder):
                 for ordered_item_name, file_name, custom_cap in ordered_files:
                     if ordered_item_name != item_name:
@@ -52,16 +50,13 @@ class PerformanceSection:
                     subfolder = os.path.splitext(file_name)[0]
                     subfolder_path = os.path.join(item_folder, subfolder)
                     if os.path.isdir(subfolder_path):
-                        # Check for Table.png first
                         table_image = os.path.join(subfolder_path, "Table.png")
                         if os.path.exists(table_image):
                             performance_data[item_name]['charts'].append({'path': table_image, 'custom_cap': custom_cap})
-                        # Then collect other chart images (e.g., chart sheets)
                         for file in sorted(os.listdir(subfolder_path)):
                             if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')) and file != "Table.png":
                                 performance_data[item_name]['charts'].append({'path': os.path.join(subfolder_path, file), 'custom_cap': custom_cap})
 
-            # Process tables in the order of ordered_files
             for ordered_item_name, file_name, custom_cap in ordered_files:
                 if ordered_item_name != item_name:
                     continue
@@ -81,7 +76,6 @@ class PerformanceSection:
                         wb.close()
                     except Exception as e:
                         log_message(f"Error extracting table from {file_name}: {str(e)}")
-            log_message(f"Performance data for {item_name}: {performance_data[item_name]}")
         return performance_data
 
     def get_efficiency_table(self):
@@ -110,15 +104,20 @@ class PerformanceSection:
                     last_element = img_para._element
                     file_name = os.path.basename(image_path).lower()
                     
-                    if custom_cap:
-                        caption_text = custom_cap
+                    main_cap_text = ""
+                    if isinstance(custom_cap, dict):
+                        main_cap_text = custom_cap.get('caption', '')
+                    elif isinstance(custom_cap, str):
+                        main_cap_text = custom_cap
+                        
+                    if main_cap_text:
+                        caption_text = main_cap_text
                     else:
                         if 'table' in file_name:
                             caption_text = f"{item} Table"
                         else:
                             cap = f"{item} Chart"
                             caption_text = format_value_units(cap)
-                            
                             edited_name = file_name[:-4].upper()
                             categories = edited_name.split("_")
                             current = categories[-1] if categories else ""
@@ -144,6 +143,17 @@ class PerformanceSection:
                     add_caption_field(caption_para, caption_text, "Figure")
                     last_element.getparent().insert(last_element.getparent().index(last_element) + 1, caption_para._element)
                     last_element = caption_para._element
+                    
+                    if isinstance(custom_cap, dict):
+                        for key in ['ch_info', 'zoom_info', 'meas_info']:
+                            text_val = custom_cap.get(key, "")
+                            if text_val:
+                                extra_p = doc.add_paragraph(text_val)
+                                extra_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                                extra_p.paragraph_format.space_after = Pt(2)
+                                extra_p.paragraph_format.space_before = Pt(0)
+                                last_element.getparent().insert(last_element.getparent().index(last_element) + 1, extra_p._element)
+                                last_element = extra_p._element
 
             # Add tables for all items
             for table_info in performance_data.get(item, {}).get('tables', []):
@@ -157,16 +167,33 @@ class PerformanceSection:
                 last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
                 last_element = table._element
                 
-                caption_para = doc.add_paragraph()
-                if custom_cap:
-                    caption_text = custom_cap
+                main_cap_text = ""
+                if isinstance(custom_cap, dict):
+                    main_cap_text = custom_cap.get('caption', '')
+                elif isinstance(custom_cap, str):
+                    main_cap_text = custom_cap
+
+                if main_cap_text:
+                    caption_text = main_cap_text
                 else:
                     caption_stripped = str(table_info['file_name']).strip(".xlsx")
                     cap = f"Data from {caption_stripped}"
                     caption_text = format_value_units(cap)
                     
+                caption_para = doc.add_paragraph()
                 add_caption_field(caption_para, caption_text, "Table")
                 last_element.getparent().insert(last_element.getparent().index(last_element) + 1, caption_para._element)
                 last_element = caption_para._element
+                
+                if isinstance(custom_cap, dict):
+                    for key in ['ch_info', 'zoom_info', 'meas_info']:
+                        text_val = custom_cap.get(key, "")
+                        if text_val:
+                            extra_p = doc.add_paragraph(text_val)
+                            extra_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                            extra_p.paragraph_format.space_after = Pt(2)
+                            extra_p.paragraph_format.space_before = Pt(0)
+                            last_element.getparent().insert(last_element.getparent().index(last_element) + 1, extra_p._element)
+                            last_element = extra_p._element
 
         return last_element

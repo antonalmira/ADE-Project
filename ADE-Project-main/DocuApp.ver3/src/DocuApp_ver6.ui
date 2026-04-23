@@ -32,28 +32,29 @@
         border: 1px solid #3a3a40; 
         border-radius: 8px; 
     }
-    QPushButton {
+    /* ADDING #centralwidget PREVENTS STYLES FROM LEAKING INTO POPUPS */
+    #centralwidget QPushButton {
         background: #0085ca;
         color: white;
         border-radius: 5px;
         font-weight: bold;
         min-height: 28px;
     }
-    QPushButton:hover { background: #3c649f; }
-    QLineEdit {
+    #centralwidget QPushButton:hover { background: #3c649f; }
+    #centralwidget QLineEdit {
         background: #1a1a1e;
         color: #e0e0e0;
         border-radius: 4px;
         padding-left: 5px;
         border: 1px solid #3a3a40;
     }
-    QListWidget {
+    #centralwidget QListWidget {
         background: #121214;
         color: #f0f0f0;
         border: 1px solid #3a3a40;
         border-radius: 5px;
     }
-    QLabel { color: white; border: none; }
+    #centralwidget QLabel { color: white; border: none; }
    </string>
   </property>
   <widget class="QWidget" name="centralwidget">

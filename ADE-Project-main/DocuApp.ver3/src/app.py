@@ -19,6 +19,64 @@ from utils import get_resource_path
 from preview import show_file_preview, crop_and_update_preview
 from list_updater import update_available_data_list, refresh_data_lists
 
+# --- NEW: CUSTOM DIALOG FOR MULTIPLE CAPTION VARIABLES ---
+class CaptionDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None, current_data=None):
+        super().__init__(parent)
+        self.setWindowTitle("Custom Caption & Details")
+        self.setMinimumWidth(450)
+        
+        self.layout = QtWidgets.QFormLayout(self)
+        
+        self.caption_input = QtWidgets.QLineEdit(self)
+        self.caption_input.setPlaceholderText("e.g., 85 VAC 60 Hz.")
+        
+        self.ch_info_input = QtWidgets.QLineEdit(self)
+        self.ch_info_input.setPlaceholderText("e.g., CH4: VRIPPLE, 20 mV / div., 20 ms / div.")
+        
+        self.zoom_info_input = QtWidgets.QLineEdit(self)
+        self.zoom_info_input.setPlaceholderText("e.g., Zoom: 10 µs / div.")
+        
+        self.meas_info_input = QtWidgets.QLineEdit(self)
+        self.meas_info_input.setPlaceholderText("e.g., Output Ripple = 67.2 mV")
+        
+        # Pre-fill if data already exists
+        if isinstance(current_data, dict):
+            self.caption_input.setText(current_data.get('caption', ''))
+            self.ch_info_input.setText(current_data.get('ch_info', ''))
+            self.zoom_info_input.setText(current_data.get('zoom_info', ''))
+            self.meas_info_input.setText(current_data.get('meas_info', ''))
+        elif isinstance(current_data, str):
+            self.caption_input.setText(current_data)
+            
+        self.layout.addRow("Main Caption:", self.caption_input)
+        self.layout.addRow("Channel Info:", self.ch_info_input)
+        self.layout.addRow("Zoom Info:", self.zoom_info_input)
+        self.layout.addRow("Measurement:", self.meas_info_input)
+        
+        self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+        self.layout.addRow(self.buttons)
+        
+        # Keep styling clean
+        self.setStyleSheet("""
+            QDialog { background-color: #f5f5f5; }
+            QLabel { color: #000000; font-weight: bold; }
+            QLineEdit { border: 1px solid #b0b0b0; border-radius: 4px; padding: 6px; background: white; color: black; }
+            QPushButton { background-color: #0085ca; color: #ffffff; border-radius: 4px; padding: 6px 20px; font-weight: bold; }
+            QPushButton:hover { background-color: #3c649f; }
+        """)
+
+    def get_data(self):
+        return {
+            'caption': self.caption_input.text().strip(),
+            'ch_info': self.ch_info_input.text().strip(),
+            'zoom_info': self.zoom_info_input.text().strip(),
+            'meas_info': self.meas_info_input.text().strip()
+        }
+
+
 class DocuApp(QtWidgets.QMainWindow):
     def __init__(self):
         super(DocuApp, self).__init__()
@@ -83,17 +141,11 @@ class DocuApp(QtWidgets.QMainWindow):
         # 7. POPULATE TEMPLATE DROPDOWN
         self.populate_templates_dropdown()
 
-    # --- NEW METHOD: POPULATE DROPDOWN ---
     def populate_templates_dropdown(self):
-        # Path to the templates folder (assuming it's in the same folder as this script)
         templates_folder = os.path.join(os.path.dirname(__file__), "templates")
-        
         self.template_dropdown.clear()
-        
         if os.path.exists(templates_folder):
-            # Find all .docx files in the templates folder
             template_files = [f for f in os.listdir(templates_folder) if f.endswith('.docx')]
-            
             if template_files:
                 self.template_dropdown.addItems(template_files)
             else:
@@ -105,26 +157,30 @@ class DocuApp(QtWidgets.QMainWindow):
 
     # --- CUSTOM CAPTIONS METHOD ---
     def set_custom_caption(self, item):
-        # Ensure we are editing a file, not a non-selectable header
         if item.flags() & Qt.ItemIsUserCheckable:
-            # Use QTimer to delay the popup slightly so the mouse-release event 
-            # can finish, preventing the drag-and-drop from getting locked/broken.
             QtCore.QTimer.singleShot(0, lambda: self._prompt_custom_caption(item))
 
     def _prompt_custom_caption(self, item):
-        current_caption = item.data(Qt.UserRole) or ""
-        new_caption, ok = QtWidgets.QInputDialog.getText(
-            self, "Custom Caption", 
-            f"Enter custom caption for '{item.text()}':\n(Leave blank to use default formatting)", 
-            text=current_caption
-        )
-        if ok:
-            item.setData(Qt.UserRole, new_caption.strip())
-            # Show visual feedback that a custom caption exists
-            if new_caption.strip():
-                item.setToolTip(f"Custom Caption: {new_caption.strip()}")
-                item.setBackground(QtCore.Qt.darkBlue) # Highlight slightly
+        current_data = item.data(Qt.UserRole)
+        dialog = CaptionDialog(self, current_data)
+        
+        if dialog.exec_():
+            new_data = dialog.get_data()
+            # If at least one field has text, save it
+            if any(new_data.values()):
+                item.setData(Qt.UserRole, new_data)
+                
+                # Build preview for the Tooltip
+                preview = []
+                if new_data['caption']: preview.append(f"Caption: {new_data['caption']}")
+                if new_data['ch_info']: preview.append(f"Ch: {new_data['ch_info']}")
+                if new_data['zoom_info']: preview.append(f"Zoom: {new_data['zoom_info']}")
+                if new_data['meas_info']: preview.append(f"Meas: {new_data['meas_info']}")
+                
+                item.setToolTip("\n".join(preview))
+                item.setBackground(QtCore.Qt.darkBlue)
             else:
+                item.setData(Qt.UserRole, None)
                 item.setToolTip("")
                 item.setBackground(QtCore.Qt.transparent)
 
@@ -135,7 +191,6 @@ class DocuApp(QtWidgets.QMainWindow):
         else:
             self.showMaximized()
 
-    # --- MOUSE EVENTS FOR DRAGGING FRAMELESS WINDOW (Restricted to Header) ---
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             if self.headerr.underMouse():

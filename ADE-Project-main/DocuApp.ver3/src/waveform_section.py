@@ -51,7 +51,7 @@ class WaveformSection:
             if item.text() in waveform_items:
                 current_item = item.text()
             elif current_item and item.checkState() == Qt.Checked and item.text().lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
-                custom_cap = item.data(Qt.UserRole) # Extract the custom caption
+                custom_cap = item.data(Qt.UserRole)
                 ordered_files.append((current_item, item.text(), custom_cap))
                 
         log_message(f"Ordered waveform files from UI: {ordered_files}")
@@ -60,7 +60,7 @@ class WaveformSection:
         for item_name in waveform_items:
             waveform_files[item_name] = []
             prefix = next((key for key, value in waveform_testnames.items() if value == item_name), '')
-            for ordered_item_name, file_name, custom_cap in ordered_files: # Unpack the 3 variables
+            for ordered_item_name, file_name, custom_cap in ordered_files:
                 if ordered_item_name != item_name:
                     continue
                 if self.get_first_two_words(file_name) == prefix:
@@ -68,7 +68,6 @@ class WaveformSection:
                     if os.path.exists(original_path):
                         cropped_path = crop_and_save(original_path, crop_left, crop_upper, crop_right, crop_lower, self.temp_dir)
                         if cropped_path:
-                            # Save as dictionary to pass down the custom caption
                             waveform_files[item_name].append({'path': cropped_path, 'custom_cap': custom_cap})
         return waveform_files
 
@@ -102,16 +101,36 @@ class WaveformSection:
                         cell_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
                         run = cell_para.add_run()
                         run.add_picture(image_path, width=Inches(3.5))
+                        
                         caption_cell = cell.add_paragraph()
                         
-                        # Apply Custom Caption if provided, otherwise default formatting
-                        if custom_cap:
-                            caption_text = custom_cap
+                        # --- EXTRACT DICTIONARY DATA ---
+                        main_cap_text = ""
+                        if isinstance(custom_cap, dict):
+                            main_cap_text = custom_cap.get('caption', '')
+                        elif isinstance(custom_cap, str):
+                            main_cap_text = custom_cap # Fallback if standard string is found
+                            
+                        # Format the Main "Figure X – " line
+                        if main_cap_text:
+                            caption_text = main_cap_text
                         else:
                             cap = os.path.splitext(os.path.basename(image_path))[0]
                             caption_text = format_value_units(cap)
                             
                         add_caption_field(caption_cell, caption_text, "Figure")
+                        
+                        # Format the variables (Left Aligned, slight indent matching the picture)
+                        if isinstance(custom_cap, dict):
+                            for key in ['ch_info', 'zoom_info', 'meas_info']:
+                                text_val = custom_cap.get(key, "")
+                                if text_val:
+                                    extra_p = cell.add_paragraph(text_val)
+                                    extra_p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                                    extra_p.paragraph_format.left_indent = Inches(0.5) # Lines it up perfectly
+                                    extra_p.paragraph_format.space_after = Pt(2)
+                                    extra_p.paragraph_format.space_before = Pt(0)
+                        
                         current_col += 1
                         
                 last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
