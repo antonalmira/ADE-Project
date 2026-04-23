@@ -127,6 +127,8 @@ class DocuApp(QtWidgets.QMainWindow):
         self.available_data_list__waveforms.itemSelectionChanged.connect(lambda: show_file_preview(self))
 
         # ENABLE DRAG AND DROP REORDERING
+        self.performancedata_list.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        self.waveforms_list.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
         self.available_data_list_performance.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
         self.available_data_list__waveforms.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
 

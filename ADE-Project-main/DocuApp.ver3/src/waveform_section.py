@@ -1,13 +1,13 @@
 import os
+import re
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtCore import Qt
-from docx.shared import Pt, Inches
+from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from utils import log_message
 from word_utils import add_caption_field, format_value_units
 from image_utils import crop_and_save
 from list_updater import waveform_testnames
-import re
 
 class WaveformSection:
     def __init__(self, app, temp_dir):
@@ -103,13 +103,16 @@ class WaveformSection:
                         run.add_picture(image_path, width=Inches(3.5))
                         
                         caption_cell = cell.add_paragraph()
+                        # Tighten line spacing between picture and text
+                        caption_cell.paragraph_format.space_before = Pt(4)
+                        caption_cell.paragraph_format.space_after = Pt(2)
                         
                         # --- EXTRACT DICTIONARY DATA ---
                         main_cap_text = ""
                         if isinstance(custom_cap, dict):
                             main_cap_text = custom_cap.get('caption', '')
                         elif isinstance(custom_cap, str):
-                            main_cap_text = custom_cap # Fallback if standard string is found
+                            main_cap_text = custom_cap 
                             
                         # Format the Main "Figure X – " line
                         if main_cap_text:
@@ -118,18 +121,37 @@ class WaveformSection:
                             cap = os.path.splitext(os.path.basename(image_path))[0]
                             caption_text = format_value_units(cap)
                             
-                        add_caption_field(caption_cell, caption_text, "Figure")
+                        # Use LEFT ALIGNMENT for waveform figures
+                        add_caption_field(caption_cell, caption_text, "Figure", alignment=WD_ALIGN_PARAGRAPH.LEFT)
                         
                         # Format the variables (Left Aligned, slight indent matching the picture)
                         if isinstance(custom_cap, dict):
                             for key in ['ch_info', 'zoom_info', 'meas_info']:
                                 text_val = custom_cap.get(key, "")
                                 if text_val:
-                                    extra_p = cell.add_paragraph(text_val)
+                                    extra_p = cell.add_paragraph()
                                     extra_p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                                    extra_p.paragraph_format.left_indent = Inches(0.5) # Lines it up perfectly
-                                    extra_p.paragraph_format.space_after = Pt(2)
+                                    extra_p.paragraph_format.left_indent = Inches(0.8) # Perfectly indents past "Figure XX - "
+                                    extra_p.paragraph_format.space_after = Pt(2) # Removes huge gaps
                                     extra_p.paragraph_format.space_before = Pt(0)
+                                    
+                                    # Identify if it is the CH info line to make it blue
+                                    is_ch_info = (key == 'ch_info')
+                                    
+                                    # Smart parser to automatically make VRIPPLE subscript and color text
+                                    parts = re.split(r'(VRIPPLE|Vripple|V_RIPPLE|V_ripple)', text_val)
+                                    for part in parts:
+                                        if part in ['VRIPPLE', 'Vripple', 'V_RIPPLE', 'V_ripple']:
+                                            r1 = extra_p.add_run("V")
+                                            r2 = extra_p.add_run("RIPPLE" if "RIPPLE" in part.upper() else "ripple")
+                                            r2.font.subscript = True
+                                            if is_ch_info:
+                                                r1.font.color.rgb = RGBColor(0, 0, 255)
+                                                r2.font.color.rgb = RGBColor(0, 0, 255)
+                                        elif part:
+                                            r = extra_p.add_run(part)
+                                            if is_ch_info:
+                                                r.font.color.rgb = RGBColor(0, 0, 255)
                         
                         current_col += 1
                         
