@@ -83,19 +83,19 @@ def add_caption_field(paragraph, caption_text, caption_type):
         Figure(paragraph, bold=True)
     elif caption_type == "Table":
         Table(paragraph, bold=True)
-    # Use an en-dash with spaces and non-bold run for the rest of the caption
-    caption_run = paragraph.add_run(f" — {caption_text}")
+    # Use an en-dash (–) with spaces and non-bold run for the rest of the caption
+    caption_run = paragraph.add_run(f" – {caption_text}")
     caption_run.font.bold = False
 
 def format_value_units(text: str) -> str:
-	"""
-	Insert a space between numeric values and immediately following unit letters.
-	Examples:
-		"12V 3A 1.25A" -> "12 V 3 A 1.25 A"
-	Handles letters and common unit symbols (%, °, µ, Ω). Leaves already-correct strings unchanged.
-	"""
-	if not isinstance(text, str) or not text:
-		return text
-	# Insert a single space before a run of unit letters/symbols that immediately follow a digit.
-	# e.g. "12V" -> "12 V", "1.25A" -> "1.25 A"
-	return re.sub(r'(?<=\d)(?P<unit>[A-Za-z%°µΩ]+)', r' \g<unit>', text)
+    """
+    Insert a space between numeric values and immediately following unit letters.
+    Examples:
+        "12V 3A 1.25A" -> "12 V 3 A 1.25 A"
+    Handles letters and common unit symbols (%, °, µ, Ω). Leaves already-correct strings unchanged.
+    """
+    if not isinstance(text, str) or not text:
+        return text
+    # Insert a single space before a run of unit letters/symbols that immediately follow a digit.
+    # e.g. "12V" -> "12 V", "1.25A" -> "1.25 A"
+    return re.sub(r'(?<=\d)(?P<unit>[A-Za-z%°µΩ]+)', r' \g<unit>', text)

@@ -121,8 +121,10 @@ class WaveformSection:
                             cap = os.path.splitext(os.path.basename(image_path))[0]
                             caption_text = format_value_units(cap)
                             
-                        # Use LEFT ALIGNMENT for waveform figures
-                        add_caption_field(caption_cell, caption_text, "Figure", alignment=WD_ALIGN_PARAGRAPH.LEFT)
+                        # Generate standard caption
+                        add_caption_field(caption_cell, caption_text, "Figure")
+                        # Override alignment to LEFT
+                        caption_cell.alignment = WD_ALIGN_PARAGRAPH.LEFT
                         
                         # Format the variables (Left Aligned, slight indent matching the picture)
                         if isinstance(custom_cap, dict):
