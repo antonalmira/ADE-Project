@@ -46,6 +46,9 @@ ADE_PROJECT_ver3/
 ********FOR THE NEXT DEVELOPER**********
 
 To run this project, install dependencies first:
+To run this project, install dependencies first:
+pip install pyqt5 pyinstaller openpyxl pillow pywin32 pyautogui python-docx
+install pyqt5-tools as well if GUI needs to be edited as well, alternitively, install the qt designer separately
 
 pip install pyqt5 pyinstaller openpyxl Pillow pywin32 pyautogui python-docx
 
