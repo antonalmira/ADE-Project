@@ -7,6 +7,7 @@ from chart_extractor import save_chart_screenshots
 from utils import log_message
 
 class DocumentWorker(QThread):
+    """Handles the heavy lifting of chart extraction and document generation in a separate thread."""
     progress_signal = pyqtSignal(int, str)
     finished_signal = pyqtSignal(bool, str)
 
@@ -27,18 +28,17 @@ class DocumentWorker(QThread):
             )
             
             # 2. Setup Generator (50% to 60%)
-            self.progress_signal.emit(55, "Opening Document...")
+            self.progress_signal.emit(55, "Opening Document Template...")
             output_path = getattr(self.app, 'final_save_destination', "Generated_Document.docx")
             update_path = getattr(self.app, 'update_document_path', "") if self.is_update else ""
             
             generator = DocGenerator(self.app, output_path, update_path)
             
-            # 3. Generate Content (60% to 90% handled inside generator)
-            self.progress_signal.emit(60, "Configuring Document Sections...")
+            # 3. Generate Content (60% to 95%)
+            self.progress_signal.emit(60, "Processing Sections and Cropping...")
             generator.generate(progress_callback=self.progress_signal.emit)
             
-            # 4. Finalize (95% to 100%)
-            self.progress_signal.emit(95, "Saving Document...")
+            # 4. Finalize
             self.progress_signal.emit(100, "Finalizing...")
             self.finished_signal.emit(True, "Document successfully generated and saved!")
         except Exception as e:
@@ -47,8 +47,26 @@ class DocumentWorker(QThread):
         finally:
             pythoncom.CoUninitialize()
 
+def get_automatic_bom_path():
+    """
+    Calculates the BOM path automatically.
+    Moves from: ADE-Project-main/DocuApp.ver3/src
+    To: ADE-Project-main/resource/BOM_PIXL.xlsx
+    """
+    try:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Go up two levels: from 'src' to 'DocuApp.ver3' to 'ADE-Project-main'
+        project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
+        bom_path = os.path.join(project_root, "resource", "BOM_PIXL.xlsx")
+        
+        if os.path.exists(bom_path):
+            return bom_path
+        return None
+    except:
+        return None
+
 def run_document_job(app, is_update=False):
-    # Setup the Progress Dialog
+    """Initializes the progress dialog and starts the worker thread."""
     app.progress_dialog = QProgressDialog("Initializing...", None, 0, 100, app)
     app.progress_dialog.setWindowTitle("Processing Document")
     app.progress_dialog.setModal(True)
@@ -56,7 +74,7 @@ def run_document_job(app, is_update=False):
     app.progress_dialog.setAutoReset(False)
     app.progress_dialog.setMinimumDuration(0) 
     
-    # Apply clean Light Mode stylesheet to fix invisible text
+    # Apply clean Light Mode stylesheet to fix invisible text bugs
     app.progress_dialog.setStyleSheet("""
         QProgressDialog { background-color: #f5f5f5; }
         QLabel { color: #000000; font-size: 12px; font-weight: bold; }
@@ -73,12 +91,14 @@ def run_document_job(app, is_update=False):
     app.worker.start()
 
 def _update_ui(app, value, text):
+    """Updates the progress dialog text and bar."""
     if hasattr(app, 'progress_dialog'):
         app.progress_dialog.setValue(value)
         black_text = f'<span style="color: black;">{text}</span>'
         app.progress_dialog.setLabelText(black_text)
 
 def _finish_ui(app, success, message):
+    """Displays the final result popup."""
     if hasattr(app, 'progress_dialog'):
         app.progress_dialog.close()
     
@@ -104,24 +124,31 @@ def _finish_ui(app, success, message):
     msg_box.exec_()
 
 def generate_document(app):
-    """Handles the 'Generate Document' button flow."""
-    # 1. Validate the Template selection from dropdown
+    """
+    Handles the 'Generate Document' flow:
+    1. Validation
+    2. Auto-Detect BOM
+    3. Save File Dialog (Once)
+    4. Start Process
+    """
+    # 1. Validate Template
     selected_template = app.template_dropdown.currentText()
     if not selected_template or selected_template in ["No templates found", "Templates folder missing!", ""]:
         QMessageBox.warning(app, "Missing Template", "Please choose a valid template (.docx) from the dropdown.")
         return
 
-    # 2. Build the full absolute path to the selected template
+    # 2. Build template path
     templates_folder = os.path.join(os.path.dirname(__file__), "templates")
     app.selected_template_path = os.path.join(templates_folder, selected_template)
 
-    # 3. Prompt for BOM Excel File (Optional)
-    bom_path, _ = QFileDialog.getOpenFileName(
-        app, "Optional: Select BOM Spreadsheet (Cancel to skip)", "", "Excel Files (*.xlsx *.xls)"
-    )
-    app.bom_file_path = bom_path if bom_path else None
+    # 3. AUTOMATIC BOM FILE DETECTION
+    app.bom_file_path = get_automatic_bom_path()
+    if app.bom_file_path:
+        log_message(f"BOM Auto-detected: {app.bom_file_path}")
+    else:
+        log_message("BOM file not found in resource folder. Skipping BOM section.")
 
-    # 4. Prompt for Save Destination (Asking only once here)
+    # 4. Save Dialog (ONLY CALLED ONCE)
     save_path, _ = QFileDialog.getSaveFileName(
         app, 
         "Save Generated Document", 
@@ -134,26 +161,22 @@ def generate_document(app):
         run_document_job(app, is_update=False)
 
 def update_document_prompt(app):
-    """Handles the 'Update Existing Report' button flow."""
-    # 1. Prompt for the existing document to update
+    """Handles the 'Update Existing Report' flow."""
+    # 1. Prompt for existing doc
     update_path, _ = QFileDialog.getOpenFileName(
-        app, 
-        "Select Existing Report to Update", 
-        "", 
-        "Word Documents (*.docx)"
+        app, "Select Existing Report to Update", "", "Word Documents (*.docx)"
     )
-    
     if not update_path:
-        return # User cancelled
+        return 
 
     app.update_document_path = update_path
 
-    # 2. Prompt where to save the newly updated document
+    # 2. Automatic BOM
+    app.bom_file_path = get_automatic_bom_path()
+
+    # 3. Save Dialog
     save_path, _ = QFileDialog.getSaveFileName(
-        app, 
-        "Save Updated Report As", 
-        update_path, # Defaults to the existing filename
-        "Word Documents (*.docx)"
+        app, "Save Updated Report As", update_path, "Word Documents (*.docx)"
     )
 
     if save_path:
