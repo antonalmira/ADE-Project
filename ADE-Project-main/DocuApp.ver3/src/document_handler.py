@@ -131,14 +131,15 @@ def generate_document(app):
     3. Save File Dialog (Once)
     4. Start Process
     """
-    # 1. Validate Template
+    # 1. Validate Template selection
     selected_template = app.template_dropdown.currentText()
     if not selected_template or selected_template in ["No templates found", "Templates folder missing!", ""]:
-        QMessageBox.warning(app, "Missing Template", "Please choose a valid template (.docx) from the dropdown.")
+        QMessageBox.warning(app, "Missing Template", "Please choose a valid template.")
         return
 
-    # 2. Build template path
-    templates_folder = os.path.join(os.path.dirname(__file__), "templates")
+    # 2. NEW LOGIC: Point to the new template location in the project root
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    templates_folder = os.path.abspath(os.path.join(current_dir, "..", "..", "templates"))
     app.selected_template_path = os.path.join(templates_folder, selected_template)
 
     # 3. AUTOMATIC BOM FILE DETECTION

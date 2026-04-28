@@ -144,7 +144,10 @@ class DocuApp(QtWidgets.QMainWindow):
         self.populate_templates_dropdown()
 
     def populate_templates_dropdown(self):
-        templates_folder = os.path.join(os.path.dirname(__file__), "templates")
+        # NEW LOGIC: Go up from 'src' to 'DocuApp.ver3' to 'ADE-Project-main' then into 'templates'
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        templates_folder = os.path.abspath(os.path.join(current_dir, "..", "..", "templates"))
+        
         self.template_dropdown.clear()
         if os.path.exists(templates_folder):
             template_files = [f for f in os.listdir(templates_folder) if f.endswith('.docx')]
