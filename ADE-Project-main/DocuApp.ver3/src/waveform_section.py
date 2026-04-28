@@ -1,6 +1,5 @@
 import os
 import re
-from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtCore import Qt
 from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -18,60 +17,51 @@ class WaveformSection:
         words = re.split(r'\s+|-|_', filename.lower())
         return ' '.join(words[:2]).strip()
 
-    def get_images(self, waveform_items):
-        return self.get_images_with_custom_crop(waveform_items)
-
     def get_images_with_custom_crop(self, waveform_items):
+        """Gather and crop images based on UI settings."""
         try:
-            crop_upper = int(self.app.upper_input.text()) if self.app.upper_input.text() else 0
-            crop_lower = int(self.app.lower_input.text()) if self.app.lower_input.text() else 0
-            crop_left = int(self.app.left_input.text()) if self.app.left_input.text() else 0
-            crop_right = int(self.app.right_input.text()) if self.app.right_input.text() else 0
+            c_left = int(self.app.left_input.text()) if self.app.left_input.text() else 0
+            c_top = int(self.app.upper_input.text()) if self.app.upper_input.text() else 0
+            c_right = int(self.app.right_input.text()) if self.app.right_input.text() else 0
+            c_bottom = int(self.app.lower_input.text()) if self.app.lower_input.text() else 0
         except ValueError:
-            crop_upper = crop_lower = crop_left = crop_right = 0
+            c_left = c_top = c_right = c_bottom = 0
 
         waveform_folder = self.app.waveforms_path.text()
-        
         if not waveform_folder or not os.path.isdir(waveform_folder):
-            log_message(f"Invalid waveform folder: {waveform_folder}")
-            folder_path = QFileDialog.getExistingDirectory(self.app, "Select Waveform Folder", self.app.performancedata_path.text())
-            if folder_path:
-                waveform_folder = folder_path
-                log_message(f"Selected waveform folder: {waveform_folder}")
-            else:
-                log_message("No waveform folder selected")
-                return {}
-                
-        ordered_files = []
-        current_item = None
-        for index in range(self.app.available_data_list__waveforms.count()):
-            item = self.app.available_data_list__waveforms.item(index)
-            if not item:
-                continue
+            return {}
+
+        checked_files_metadata = []
+        current_test_category = None
+        for i in range(self.app.available_data_list__waveforms.count()):
+            item = self.app.available_data_list__waveforms.item(i)
+            if not item: continue
+            
             if item.text() in waveform_items:
-                current_item = item.text()
-            elif current_item and item.checkState() == Qt.Checked and item.text().lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
-                custom_cap = item.data(Qt.UserRole)
-                ordered_files.append((current_item, item.text(), custom_cap))
-                
-        log_message(f"Ordered waveform files from UI: {ordered_files}")
+                current_test_category = item.text()
+            elif current_test_category and item.checkState() == Qt.Checked:
+                checked_files_metadata.append((current_test_category, item.text(), item.data(Qt.UserRole)))
 
         waveform_files = {}
-        for item_name in waveform_items:
-            waveform_files[item_name] = []
-            prefix = next((key for key, value in waveform_testnames.items() if value == item_name), '')
-            for ordered_item_name, file_name, custom_cap in ordered_files:
-                if ordered_item_name != item_name:
-                    continue
-                if self.get_first_two_words(file_name) == prefix:
-                    original_path = os.path.join(waveform_folder, file_name)
-                    if os.path.exists(original_path):
-                        cropped_path = crop_and_save(original_path, crop_left, crop_upper, crop_right, crop_lower, self.temp_dir)
-                        if cropped_path:
-                            waveform_files[item_name].append({'path': cropped_path, 'custom_cap': custom_cap})
+        for category in waveform_items:
+            waveform_files[category] = []
+            prefix = next((key for key, value in waveform_testnames.items() if value == category), '')
+            
+            for parent_cat, file_name, custom_cap in checked_files_metadata:
+                if parent_cat == category:
+                    if self.get_first_two_words(file_name) == prefix:
+                        original_path = os.path.join(waveform_folder, file_name)
+                        if os.path.exists(original_path):
+                            cropped_path = crop_and_save(original_path, c_left, c_top, c_right, c_bottom, self.temp_dir)
+                            if cropped_path:
+                                waveform_files[category].append({
+                                    'path': cropped_path, 
+                                    'custom_cap': custom_cap
+                                })
         return waveform_files
 
     def add_section(self, doc, last_element, waveform_items, waveform_files):
+        """Writes the gathered images and captions into the Word document."""
         for item in waveform_items:
             log_message(f"Adding waveform subheader: {item}")
             new_para = doc.add_paragraph(item, style='Heading 2')
@@ -80,83 +70,70 @@ class WaveformSection:
             last_element = new_para._element
             
             if item in waveform_files and waveform_files[item]:
+                # Create a 2-column table for images
                 table = doc.add_table(rows=1, cols=2)
                 table.autofit = False
                 table.columns[0].width = Inches(3.5)
                 table.columns[1].width = Inches(3.5)
                 table.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
                 current_row = 0
                 current_col = 0
                 
                 for img_data in waveform_files[item]:
-                    image_path = img_data['path']
+                    if current_col >= 2:
+                        current_col = 0
+                        current_row += 1
+                        table.add_row()
+                    
+                    cell = table.cell(current_row, current_col)
+                    cell_para = cell.paragraphs[0]
+                    run = cell_para.add_run()
+                    run.add_picture(img_data['path'], width=Inches(3.4))
+                    
+                    # --- Caption Logic ---
                     custom_cap = img_data.get('custom_cap')
-                    if image_path:
-                        if current_col >= 2:
-                            current_col = 0
-                            current_row += 1
-                            table.add_row()
-                        cell = table.cell(current_row, current_col)
-                        cell_para = cell.paragraphs[0]
-                        cell_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                        run = cell_para.add_run()
-                        run.add_picture(image_path, width=Inches(3.5))
-                        
-                        caption_cell = cell.add_paragraph()
-                        # Tighten line spacing between picture and text
-                        caption_cell.paragraph_format.space_before = Pt(4)
-                        caption_cell.paragraph_format.space_after = Pt(2)
-                        
-                        # --- EXTRACT DICTIONARY DATA ---
-                        main_cap_text = ""
-                        if isinstance(custom_cap, dict):
-                            main_cap_text = custom_cap.get('caption', '')
-                        elif isinstance(custom_cap, str):
-                            main_cap_text = custom_cap 
-                            
-                        # Format the Main "Figure X – " line
-                        if main_cap_text:
-                            caption_text = main_cap_text
-                        else:
-                            cap = os.path.splitext(os.path.basename(image_path))[0]
-                            caption_text = format_value_units(cap)
-                            
-                        # Generate standard caption
-                        add_caption_field(caption_cell, caption_text, "Figure")
-                        # Override alignment to LEFT
-                        caption_cell.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                        
-                        # Format the variables (Left Aligned, slight indent matching the picture)
-                        if isinstance(custom_cap, dict):
-                            for key in ['ch_info', 'zoom_info', 'meas_info']:
-                                text_val = custom_cap.get(key, "")
-                                if text_val:
-                                    extra_p = cell.add_paragraph()
-                                    extra_p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                                    extra_p.paragraph_format.left_indent = Inches(0.8) # Perfectly indents past "Figure XX - "
-                                    extra_p.paragraph_format.space_after = Pt(2) # Removes huge gaps
-                                    extra_p.paragraph_format.space_before = Pt(0)
-                                    
-                                    # Identify if it is the CH info line to make it blue
-                                    is_ch_info = (key == 'ch_info')
-                                    
-                                    # Smart parser to automatically make VRIPPLE subscript and color text
-                                    parts = re.split(r'(VRIPPLE|Vripple|V_RIPPLE|V_ripple)', text_val)
-                                    for part in parts:
-                                        if part in ['VRIPPLE', 'Vripple', 'V_RIPPLE', 'V_ripple']:
-                                            r1 = extra_p.add_run("V")
-                                            r2 = extra_p.add_run("RIPPLE" if "RIPPLE" in part.upper() else "ripple")
-                                            r2.font.subscript = True
-                                            if is_ch_info:
-                                                r1.font.color.rgb = RGBColor(0, 0, 255)
-                                                r2.font.color.rgb = RGBColor(0, 0, 255)
-                                        elif part:
-                                            r = extra_p.add_run(part)
-                                            if is_ch_info:
-                                                r.font.color.rgb = RGBColor(0, 0, 255)
-                        
-                        current_col += 1
-                        
+                    main_cap_text = ""
+                    if isinstance(custom_cap, dict):
+                        main_cap_text = custom_cap.get('caption', '')
+                    elif isinstance(custom_cap, str):
+                        main_cap_text = custom_cap
+                    
+                    if not main_cap_text:
+                        base_name = os.path.splitext(os.path.basename(img_data['path']))[0]
+                        main_cap_text = format_value_units(base_name)
+
+                    caption_cell = cell.add_paragraph()
+                    add_caption_field(caption_cell, main_cap_text, "Figure")
+                    caption_cell.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                    
+                    # --- Extra Variable Lines (CH, Zoom, Meas) ---
+                    if isinstance(custom_cap, dict):
+                        for key in ['ch_info', 'zoom_info', 'meas_info']:
+                            text_val = custom_cap.get(key, "")
+                            if text_val:
+                                extra_p = cell.add_paragraph()
+                                extra_p.paragraph_format.left_indent = Inches(0.8)
+                                extra_p.paragraph_format.space_after = Pt(2)
+                                extra_p.paragraph_format.space_before = Pt(0)
+                                
+                                # Style Vripple/Blue color if it's ch_info
+                                is_ch = (key == 'ch_info')
+                                parts = re.split(r'(VRIPPLE|Vripple|V_RIPPLE|V_ripple)', text_val)
+                                for part in parts:
+                                    if part.lower().replace('_', '') == 'vripple':
+                                        r1 = extra_p.add_run("V")
+                                        r2 = extra_p.add_run("RIPPLE")
+                                        r2.font.subscript = True
+                                        if is_ch:
+                                            r1.font.color.rgb = RGBColor(0, 0, 255)
+                                            r2.font.color.rgb = RGBColor(0, 0, 255)
+                                    else:
+                                        r = extra_p.add_run(part)
+                                        if is_ch: r.font.color.rgb = RGBColor(0, 0, 255)
+
+                    current_col += 1
+                
                 last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
                 last_element = table._element
                 

@@ -54,31 +54,14 @@ def run_document_job(app, is_update=False):
     app.progress_dialog.setModal(True)
     app.progress_dialog.setAutoClose(False)
     app.progress_dialog.setAutoReset(False)
-    
-    # Force it to show instantly (Default is 4000ms delay)
     app.progress_dialog.setMinimumDuration(0) 
     
-    # Fix the invisible text issue by applying a clean Light Mode stylesheet
+    # Apply clean Light Mode stylesheet to fix invisible text
     app.progress_dialog.setStyleSheet("""
-        QProgressDialog {
-            background-color: #f5f5f5;
-        }
-        QLabel {
-            color: #000000;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        QProgressBar {
-            border: 1px solid #b0b0b0;
-            border-radius: 4px;
-            text-align: center;
-            color: #000000;
-            background-color: #e0e0e0;
-        }
-        QProgressBar::chunk {
-            background-color: #0085ca;
-            width: 15px;
-        }
+        QProgressDialog { background-color: #f5f5f5; }
+        QLabel { color: #000000; font-size: 12px; font-weight: bold; }
+        QProgressBar { border: 1px solid #b0b0b0; border-radius: 4px; text-align: center; color: #000000; background-color: #e0e0e0; }
+        QProgressBar::chunk { background-color: #0085ca; width: 15px; }
     """)
     
     app.progress_dialog.setValue(0)
@@ -92,7 +75,6 @@ def run_document_job(app, is_update=False):
 def _update_ui(app, value, text):
     if hasattr(app, 'progress_dialog'):
         app.progress_dialog.setValue(value)
-        # Force the label text to strictly black using a rich text span
         black_text = f'<span style="color: black;">{text}</span>'
         app.progress_dialog.setLabelText(black_text)
 
@@ -100,29 +82,12 @@ def _finish_ui(app, success, message):
     if hasattr(app, 'progress_dialog'):
         app.progress_dialog.close()
     
-    # Create a completely custom message box to fix the blank/invisible text bug
     msg_box = QMessageBox(app)
-    
-    # Apply strict stylesheet so it doesn't inherit the main app's dark mode
     msg_box.setStyleSheet("""
-        QMessageBox {
-            background-color: #f5f5f5;
-        }
-        QLabel {
-            color: #000000;
-            font-size: 13px;
-        }
-        QPushButton {
-            background-color: #0085ca;
-            color: #ffffff;
-            border-radius: 4px;
-            padding: 6px 20px;
-            font-weight: bold;
-            min-width: 60px;
-        }
-        QPushButton:hover {
-            background-color: #3c649f;
-        }
+        QMessageBox { background-color: #f5f5f5; }
+        QLabel { color: #000000; font-size: 13px; }
+        QPushButton { background-color: #0085ca; color: #ffffff; border-radius: 4px; padding: 6px 20px; font-weight: bold; min-width: 60px; }
+        QPushButton:hover { background-color: #3c649f; }
     """)
     
     if success:
@@ -139,49 +104,38 @@ def _finish_ui(app, success, message):
     msg_box.exec_()
 
 def generate_document(app):
+    """Handles the 'Generate Document' button flow."""
+    # 1. Validate the Template selection from dropdown
     selected_template = app.template_dropdown.currentText()
-    
-    # Validate the selection
     if not selected_template or selected_template in ["No templates found", "Templates folder missing!", ""]:
         QMessageBox.warning(app, "Missing Template", "Please choose a valid template (.docx) from the dropdown.")
         return
-    # ---> ADD THESE 4 LINES HERE <---
-    # Prompt for BOM Excel File BEFORE generation
+
+    # 2. Build the full absolute path to the selected template
+    templates_folder = os.path.join(os.path.dirname(__file__), "templates")
+    app.selected_template_path = os.path.join(templates_folder, selected_template)
+
+    # 3. Prompt for BOM Excel File (Optional)
     bom_path, _ = QFileDialog.getOpenFileName(
         app, "Optional: Select BOM Spreadsheet (Cancel to skip)", "", "Excel Files (*.xlsx *.xls)"
     )
     app.bom_file_path = bom_path if bom_path else None
-    # --------------------------------
 
-    # Your existing Save File prompt
-    save_path, _ = QFileDialog.getSaveFileName(
-        app, "Save Generated Document", "Generated_Document.docx", "Word Documents (*.docx)"
-    )
-    
-    if save_path:
-        app.final_save_destination = save_path
-        run_document_job(app, is_update=False)
-
-    # Build the full absolute path to the selected template
-    templates_folder = os.path.join(os.path.dirname(__file__), "templates")
-    full_template_path = os.path.join(templates_folder, selected_template)
-    
-    app.selected_template_path = full_template_path
-
+    # 4. Prompt for Save Destination (Asking only once here)
     save_path, _ = QFileDialog.getSaveFileName(
         app, 
         "Save Generated Document", 
         "Generated_Document.docx", 
         "Word Documents (*.docx)"
     )
-
+    
     if save_path:
-        # Save the destination to the app instance so the worker can access it
-        app.final_save_destination = save_path 
+        app.final_save_destination = save_path
         run_document_job(app, is_update=False)
 
 def update_document_prompt(app):
-    # Prompt the user for the existing document they want to update
+    """Handles the 'Update Existing Report' button flow."""
+    # 1. Prompt for the existing document to update
     update_path, _ = QFileDialog.getOpenFileName(
         app, 
         "Select Existing Report to Update", 
@@ -194,11 +148,11 @@ def update_document_prompt(app):
 
     app.update_document_path = update_path
 
-    # Prompt where to save the newly updated document
+    # 2. Prompt where to save the newly updated document
     save_path, _ = QFileDialog.getSaveFileName(
         app, 
         "Save Updated Report As", 
-        update_path, # Defaults to overwriting the same file
+        update_path, # Defaults to the existing filename
         "Word Documents (*.docx)"
     )
 
