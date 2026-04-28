@@ -1,4 +1,5 @@
 import os
+import sys
 import pythoncom
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QFileDialog, QProgressDialog, QMessageBox
@@ -40,20 +41,23 @@ class DocumentWorker(QThread):
 
 def get_project_paths():
     """
-    Calculates paths relative to the script location.
-    Works on any laptop as long as the folder structure is kept.
+    Calculates paths depending on whether running as a Python script or a compiled .exe
     """
-    # Ver3/src/document_handler.py
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    # Ver3/
-    ver_root = os.path.dirname(current_dir)
-    # ADE-Project-main/
-    project_root = os.path.dirname(ver_root)
+    if getattr(sys, 'frozen', False):
+        # Running as a compiled .exe
+        # sys._MEIPASS is the internal folder where PyInstaller bundles everything
+        project_root = sys._MEIPASS
+        output_folder = os.path.join(os.path.dirname(sys.executable), "output")
+    else:
+        # Running as a .py script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
+        output_folder = os.path.join(project_root, "output")
     
     paths = {
         "bom": os.path.join(project_root, "resource", "BOM_PIXL.xlsx"),
-        "output_dir": os.path.join(project_root, "output"),
-        "templates": os.path.join(project_root, "templates")
+        "templates": os.path.join(project_root, "templates"),
+        "output_dir": output_folder
     }
     return paths
 
