@@ -6,14 +6,12 @@ from PyQt5 import QtWidgets, QtCore
 from app import DocuApp
 
 def main():
-    # 1. FIX: Taskbar Icon (Windows only)
-    # This prevents Windows from grouping your app under the Python icon.
+  
     if os.name == 'nt':
-        myappid = 'mycompany.myproduct.subproduct.version' # arbitrary string
+        myappid = 'powerintegrations.tardis.v1'
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
-    # 2. DPI SCALING SETTINGS
-    # These must be set BEFORE the QApplication is created.
+
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
     

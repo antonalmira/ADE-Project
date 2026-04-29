@@ -11,6 +11,10 @@ a = Analysis(
     ('..\\waveform_testnames.json', '.'),
     ('..\\resources\\*', 'resources'),
     ('..\\DocuApp_ver6.ui', '.')
+    ('tardis.png', '.'),      
+    ('..\\..\\templates', 'templates'), 
+    ('..\\..\\resource\\BOM_PIXL.xlsx', 'resource')
+
     ],
     hiddenimports=[
     'openpyxl',  # For excel_handlers.py, excel_utils.py, chart_extractor.py
@@ -35,7 +39,8 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='main',
+    name='TARDIS',
+    icon='tardis.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

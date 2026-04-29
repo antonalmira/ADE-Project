@@ -1,0 +1,2417 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.repomixignore
+app.py
+chart_extractor.py
+DocuApp_ver6.ui
+document_generator.py
+document_handler.py
+excel_handlers.py
+excel_utils.py
+handlers.py
+image_utils.py
+list_updater.py
+main.py
+performance_section.py
+preview.py
+SAMPLE.PY
+TARDIS.spec
+temp_preview/Load transient 90VAC, 5V, 2.1A.png
+test.txt
+test2.txt
+utils.py
+waveform_section.py
+word_utils.py
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".repomixignore">
+resource_rc.py
+main.spec
+</file>
+
+<file path="app.py">
+import os
+import sys
+from PyQt5 import QtWidgets, uic, QtCore
+from PyQt5.QtCore import Qt, QPoint
+import resource_rc
+
+# Import handlers (Removed select_template_file since we use a dropdown now)
+from handlers import (
+    select_performance_folder, 
+    select_waveform_folder, 
+    add_performance_item,
+    delete_performance_item, 
+    add_waveform_item, 
+    delete_waveform_item
+)
+
+from document_handler import generate_document, update_document_prompt
+from utils import get_resource_path
+from preview import show_file_preview, crop_and_update_preview
+from list_updater import update_available_data_list, refresh_data_lists
+
+# --- NEW: CUSTOM DIALOG FOR MULTIPLE CAPTION VARIABLES ---
+class CaptionDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None, current_data=None):
+        super().__init__(parent)
+        self.setWindowTitle("Custom Caption & Details")
+        self.setMinimumWidth(450)
+        
+        self.layout = QtWidgets.QFormLayout(self)
+        
+        self.caption_input = QtWidgets.QLineEdit(self)
+        self.caption_input.setPlaceholderText("e.g., 85 VAC 60 Hz.")
+        
+        self.ch_info_input = QtWidgets.QLineEdit(self)
+        self.ch_info_input.setPlaceholderText("e.g., CH4: VRIPPLE, 20 mV / div., 20 ms / div.")
+        
+        self.zoom_info_input = QtWidgets.QLineEdit(self)
+        self.zoom_info_input.setPlaceholderText("e.g., Zoom: 10 µs / div.")
+        
+        self.meas_info_input = QtWidgets.QLineEdit(self)
+        self.meas_info_input.setPlaceholderText("e.g., Output Ripple = 67.2 mV")
+        
+        # Pre-fill if data already exists
+        if isinstance(current_data, dict):
+            self.caption_input.setText(current_data.get('caption', ''))
+            self.ch_info_input.setText(current_data.get('ch_info', ''))
+            self.zoom_info_input.setText(current_data.get('zoom_info', ''))
+            self.meas_info_input.setText(current_data.get('meas_info', ''))
+        elif isinstance(current_data, str):
+            self.caption_input.setText(current_data)
+            
+        self.layout.addRow("Main Caption:", self.caption_input)
+        self.layout.addRow("Channel Info:", self.ch_info_input)
+        self.layout.addRow("Zoom Info:", self.zoom_info_input)
+        self.layout.addRow("Measurement:", self.meas_info_input)
+        
+        self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+        self.layout.addRow(self.buttons)
+        
+        # Keep styling clean
+        self.setStyleSheet("""
+            QDialog { background-color: #f5f5f5; }
+            QLabel { color: #000000; font-weight: bold; }
+            QLineEdit { border: 1px solid #b0b0b0; border-radius: 4px; padding: 6px; background: white; color: black; }
+            QPushButton { background-color: #0085ca; color: #ffffff; border-radius: 4px; padding: 6px 20px; font-weight: bold; }
+            QPushButton:hover { background-color: #3c649f; }
+        """)
+
+    def get_data(self):
+        return {
+            'caption': self.caption_input.text().strip(),
+            'ch_info': self.ch_info_input.text().strip(),
+            'zoom_info': self.zoom_info_input.text().strip(),
+            'meas_info': self.meas_info_input.text().strip()
+        }
+
+
+class DocuApp(QtWidgets.QMainWindow):
+    def __init__(self):
+        super(DocuApp, self).__init__()
+        # Load the UI file 
+        uic.loadUi(get_resource_path('DocuApp_ver6.ui'), self)
+        
+        # 1. WINDOW SETTINGS
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.old_pos = None
+
+        # 2. CROP LOGIC INITIALIZATION
+        self.crop_upper = 0
+        self.crop_lower = 0
+        self.crop_left = 0
+        self.crop_right = 0
+
+        # Set crop inputs to "0" by default in the UI
+        for line_edit in [self.upper_input, self.lower_input, self.left_input, self.right_input]:
+            line_edit.setText("0")
+
+        # 3. FILE & FOLDER SELECTION CONNECTIONS
+        self.performancedata_sel.clicked.connect(lambda: select_performance_folder(self))
+        self.waveforms_sel.clicked.connect(lambda: select_waveform_folder(self))
+
+        # 4. DATA LIST MANAGEMENT (Add/Delete)
+        self.performancedata_add.clicked.connect(lambda: add_performance_item(self))
+        self.performancedata_delete.clicked.connect(lambda: delete_performance_item(self))
+        self.waveforms_add.clicked.connect(lambda: add_waveform_item(self))
+        self.waveforms_delete.clicked.connect(lambda: delete_waveform_item(self))
+
+        # 5. CORE ACTION CONNECTIONS
+        self.exit_button.clicked.connect(self.close)
+        self.minimize_button.clicked.connect(self.showMinimized)
+        self.maximize_button.clicked.connect(self.toggle_maximize)
+        
+        self.load_files_button.clicked.connect(lambda: update_available_data_list(self))
+        self.refresh_button.clicked.connect(lambda: refresh_data_lists(self))
+        
+        # Crop button triggers the image update in preview.py
+        self.crop_button.clicked.connect(lambda: crop_and_update_preview(self))
+        
+        # Generate button opens the Save dialog and starts processing
+        self.generate_document_button.clicked.connect(lambda: generate_document(self))
+
+        # 6. LIST SELECTION CONNECTIONS (Preview Updates & Custom Functions)
+        self.available_data_list_performance.itemSelectionChanged.connect(lambda: show_file_preview(self))
+        self.available_data_list__waveforms.itemSelectionChanged.connect(lambda: show_file_preview(self))
+
+        # ENABLE DRAG AND DROP REORDERING
+        self.performancedata_list.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        self.waveforms_list.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        self.available_data_list_performance.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        self.available_data_list__waveforms.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+
+        # ENABLE DOUBLE CLICK FOR CUSTOM CAPTIONS
+        self.available_data_list_performance.itemDoubleClicked.connect(self.set_custom_caption)
+        self.available_data_list__waveforms.itemDoubleClicked.connect(self.set_custom_caption)
+
+        # CONNECT THE NEW UPDATE DOCUMENT BUTTON
+        if hasattr(self, 'update_document_button'):
+            self.update_document_button.clicked.connect(lambda: update_document_prompt(self))
+
+        # 7. POPULATE TEMPLATE DROPDOWN
+        self.populate_templates_dropdown()
+
+    def populate_templates_dropdown(self):
+        # NEW: Check if we are running as an .exe or a Python script
+        if getattr(sys, 'frozen', False):
+            # Running as .exe: Look in the same folder as the .exe
+            base_path = sys._MEIPASS
+        else:
+            # Running as script: Go up to the ADE-Project-main folder
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            base_path = os.path.abspath(os.path.join(current_dir, "..", ".."))
+
+        templates_folder = os.path.join(base_path, "templates")
+        
+        self.template_dropdown.clear()
+        if os.path.exists(templates_folder):
+            template_files = [f for f in os.listdir(templates_folder) if f.endswith('.docx')]
+            if template_files:
+                self.template_dropdown.addItems(template_files)
+            else:
+                self.template_dropdown.addItem("No templates found")
+                self.template_dropdown.setEnabled(False)
+        else:
+            self.template_dropdown.addItem("Templates folder missing!")
+            self.template_dropdown.setEnabled(False)
+
+    # --- CUSTOM CAPTIONS METHOD ---
+    def set_custom_caption(self, item):
+        if item.flags() & Qt.ItemIsUserCheckable:
+            QtCore.QTimer.singleShot(0, lambda: self._prompt_custom_caption(item))
+
+    def _prompt_custom_caption(self, item):
+        current_data = item.data(Qt.UserRole)
+        dialog = CaptionDialog(self, current_data)
+        
+        if dialog.exec_():
+            new_data = dialog.get_data()
+            # If at least one field has text, save it
+            if any(new_data.values()):
+                item.setData(Qt.UserRole, new_data)
+                
+                # Build preview for the Tooltip
+                preview = []
+                if new_data['caption']: preview.append(f"Caption: {new_data['caption']}")
+                if new_data['ch_info']: preview.append(f"Ch: {new_data['ch_info']}")
+                if new_data['zoom_info']: preview.append(f"Zoom: {new_data['zoom_info']}")
+                if new_data['meas_info']: preview.append(f"Meas: {new_data['meas_info']}")
+                
+                item.setToolTip("\n".join(preview))
+                item.setBackground(QtCore.Qt.darkBlue)
+            else:
+                item.setData(Qt.UserRole, None)
+                item.setToolTip("")
+                item.setBackground(QtCore.Qt.transparent)
+
+    # --- HELPER METHODS ---
+    def toggle_maximize(self):
+        if self.isMaximized():
+            self.showNormal()
+        else:
+            self.showMaximized()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            if self.headerr.underMouse():
+                self.old_pos = event.globalPos()
+
+    def mouseMoveEvent(self, event):
+        if self.old_pos:
+            delta = QPoint(event.globalPos() - self.old_pos)
+            self.move(self.x() + delta.x(), self.y() + delta.y())
+            self.old_pos = event.globalPos()
+
+    def mouseReleaseEvent(self, event):
+        self.old_pos = None
+</file>
+
+<file path="chart_extractor.py">
+import os
+import shutil
+import time
+from pathlib import Path
+from PyQt5.QtCore import Qt
+import win32com.client
+from PIL import Image
+
+def save_chart_screenshots(app, headless=True, progress_callback=None):
+    excel = None
+    try:
+        excel = win32com.client.Dispatch("Excel.Application")
+        excel.Visible = not headless
+        excel.DisplayAlerts = False
+
+        base_folder = app.performancedata_path.text()
+        charts_base_dir = os.path.join(base_folder, "Performance Data Charts")
+        if os.path.exists(charts_base_dir):
+            shutil.rmtree(charts_base_dir)
+        os.makedirs(charts_base_dir, exist_ok=True)
+
+        performance_items = [app.performancedata_list.item(i).text() 
+                            for i in range(app.performancedata_list.count()) 
+                            if app.performancedata_list.item(i).checkState() == Qt.Checked]
+
+        # Filter selected files
+        selected_files = {}
+        current_item = None
+        for index in range(app.available_data_list_performance.count()):
+            item = app.available_data_list_performance.item(index)
+            if item.text() in performance_items:
+                current_item = item.text()
+                selected_files[current_item] = []
+            elif current_item and item.checkState() == Qt.Checked:
+                if item.text().lower().endswith(('.xlsx', '.xls')):
+                    selected_files[current_item].append(item.text())
+
+        total_files = sum(len(files) for files in selected_files.values())
+        if total_files == 0: return
+        
+        processed_count = 0
+        for item_name, files in selected_files.items():
+            item_folder = os.path.join(charts_base_dir, f"{item_name} Charts")
+            os.makedirs(item_folder, exist_ok=True)
+
+            for file_name in files:
+                processed_count += 1
+                if progress_callback:
+                    progress_callback(int((processed_count/total_files)*50), f"Excel: {file_name}")
+
+                file_path = os.path.abspath(os.path.join(base_folder, file_name))
+                file_subfolder = os.path.join(item_folder, os.path.splitext(file_name)[0])
+                os.makedirs(file_subfolder, exist_ok=True)
+
+                wb = excel.Workbooks.Open(file_path, ReadOnly=True)
+                chart_sheets = [s for s in wb.Sheets if s.Type in [-4169, 3]]
+                
+                for sheet in chart_sheets:
+                    temp_image = os.path.join(file_subfolder, f"{sheet.Name}.png")
+                    try:
+                        sheet.Export(temp_image, "PNG")
+                    except:
+                        continue
+                wb.Close(SaveChanges=False)
+    finally:
+        if excel:
+            excel.Quit()
+</file>
+
+<file path="DocuApp_ver6.ui">
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>750</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>TARDIS</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">
+    QMainWindow { 
+        background: transparent; 
+    }
+    QWidget#centralwidget {
+        background: #16161a; /* Creates a solid unified background for the whole app */
+        border: 1px solid #3a3a40;
+        border-radius: 12px;
+    }
+    QFrame#headerr, QFrame#footer { 
+        background: transparent; 
+        border: none; 
+    }
+    QFrame#selectionframe, QFrame#generate_frame { 
+        background: #202025; /* Lighter color for the panels to make them pop */
+        border: 1px solid #3a3a40; 
+        border-radius: 8px; 
+    }
+    /* ADDING #centralwidget PREVENTS STYLES FROM LEAKING INTO POPUPS */
+    #centralwidget QPushButton {
+        background: #0085ca;
+        color: white;
+        border-radius: 5px;
+        font-weight: bold;
+        min-height: 28px;
+    }
+    #centralwidget QPushButton:hover { background: #3c649f; }
+    #centralwidget QLineEdit {
+        background: #1a1a1e;
+        color: #e0e0e0;
+        border-radius: 4px;
+        padding-left: 5px;
+        border: 1px solid #3a3a40;
+    }
+    #centralwidget QListWidget {
+        background: #121214;
+        color: #f0f0f0;
+        border: 1px solid #3a3a40;
+        border-radius: 5px;
+    }
+    #centralwidget QLabel { color: white; border: none; }
+   </string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_main">
+    <property name="spacing"><number>0</number></property>
+    <property name="margin"><number>0</number></property>
+    <item>
+     <widget class="QFrame" name="headerr">
+      <property name="minimumSize"><size><width>0</width><height>50</height></size></property>
+      <layout class="QHBoxLayout" name="horizontalLayout_header">
+       <item><widget class="QLabel" name="power_integrations_icon"><property name="maximumSize"><size><width>35</width><height>35</height></size></property><property name="pixmap"><pixmap resource="resource.qrc">:/icons/resources/icons/POWI.D-16de9fb7.png</pixmap></property><property name="scaledContents"><bool>true</bool></property></widget></item>
+       <item><widget class="QLabel" name="data_exporter"><property name="font"><font><family>Bahnschrift</family><pointsize>16</pointsize><bold>true</bold></font></property><property name="text"><string>T.A.R.D.I.S.</string></property></widget></item>
+       <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+       <item><widget class="QPushButton" name="minimize_button"><property name="maximumSize"><size><width>30</width><height>30</height></size></property><property name="text"><string>—</string></property></widget></item>
+       <item><widget class="QPushButton" name="maximize_button"><property name="maximumSize"><size><width>30</width><height>30</height></size></property><property name="text"><string>▢</string></property></widget></item>
+       <item><widget class="QPushButton" name="exit_button"><property name="maximumSize"><size><width>30</width><height>30</height></size></property><property name="text"><string>✕</string></property></widget></item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_body">
+      <property name="margin"><number>15</number></property>
+      <property name="spacing"><number>15</number></property>
+      <item>
+       <widget class="QFrame" name="selectionframe">
+        <layout class="QGridLayout" name="gridLayout_selection">
+         <property name="margin"><number>15</number></property>
+         <property name="horizontalSpacing"><number>20</number></property>
+         <item row="0" column="0"><widget class="QLabel" name="l1"><property name="font"><font><bold>true</bold><pointsize>11</pointsize></font></property><property name="text"><string>PERFORMANCE DATA</string></property></widget></item>
+         <item row="0" column="2"><widget class="QLabel" name="l2"><property name="font"><font><bold>true</bold><pointsize>11</pointsize></font></property><property name="text"><string>WAVEFORMS</string></property></widget></item>
+         <item row="1" column="0"><widget class="QPushButton" name="performancedata_sel"><property name="text"><string>Select Folder</string></property></widget></item>
+         <item row="1" column="1"><widget class="QLineEdit" name="performancedata_path"></widget></item>
+         <item row="1" column="2"><widget class="QPushButton" name="waveforms_sel"><property name="text"><string>Select Folder</string></property></widget></item>
+         <item row="1" column="3"><widget class="QLineEdit" name="waveforms_path"></widget></item>
+         <item row="2" column="0" colspan="2"><widget class="QListWidget" name="performancedata_list"><property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>1</horstretch><verstretch>0</verstretch></sizepolicy></property></widget></item>
+         <item row="2" column="2" colspan="2"><widget class="QListWidget" name="waveforms_list"><property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>1</horstretch><verstretch>0</verstretch></sizepolicy></property></widget></item>
+         <item row="3" column="0"><widget class="QPushButton" name="performancedata_add"><property name="text"><string>Add Item</string></property></widget></item>
+         <item row="3" column="1"><widget class="QPushButton" name="performancedata_delete"><property name="text"><string>Delete Item</string></property></widget></item>
+         <item row="3" column="2"><widget class="QPushButton" name="waveforms_add"><property name="text"><string>Add Item</string></property></widget></item>
+         <item row="3" column="3"><widget class="QPushButton" name="waveforms_delete"><property name="text"><string>Delete Item</string></property></widget></item>
+         <item row="4" column="0" colspan="2"><widget class="QListWidget" name="available_data_list_performance"><property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>1</horstretch><verstretch>0</verstretch></sizepolicy></property></widget></item>
+         <item row="4" column="2" colspan="2"><widget class="QListWidget" name="available_data_list__waveforms"><property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>1</horstretch><verstretch>0</verstretch></sizepolicy></property></widget></item>
+         <item row="5" column="0" colspan="4">
+          <layout class="QHBoxLayout" name="h_btn">
+           <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+           <item><widget class="QPushButton" name="load_files_button">
+            <property name="minimumSize"><size><width>160</width><height>35</height></size></property>
+            <property name="maximumSize"><size><width>200</width><height>35</height></size></property>
+            <property name="text"><string>LOAD TESTS</string></property>
+           </widget></item>
+           <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+           <item><widget class="QPushButton" name="refresh_button">
+            <property name="minimumSize"><size><width>160</width><height>35</height></size></property>
+            <property name="maximumSize"><size><width>200</width><height>35</height></size></property>
+            <property name="text"><string>REFRESH LIST</string></property>
+           </widget></item>
+           <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="generate_frame">
+        <property name="maximumSize"><size><width>400</width><height>16777215</height></size></property>
+        <layout class="QVBoxLayout" name="verticalLayout_gen">
+         <property name="margin"><number>15</number></property>
+         <item><widget class="QLabel" name="images_preview_text">
+          <property name="font"><font><bold>true</bold><pointsize>11</pointsize></font></property>
+          <property name="text"><string>PREVIEW</string></property>
+          <property name="alignment"><set>Qt::AlignCenter</set></property>
+          <property name="maximumSize"><size><width>16777215</width><height>20</height></size></property>
+         </widget></item>
+         <item><widget class="QLabel" name="file_view">
+          <property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>0</horstretch><verstretch>1</verstretch></sizepolicy></property>
+          <property name="minimumSize"><size><width>0</width><height>220</height></size></property>
+          <property name="styleSheet"><string>background: #0b0b0d; border-radius: 4px; border: 1px solid #3a3a40;</string></property>
+         </widget></item>
+         <item>
+          <layout class="QGridLayout" name="gridLayout_crop">
+           <item row="0" column="0"><widget class="QLabel" name="tl"><property name="text"><string>Up/Down:</string></property></widget></item>
+           <item row="0" column="1"><widget class="QLineEdit" name="upper_input"></widget></item>
+           <item row="0" column="2"><widget class="QLineEdit" name="lower_input"></widget></item>
+           <item row="1" column="0"><widget class="QLabel" name="tr"><property name="text"><string>Left/Right:</string></property></widget></item>
+           <item row="1" column="1"><widget class="QLineEdit" name="left_input"></widget></item>
+           <item row="1" column="2"><widget class="QLineEdit" name="right_input"></widget></item>
+           <item row="0" column="3" rowspan="2"><widget class="QPushButton" name="crop_button"><property name="minimumSize"><size><width>55</width><height>55</height></size></property><property name="text"><string>CROP</string></property></widget></item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="layout_template">
+           <item><widget class="QLabel" name="template_label"><property name="text"><string>Template:</string></property></widget></item>
+           <item><widget class="QComboBox" name="template_dropdown">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize"><size><width>0</width><height>30</height></size></property>
+            <property name="styleSheet"><string>
+              QComboBox { background: #1a1a1e; color: white; border: 1px solid #3a3a40; border-radius: 4px; padding-left: 5px; }
+              QComboBox::drop-down { border: none; }
+            </string></property>
+           </widget></item>
+          </layout>
+         </item>
+         <item><widget class="QPushButton" name="generate_document_button"><property name="minimumSize"><size><width>0</width><height>50</height></size></property><property name="font"><font><bold>true</bold></font></property><property name="text"><string>Generate Document</string></property></widget></item>
+         <item><widget class="QPushButton" name="update_document_button"><property name="minimumSize"><size><width>0</width><height>50</height></size></property><property name="font"><font><bold>true</bold></font></property><property name="text"><string>Update Existing Report</string></property></widget></item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QFrame" name="footer">
+      <property name="minimumSize"><size><width>0</width><height>30</height></size></property>
+      <layout class="QHBoxLayout" name="horizontalLayout_footer">
+       <item><widget class="QLabel" name="l_copy"><property name="styleSheet"><string>color: #777;</string></property><property name="text"><string>© 2025 Power Integrations</string></property></widget></item>
+       <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
+</file>
+
+<file path="document_generator.py">
+import os
+import re
+import pandas as pd
+from docx import Document
+from docx.shared import Pt, RGBColor, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_ALIGN_VERTICAL
+from docx.oxml.shared import OxmlElement, qn
+from PyQt5.QtCore import Qt
+from performance_section import PerformanceSection
+from waveform_section import WaveformSection
+from utils import ensure_directory, remove_directory
+
+def set_cell_background(cell, hex_color):
+    tcPr = cell._tc.get_or_add_tcPr()
+    shd = OxmlElement('w:shd')
+    shd.set(qn('w:val'), 'clear')
+    shd.set(qn('w:color'), 'auto')
+    shd.set(qn('w:fill'), hex_color)
+    tcPr.append(shd)
+
+def set_table_inner_borders(table, hex_color):
+    """BOM: No Outer Border, Inner Border Only. 1/2 pt (sz=4)."""
+    tblPr = table._element.tblPr
+    tblBorders = OxmlElement('w:tblBorders')
+    for border_name in ['insideH', 'insideV']:
+        border = OxmlElement(f'w:{border_name}')
+        border.set(qn('w:val'), 'single')
+        border.set(qn('w:sz'), '4') 
+        border.set(qn('w:color'), hex_color)
+        tblBorders.append(border)
+    tblPr.append(tblBorders)
+    
+def set_table_all_borders(table, hex_color):
+    """PIXls: All Borders. 1/2 pt (sz=4)."""
+    tblPr = table._element.tblPr
+    tblBorders = OxmlElement('w:tblBorders')
+    for border_name in ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']:
+        border = OxmlElement(f'w:{border_name}')
+        border.set(qn('w:val'), 'single')
+        border.set(qn('w:sz'), '4') 
+        border.set(qn('w:color'), hex_color)
+        tblBorders.append(border)
+    tblPr.append(tblBorders)
+
+def format_text_specs(text):
+    """Applies the 'Other' specifications: spacing and capitalization."""
+    if not isinstance(text, str):
+        return text
+    # Space between numeric value and symbol/unit (e.g., 10uF -> 10 uF)
+    text = re.sub(r'(?<=\d)(?=[a-zA-ZµΩ°])', ' ', text)
+    # Capitalize specific terms
+    for term in ['vac', 'vdc', 'vor', 'kp']:
+        # Use regex boundary \b to only replace the exact word, ignoring case
+        text = re.sub(fr'\b{term}\b', term.upper(), text, flags=re.IGNORECASE)
+    return text
+
+def apply_column_widths(table, width_inches_list):
+    """Forces exact column widths across the entire table."""
+    for row in table.rows:
+        for idx, width in enumerate(width_inches_list):
+            if idx < len(row.cells):
+                row.cells[idx].width = Inches(width)
+
+class DocGenerator:
+    def __init__(self, app, output_path, update_doc_path=""):
+        self.app = app
+        self.template_path = getattr(app, 'selected_template_path', '')
+        self.output_path = output_path
+        self.update_doc_path = update_doc_path
+        self.temp_dir = "temp_cropped_images"
+        ensure_directory(self.temp_dir)
+        
+        self.performance = PerformanceSection(app, self.temp_dir)
+        self.waveform = WaveformSection(app, self.temp_dir)
+
+    def generate(self, progress_callback=None):
+        doc_path = self.update_doc_path if self.update_doc_path and os.path.exists(self.update_doc_path) else self.template_path
+        doc = Document(doc_path)
+        
+        perf_checked = [self.app.performancedata_list.item(i).text() for i in range(self.app.performancedata_list.count()) if self.app.performancedata_list.item(i).checkState() == Qt.Checked]
+        wave_checked = [self.app.waveforms_list.item(i).text() for i in range(self.app.waveforms_list.count()) if self.app.waveforms_list.item(i).checkState() == Qt.Checked]
+
+        if perf_checked:
+            if progress_callback: progress_callback(70, "Writing Performance Data...")
+            perf_data = self.performance.get_data(perf_checked)
+            self.performance.add_section(doc, doc.element.body[-1], perf_checked, perf_data, None)
+
+        if wave_checked:
+            if progress_callback: progress_callback(85, "Writing Waveforms...")
+            wave_files = self.waveform.get_images_with_custom_crop(wave_checked)
+            self.waveform.add_section(doc, doc.element.body[-1], wave_checked, wave_files)
+
+        if hasattr(self.app, 'bom_file_path') and self.app.bom_file_path:
+            if progress_callback: progress_callback(95, "Appending Bill of Materials and PIXls...")
+            add_pixls_designer_table(doc, self.app.bom_file_path)
+            add_bom_table(doc, self.app.bom_file_path)
+
+        doc.save(self.output_path)
+        os.startfile(self.output_path)
+        remove_directory(self.temp_dir)
+
+def add_bom_table(document, excel_path):
+    try:
+        df = pd.read_excel(excel_path, sheet_name='BOM', skiprows=2)
+        bom_columns = ['Item', 'Quantity', 'Designator', 'Value', 'Description', 'Manufacturer Part Number', 'Manufacturer']
+        
+        rename_map = {}
+        for col in df.columns:
+            if 'part number' in str(col).lower() and 'man' in str(col).lower(): rename_map[col] = 'Manufacturer Part Number'
+            elif 'man' in str(col).lower() and 'part' not in str(col).lower(): rename_map[col] = 'Manufacturer'
+        df = df.rename(columns=rename_map)
+        
+        existing_cols = [col for col in bom_columns if col in df.columns]
+        df = df[existing_cols].dropna(how='all')
+        
+        document.add_paragraph("Bill of Materials", style='Heading 2')
+        table = document.add_table(rows=1, cols=len(df.columns))
+        set_table_inner_borders(table, 'C0C0C0')
+
+        # Format Headers
+        for i, col_name in enumerate(df.columns):
+            cell = table.rows[0].cells[i]
+            cell.text = str(col_name)
+            set_cell_background(cell, '0085CA') # POWI Blue
+            cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            
+            p = cell.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = p.runs[0]
+            run.font.name = 'Calibri'
+            run.font.size = Pt(8)
+            run.font.bold = True
+            run.font.color.rgb = RGBColor(255, 255, 255)
+
+        # Insert Rows
+        for _, row in df.iterrows():
+            row_cells = table.add_row().cells
+            for i, value in enumerate(row):
+                cell_val = "" if pd.isna(value) else str(value)
+                col_name = df.columns[i]
+                
+                # Apply specific formatting rules
+                if col_name == 'Designator':
+                    # Designators are line-break-separated instead of comma-separated
+                    cell_val = cell_val.replace(',', '\n').replace(' ', '')
+                else:
+                    cell_val = format_text_specs(cell_val)
+
+                cell = row_cells[i]
+                cell.text = cell_val
+                cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+                
+                p = cell.paragraphs[0]
+                # Description left aligned, rest centered
+                if col_name == 'Description':
+                    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                else:
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    
+                for run in p.runs:
+                    run.font.name = 'Calibri'
+                    run.font.size = Pt(8)
+                    run.font.bold = False
+                    run.font.color.rgb = RGBColor(0, 0, 0)
+
+        # Apply exact Column Widths (Scaled down by 10 to fit 6.5" page)
+        # Spec ratios: 4", 6", 7.2", 21.6", 16.5", 10.1". (Added 6" for 'Value' column)
+        apply_column_widths(table, [0.4, 0.6, 0.72, 0.6, 2.16, 1.65, 1.01])
+
+    except Exception as e:
+        print(f"BOM Error: {e}")
+
+def add_pixls_designer_table(document, excel_path):
+    try:
+        xl = pd.ExcelFile(excel_path)
+        sheet_name = next((s for s in xl.sheet_names if 'PIX' in s or 'Design' in s), None)
+        if not sheet_name: return
+
+        df_raw = pd.read_excel(excel_path, sheet_name=sheet_name, header=None)
+        header_idx = 0
+        for i, row in df_raw.iterrows():
+            row_str = [str(x).upper() for x in row.values]
+            if 'INPUT' in row_str and 'OUTPUT' in row_str:
+                header_idx = i
+                break
+
+        df = pd.read_excel(excel_path, sheet_name=sheet_name, skiprows=header_idx).iloc[:, :6]
+        df.columns = ['Parameter', 'INPUT', 'INFO', 'OUTPUT', 'UNIT', 'Description']
+        
+        document.add_paragraph("Design Spreadsheet", style='Heading 2')
+        table = document.add_table(rows=1, cols=len(df.columns))
+        set_table_all_borders(table, 'C0C0C0') # POWI Gray
+
+        # Format Headers
+        for i, col_name in enumerate(df.columns):
+            cell = table.rows[0].cells[i]
+            cell.text = str(col_name)
+            cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            
+            p = cell.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = p.runs[0]
+            run.font.name = 'Calibri'
+            run.font.size = Pt(8)
+            run.font.bold = True
+            run.font.color.rgb = RGBColor(0, 0, 0)
+
+        # Insert Rows
+        for _, row in df.iterrows():
+            if pd.isna(row['Parameter']) and pd.isna(row['INPUT']): continue
+            row_cells = table.add_row().cells
+            is_subheader = pd.isna(row['INPUT']) and pd.isna(row['OUTPUT']) and pd.isna(row['UNIT'])
+
+            if is_subheader:
+                cell = row_cells[0]
+                cell.merge(row_cells[-1])
+                cell.text = format_text_specs(str(row['Parameter']))
+                set_cell_background(cell, 'D9D9D9') # Light Gray
+                cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+                
+                p = cell.paragraphs[0]
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                for run in p.runs:
+                    run.font.name = 'Calibri'
+                    run.font.size = Pt(8)
+                    run.font.bold = True
+                    run.font.color.rgb = RGBColor(255, 255, 255) # White Font
+            else:
+                for i, col_name in enumerate(df.columns):
+                    val = "" if pd.isna(row[col_name]) else format_text_specs(str(row[col_name]))
+                    cell = row_cells[i]
+                    cell.text = val
+                    cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+                    
+                    p = cell.paragraphs[0]
+                    if col_name in ['Parameter', 'Description']:
+                        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                    else:
+                        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        
+                    for run in p.runs:
+                        run.font.name = 'Calibri'
+                        run.font.size = Pt(8)
+                        run.font.bold = False
+                        run.font.color.rgb = RGBColor(0, 0, 0)
+
+        # Apply exact Column Widths (Scaled down by 10 to fit 6.5" page)
+        # Spec ratios: 13.7", 7", 7", 7", 5", 25.2"
+        apply_column_widths(table, [1.37, 0.7, 0.7, 0.7, 0.5, 2.52])
+
+    except Exception as e:
+        print(f"PIXls Error: {e}")
+</file>
+
+<file path="document_handler.py">
+import os
+import sys
+import pythoncom
+from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtWidgets import QFileDialog, QProgressDialog, QMessageBox
+from document_generator import DocGenerator
+from chart_extractor import save_chart_screenshots
+from utils import log_message
+
+class DocumentWorker(QThread):
+    progress_signal = pyqtSignal(int, str)
+    finished_signal = pyqtSignal(bool, str)
+
+    def __init__(self, app, is_update=False):
+        super().__init__()
+        self.app = app
+        self.is_update = is_update
+
+    def run(self):
+        pythoncom.CoInitialize()
+        try:
+            self.progress_signal.emit(5, "Starting chart extraction...")
+            save_chart_screenshots(self.app, headless=True, progress_callback=self.progress_signal.emit)
+            
+            self.progress_signal.emit(55, "Opening Document Template...")
+            output_path = getattr(self.app, 'final_save_destination', "Generated_Document.docx")
+            update_path = getattr(self.app, 'update_document_path', "") if self.is_update else ""
+            
+            generator = DocGenerator(self.app, output_path, update_path)
+            
+            self.progress_signal.emit(60, "Processing Sections and Cropping...")
+            generator.generate(progress_callback=self.progress_signal.emit)
+            
+            self.progress_signal.emit(100, "Finalizing...")
+            self.finished_signal.emit(True, "Document successfully generated!")
+        except Exception as e:
+            log_message(f"Worker Error: {str(e)}")
+            self.finished_signal.emit(False, str(e))
+        finally:
+            pythoncom.CoUninitialize()
+
+def get_project_paths():
+    """
+    Calculates paths depending on whether running as a Python script or a compiled .exe
+    """
+    if getattr(sys, 'frozen', False):
+        # Running as a compiled .exe
+        # sys._MEIPASS is the internal folder where PyInstaller bundles everything
+        project_root = sys._MEIPASS
+        output_folder = os.path.join(os.path.dirname(sys.executable), "output")
+    else:
+        # Running as a .py script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
+        output_folder = os.path.join(project_root, "output")
+    
+    paths = {
+        "bom": os.path.join(project_root, "resource", "BOM_PIXL.xlsx"),
+        "templates": os.path.join(project_root, "templates"),
+        "output_dir": output_folder
+    }
+    return paths
+
+def run_document_job(app, is_update=False):
+    app.progress_dialog = QProgressDialog("Initializing...", None, 0, 100, app)
+    app.progress_dialog.setWindowTitle("Processing Document")
+    app.progress_dialog.setModal(True)
+    app.progress_dialog.setMinimumDuration(0) 
+    app.progress_dialog.setStyleSheet("QProgressDialog { background-color: #f5f5f5; } QLabel { color: black; }")
+    app.progress_dialog.setValue(0)
+    app.progress_dialog.show()
+
+    app.worker = DocumentWorker(app, is_update)
+    app.worker.progress_signal.connect(lambda val, text: _update_ui(app, val, text))
+    app.worker.finished_signal.connect(lambda success, msg: _finish_ui(app, success, msg))
+    app.worker.start()
+
+def _update_ui(app, value, text):
+    if hasattr(app, 'progress_dialog'):
+        app.progress_dialog.setValue(value)
+        app.progress_dialog.setLabelText(f'<span style="color: black;">{text}</span>')
+
+def _finish_ui(app, success, message):
+    if hasattr(app, 'progress_dialog'): app.progress_dialog.close()
+    msg = QMessageBox(app)
+    msg.setStyleSheet("QMessageBox { background-color: #f5f5f5; } QLabel { color: black; }")
+    msg.setIcon(QMessageBox.Information if success else QMessageBox.Critical)
+    msg.setText(message)
+    msg.exec_()
+
+def generate_document(app):
+    paths = get_project_paths()
+    
+    # 1. Template
+    sel = app.template_dropdown.currentText()
+    if not sel or "missing" in sel.lower():
+        QMessageBox.warning(app, "Error", "Templates folder missing!")
+        return
+    app.selected_template_path = os.path.join(paths["templates"], sel)
+
+    # 2. Automatic BOM/PIX File
+    app.bom_file_path = paths["bom"] if os.path.exists(paths["bom"]) else None
+
+    # 3. Output Path
+    if not os.path.exists(paths["output_dir"]):
+        os.makedirs(paths["output_dir"])
+
+    save_path, _ = QFileDialog.getSaveFileName(
+        app, "Save Report", 
+        os.path.join(paths["output_dir"], "Generated_Report.docx"), 
+        "Word (*.docx)"
+    )
+    
+    if save_path:
+        app.final_save_destination = save_path
+        run_document_job(app, is_update=False)
+
+def update_document_prompt(app):
+    paths = get_project_paths()
+    update_path, _ = QFileDialog.getOpenFileName(app, "Select Report", paths["output_dir"], "Word (*.docx)")
+    if not update_path: return
+
+    app.update_document_path = update_path
+    app.bom_file_path = paths["bom"] if os.path.exists(paths["bom"]) else None
+
+    save_path, _ = QFileDialog.getSaveFileName(app, "Save As", update_path, "Word (*.docx)")
+    if save_path:
+        app.final_save_destination = save_path 
+        run_document_job(app, is_update=True)
+</file>
+
+<file path="excel_handlers.py">
+import os
+import time
+from PyQt5 import QtWidgets
+from PIL import Image
+import pyautogui
+import win32com.client
+from utils import ensure_directory, remove_directory, show_popup
+
+def extract_chart_screenshots(app, excel, performance_items, performance_folder, charts_base_dir):
+    """Extract charts from Excel files and save as screenshots."""
+    selected_files = {}
+    current_item = None
+    for index in range(app.available_data_list_performance.count()):
+        item = app.available_data_list_performance.item(index)
+        if not item:
+            continue
+        if item.text() in performance_items:
+            current_item = item.text()
+            selected_files[current_item] = []
+        elif current_item and item.checkState() == QtWidgets.Qt.Checked:
+            if item.text().lower().endswith(('.xlsx', '.xls')):
+                selected_files[current_item].append(item.text())
+
+    if not any(selected_files.values()):
+        show_popup(app, "Warning", "No Excel files selected.", "warning")
+        return False
+
+    if not performance_folder or not os.path.isdir(performance_folder):
+        show_popup(app, "Error", "Performance data folder is not set or invalid.", "error")
+        return False
+
+    total_files = sum(len(files) for files in selected_files.values())
+    progress_dialog = QtWidgets.QProgressDialog("Extracting charts...", "", 0, total_files, app)
+    progress_dialog.setWindowTitle("Processing")
+    progress_dialog.setWindowModality(QtWidgets.Qt.WindowModal)
+    progress_dialog.setCancelButton(None)
+    progress_dialog.setMinimumDuration(0)
+    progress_value = 0
+
+    first_file_processed = False
+    for item_name, files in selected_files.items():
+        item_folder = os.path.join(charts_base_dir, f"{item_name} Charts")
+        remove_directory(item_folder)
+        ensure_directory(item_folder)
+
+        for file_name in files:
+            file_path = os.path.join(performance_folder, file_name)
+            file_subfolder = os.path.join(item_folder, os.path.splitext(file_name)[0])
+            remove_directory(file_subfolder)
+            ensure_directory(file_subfolder)
+
+            chart_sheets = []
+            try:
+                excel_wb = excel.Workbooks.Open(os.path.abspath(file_path))
+                chart_sheets = [sheet.Name for sheet in excel_wb.Sheets if sheet.Type in [-4169, 3]]
+
+                if not chart_sheets:
+                    # No charts found, export the first table as formatted screenshot
+                    sheet_name = excel_wb.ActiveSheet.Name
+                    temp_image = os.path.join(file_subfolder, "Table.png")
+                    success = False
+                    try:
+                        sheet = excel_wb.Sheets(sheet_name)
+                        sheet.Activate()
+                        used_range = sheet.UsedRange
+                        used_range.Font.Name = 'Calibri'
+                        used_range.Font.Size = 9
+                        header_row = sheet.Rows(1)
+                        header_row.Interior.Color = 11237376  # #0078AB
+                        header_row.Font.Color = 16777215  # White
+                        excel.Visible = True
+                        time.sleep(3)
+                        windows = pyautogui.getAllWindows()
+                        excel_window = next((w for w in windows if "Microsoft Excel" in w.title), None)
+                        if excel_window:
+                            screenshot = pyautogui.screenshot(region=(excel_window.left, excel_window.top, excel_window.width, excel_window.height))
+                            screenshot.save(temp_image)
+                            success = True
+                        excel.Visible = False
+                    except Exception as e:
+                        print(f"Table screenshot failed for {file_name}: {str(e)}")
+                        excel.Visible = False
+                        
+                    if not success:
+                        print(f"Failed to export table for {file_name}. Skipping silently.")
+                    excel_wb.Close(SaveChanges=False)
+                    progress_value += 1
+                    progress_dialog.setValue(progress_value)
+                    continue
+
+                first_chart = True
+                for sheet_name in chart_sheets:
+                    temp_image = os.path.join(file_subfolder, f"{sheet_name}.png")
+                    success = False
+
+                    if not first_file_processed and first_chart:
+                        try:
+                            chart_sheet = excel_wb.Sheets(sheet_name)
+                            chart_sheet.Activate()
+                            excel.Visible = True
+                            time.sleep(3)
+                            temp_ws = excel_wb.Sheets.Add()
+                            chart = chart_sheet.Chart
+                            if chart:
+                                chart.Copy()
+                                temp_ws.Paste()
+                                temp_ws.Export(temp_image, "PNG")
+                                with Image.open(temp_image) as img:
+                                    img.save(temp_image, "PNG", quality=95)
+                                success = True
+                            temp_ws.Delete()
+                        except Exception as e:
+                            print(f"Method 2 failed for first chart {sheet_name}: {str(e)}")
+                        first_file_processed = True
+
+                    if not success:
+                        try:
+                            chart_sheet = excel_wb.Sheets(sheet_name)
+                            chart_sheet.Activate()
+                            for attempt in range(3):
+                                try:
+                                    chart_sheet.Export(temp_image, "PNG")
+                                    with Image.open(temp_image) as img:
+                                        img.save(temp_image, "PNG", quality=95)
+                                    success = True
+                                    break
+                                except Exception as e:
+                                    if attempt < 2:
+                                        time.sleep(1)
+                                    else:
+                                        raise
+                        except Exception as e:
+                            print(f"Method 1 failed for {sheet_name}: {str(e)}")
+
+                        if not success:
+                            try:
+                                chart_sheet = excel_wb.Sheets(sheet_name)
+                                chart_sheet.Activate()
+                                excel.Visible = True
+                                time.sleep(3)
+                                windows = pyautogui.getAllWindows()
+                                excel_window = next((w for w in windows if "Microsoft Excel" in w.title), None)
+                                if excel_window:
+                                    left, top = excel_window.left, excel_window.top
+                                    width, height = excel_window.width, excel_window.height
+                                    screenshot = pyautogui.screenshot(region=(left, top, width, height))
+                                    screenshot.save(temp_image)
+                                    success = True
+                            except Exception as e:
+                                print(f"Method 3 failed for {sheet_name}: {str(e)}")
+                                excel.Visible = False
+
+                    if not success:
+                        print(f"All methods failed for {sheet_name}. Skipping silently.")
+
+                    first_chart = False
+
+                excel_wb.Close(SaveChanges=False)
+            except Exception as e:
+                # Silently catch the error and move to the next file instead of triggering a popup
+                print(f"COM processing error for {file_name}: {str(e)}")
+                continue
+
+            progress_value += 1
+            progress_dialog.setValue(progress_value)
+    show_popup(app, "Success", "Charts successfully extracted.", "info")
+    return True
+</file>
+
+<file path="excel_utils.py">
+import openpyxl
+
+def extract_excel_table(worksheet):
+    """Extract and filter table data from an Excel worksheet, including merged cells."""
+    max_row = worksheet.max_row
+    max_col = worksheet.max_column
+    if max_row == 0 or max_col == 0:
+        print("Worksheet is empty, returning empty table")
+        return [], []
+
+    table_data = []
+    for row in worksheet.iter_rows(min_row=1, max_row=max_row, min_col=1, max_col=max_col):
+        row_data = []
+        for cell in row:
+            cell_value = cell.value
+            if isinstance(cell_value, (int, float)) and cell_value is not None:
+                cell_value = f"{cell_value:.3g}"
+            else:
+                cell_value = str(cell_value) if cell_value is not None else ""
+            row_data.append(cell_value)
+        table_data.append(row_data)
+
+    filtered_rows = []
+    row_indices_to_keep = []
+    for row_idx, row in enumerate(table_data):
+        if any(cell and str(cell).strip() for cell in row):
+            filtered_rows.append(row)
+            row_indices_to_keep.append(row_idx)
+
+    if not filtered_rows:
+        print("All rows are empty after filtering, returning empty table")
+        return [], []
+
+    transposed_data = list(map(list, zip(*filtered_rows)))
+    filtered_columns = []
+    col_indices_to_keep = []
+    for col_idx, col in enumerate(transposed_data):
+        if any(cell and str(cell).strip() for cell in col):
+            filtered_columns.append(col)
+            col_indices_to_keep.append(col_idx)
+
+    if not filtered_columns:
+        print("All columns are empty after filtering, returning empty table")
+        return [], []
+
+    filtered_table = list(map(list, zip(*filtered_columns)))
+
+    merged_cells = []
+    for merged_range in worksheet.merged_cells.ranges:
+        min_row, min_col, max_row, max_col = (
+            merged_range.min_row - 1,
+            merged_range.min_col - 1,
+            merged_range.max_row - 1,
+            merged_range.max_col - 1
+        )
+        row_intersects = any(min_row <= row_idx <= max_row for row_idx in row_indices_to_keep)
+        col_intersects = any(min_col <= col_idx <= max_col for col_idx in col_indices_to_keep)
+        if row_intersects and col_intersects:
+            new_min_row = sum(1 for r in row_indices_to_keep if r < min_row)
+            new_max_row = sum(1 for r in row_indices_to_keep if r <= max_row) - 1
+            new_min_col = sum(1 for c in col_indices_to_keep if c < min_col)
+            new_max_col = sum(1 for c in col_indices_to_keep if c <= max_col) - 1
+            if new_min_row <= new_max_row and new_min_col <= new_max_col:
+                merged_cells.append((new_min_row, new_min_col, new_max_row, new_max_col))
+
+    print(f"Filtered table: {len(filtered_table)} rows, {len(filtered_table[0]) if filtered_table else 0} columns")
+    print(f"Adjusted merged cells: {merged_cells}")
+    return filtered_table, merged_cells
+</file>
+
+<file path="handlers.py">
+import os
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QListWidgetItem, QFileDialog, QInputDialog
+from PyQt5.QtGui import QFont
+from list_updater import performancedata_testnames, waveform_testnames, save_performance_dict, save_waveform_dict
+
+def select_template_file(app):
+    """Opens a file dialog starting automatically in the project's template folder"""
+    
+    # 1. Get the directory where handlers.py is located
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # 2. Point to the templates folder (assuming it's in the same folder as your scripts)
+    # If templates is one level up, use: os.path.join(current_dir, "..", "templates")
+    default_path = os.path.join(current_dir, "templates")
+    
+    # Ensure the path exists, otherwise default to Desktop
+    if not os.path.exists(default_path):
+        default_path = os.path.join(os.path.expanduser("~"), "Desktop")
+
+    file, _ = QFileDialog.getOpenFileName(
+        app, 
+        "Select Word Template", 
+        default_path, # This is the starting directory
+        "Word Documents (*.docx)"
+    )
+    
+    if file:
+        app.template_path_display.setText(file)
+        app.template_path_display.setToolTip(file)
+        print(f"Selected template: {file}")
+
+def select_performance_folder(app):
+    """Opens a folder dialog for Performance Data"""
+    folder = QFileDialog.getExistingDirectory(app, "Select Performance Data Folder")
+    if folder:
+        app.performancedata_path.setText(folder)
+        print(f"Selected performance folder: {folder}")
+
+def select_waveform_folder(app):
+    """Opens a folder dialog for Waveforms"""
+    folder = QFileDialog.getExistingDirectory(app, "Select Waveforms Folder")
+    if folder:
+        app.waveforms_path.setText(folder)
+        print(f"Selected waveform folder: {folder}")
+
+def add_performance_item(app):
+    item_name, ok = QInputDialog.getText(None, "Add Performance Item", "Enter the test name:")
+    if ok and item_name.strip():
+        filename_prefix, ok = QInputDialog.getText(None, "Filename Prefix", f"Enter the first two words of the filename for '{item_name}' (e.g., 'efficiency test'):")
+        if ok and filename_prefix.strip():
+            # Add to dictionary permanently
+            performancedata_testnames[filename_prefix.lower()] = item_name.strip()
+            save_performance_dict()
+            # Add to list with consistent formatting
+            item = QListWidgetItem(item_name.strip())
+            item_font = QFont()
+            item_font.setPointSize(12)
+            item.setFont(item_font)
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setCheckState(Qt.Checked)
+            app.performancedata_list.addItem(item)
+            print(f"Added performance item: {item_name}")
+
+def add_waveform_item(app):
+    item_name, ok = QInputDialog.getText(None, "Add Waveform Item", "Enter the test name:")
+    if ok and item_name.strip():
+        filename_prefix, ok = QInputDialog.getText(None, "Filename Prefix", f"Enter the first two words of the filename for '{item_name}' (e.g., 'cc load'):")
+        if ok and filename_prefix.strip():
+            # Add to dictionary permanently
+            waveform_testnames[filename_prefix.lower()] = item_name.strip()
+            save_waveform_dict()
+            # Add to list with consistent formatting
+            item = QListWidgetItem(item_name.strip())
+            item_font = QFont()
+            item_font.setPointSize(12)
+            item.setFont(item_font)
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setCheckState(Qt.Checked)
+            app.waveforms_list.addItem(item)
+            print(f"Added waveform item: {item_name}")
+
+def delete_performance_item(app):
+    selected_items = app.performancedata_list.selectedItems()
+    for item in selected_items:
+        item_text = item.text()
+        app.performancedata_list.takeItem(app.performancedata_list.row(item))
+        # Remove from dictionary permanently
+        for key, value in list(performancedata_testnames.items()):
+            if value == item_text:
+                del performancedata_testnames[key]
+                break
+        save_performance_dict()
+        print(f"Permanently deleted performance item: {item_text}")
+
+def delete_waveform_item(app):
+    selected_items = app.waveforms_list.selectedItems()
+    for item in selected_items:
+        item_text = item.text()
+        app.waveforms_list.takeItem(app.waveforms_list.row(item))
+        # Remove from dictionary permanently
+        for key, value in list(waveform_testnames.items()):
+            if value == item_text:
+                del waveform_testnames[key]
+                break
+        save_waveform_dict()
+        print(f"Permanently deleted waveform item: {item_text}")
+
+def toggle_maximize(app):
+    if app.isMaximized():
+        app.showNormal()
+    else:
+        app.showMaximized()
+</file>
+
+<file path="image_utils.py">
+import os
+import shutil
+from PIL import Image
+from utils import log_message
+
+def crop_and_save(image_path, crop_left=0, crop_top=0, crop_right=0, crop_bottom=0, temp_dir="temp_cropped_images"):
+    """
+    Centralized cropping function.
+    left/top/right/bottom are pixels to REMOVE from each respective edge.
+    """
+    if not os.path.exists(image_path):
+        log_message(f"Image not found: {image_path}")
+        return None
+        
+    try:
+        # Fix: Ensure the destination directory exists before saving
+        os.makedirs(temp_dir, exist_ok=True)
+
+        with Image.open(image_path) as img:
+            width, height = img.size
+            
+            # Fix: Calculate boundaries ensuring we don't go out of bounds or create negative sizes
+            left = min(max(0, int(crop_left)), width - 1)
+            top = min(max(0, int(crop_top)), height - 1)
+            right = max(left + 1, width - int(crop_right))
+            bottom = max(top + 1, height - int(crop_bottom))
+            
+            cropped_img = img.crop((left, top, right, bottom))
+            
+            # Handle PNG transparency (convert to RGB with white background for Word)
+            if cropped_img.mode in ("RGBA", "P"):
+                background = Image.new("RGB", cropped_img.size, (255, 255, 255))
+                # Paste using alpha channel as mask
+                background.paste(cropped_img, mask=cropped_img.split()[3] if cropped_img.mode == "RGBA" else None)
+                cropped_img = background
+            
+            cropped_filename = os.path.basename(image_path)
+            cropped_path = os.path.join(temp_dir, cropped_filename)
+            cropped_img.save(cropped_path, "PNG")
+            return cropped_path
+            
+    except Exception as e:
+        log_message(f"Cropping Error on {image_path}: {str(e)}")
+        return None
+</file>
+
+<file path="list_updater.py">
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QBrush, QColor, QFont
+from PyQt5.QtWidgets import QListWidgetItem, QMessageBox
+import os
+import re
+import json
+from pathlib import Path
+from utils import get_resource_path, ensure_directory, show_popup
+
+# Default dictionaries
+DEFAULT_PERFORMANCE = {
+    "efficiency test": "Efficiency Test",
+    "line regulation": "Line Regulation Test",
+    "load regulation": "Load Regulation",
+    "no load": "No load Input Power Test",
+    "power factor": "Power Factor",
+    "load transient": "Load Transient Response",
+    "output voltage": "Output Voltage Distortion",
+    "line input": "Line Input Harmonic Content",
+    "led dimming": "LED Dimming Test",
+    "thermal test": "Thermal Test",
+    "standby input": "Standby Input Power"
+}
+
+DEFAULT_WAVEFORM = {
+    "cc load": "CC Load Test",
+    "output ripple": "Output Ripple Measurements",
+    "load transient": "Load Transient Response",
+    "switching waveforms": "Switching Waveforms",
+    "recovery test": "Brown-In/Brown-Out Recovery Test",
+    "start-up condition": "Start-up Condition",
+    "steady state": "Steady State Condition",
+    "transient load": "Transient Load Condition"
+}
+
+# Load from JSON if exists, else use defaults
+# Load JSON mappings from a user-writable config location when possible.
+# Default resource files are bundled with the app; user copies live under ~/.docuapp/.
+config_dir = os.path.join(str(Path.home()), '.docuapp')
+ensure_directory(config_dir)
+
+# Performance dict: prefer user copy, fallback to bundled resource, otherwise defaults
+user_perf_path = os.path.join(config_dir, 'performancedata_testnames.json')
+bundled_perf_path = get_resource_path('performancedata_testnames.json')
+performancedata_testnames = DEFAULT_PERFORMANCE.copy()
+if os.path.exists(user_perf_path):
+    try:
+        with open(user_perf_path, 'r', encoding='utf-8') as f:
+            performancedata_testnames = json.load(f)
+        print("Loaded performance dict from user config")
+    except Exception:
+        print("Failed to load user performance dict, using defaults")
+elif os.path.exists(bundled_perf_path):
+    try:
+        with open(bundled_perf_path, 'r', encoding='utf-8') as f:
+            performancedata_testnames = json.load(f)
+        print("Loaded performance dict from bundled resource")
+    except Exception:
+        print("Failed to load bundled performance dict, using defaults")
+
+# Waveform dict: same policy
+user_waveform_path = os.path.join(config_dir, 'waveform_testnames.json')
+bundled_waveform_path = get_resource_path('waveform_testnames.json')
+waveform_testnames = DEFAULT_WAVEFORM.copy()
+if os.path.exists(user_waveform_path):
+    try:
+        with open(user_waveform_path, 'r', encoding='utf-8') as f:
+            waveform_testnames = json.load(f)
+        print("Loaded waveform dict from user config")
+    except Exception:
+        print("Failed to load user waveform dict, using defaults")
+elif os.path.exists(bundled_waveform_path):
+    try:
+        with open(bundled_waveform_path, 'r', encoding='utf-8') as f:
+            waveform_testnames = json.load(f)
+        print("Loaded waveform dict from bundled resource")
+    except Exception:
+        print("Failed to load bundled waveform dict, using defaults")
+
+def save_performance_dict():
+    try:
+        with open(user_perf_path, 'w', encoding='utf-8') as f:
+            json.dump(performancedata_testnames, f, indent=2)
+        print(f"Saved performance dict to {user_perf_path}")
+    except Exception as e:
+        print(f"Failed to save performance dict: {e}")
+
+def save_waveform_dict():
+    try:
+        with open(user_waveform_path, 'w', encoding='utf-8') as f:
+            json.dump(waveform_testnames, f, indent=2)
+        print(f"Saved waveform dict to {user_waveform_path}")
+    except Exception as e:
+        print(f"Failed to save waveform dict: {e}")
+
+def update_available_data_list(app):
+    # Clear checklists and available lists
+    app.performancedata_list.clear()
+    app.waveforms_list.clear()
+    app.available_data_list_performance.clear()
+    app.available_data_list__waveforms.clear()
+
+    # Helper function to get first two words from a filename
+    def get_first_two_words(filename):
+        words = re.split(r'\s+|-|_', filename.lower())
+        return ' '.join(words[:2]).strip()
+
+    # Fetch fresh performance data from folder, respecting dictionary
+    performance_folder = app.performancedata_path.text()
+    performance_items = set()  # Discovered items
+    if performance_folder and os.path.isdir(performance_folder):
+        for file in os.listdir(performance_folder):
+            if file.lower().endswith(('.xlsx', '.xls')):
+                first_two_words = get_first_two_words(file)
+                if first_two_words in performancedata_testnames:
+                    performance_items.add(performancedata_testnames[first_two_words])
+
+    # Populate performance checklist with discovered items
+    for item_name in sorted(performance_items):
+        item = QListWidgetItem(item_name)
+        item_font = QFont()
+        item_font.setPointSize(16)
+        item.setFont(item_font)
+        item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+        item.setCheckState(Qt.Checked)
+        app.performancedata_list.addItem(item)
+        print(f"Added performance item from folder: {item_name}")
+
+    # Get ordered items from checklist (all items, as just populated)
+    performance_items_ordered = [
+        app.performancedata_list.item(i).text()
+        for i in range(app.performancedata_list.count())
+    ]
+
+    # Populate performance_files dict for discovered items
+    performance_files = {}
+    if performance_folder and os.path.isdir(performance_folder):
+        for item_name in performance_items_ordered:
+            performance_files[item_name] = []
+            for file in sorted(os.listdir(performance_folder)):
+                if file.lower().endswith(('.xlsx', '.xls')):
+                    first_two_words = get_first_two_words(file)
+                    if first_two_words in performancedata_testnames and performancedata_testnames[first_two_words] == item_name:
+                        performance_files[item_name].append(file)
+
+    # Populate available performance list in checklist order
+    print("Populating performance data list:")
+    for index, item_name in enumerate(performance_items_ordered):
+        subheader_item = QListWidgetItem(item_name)
+        subheader_item.setBackground(QBrush(QColor(34,35,39)))
+        subheader_font = QFont()
+        subheader_font.setBold(True)
+        subheader_font.setPointSize(12)
+        subheader_item.setFont(subheader_font)
+        subheader_item.setFlags(Qt.NoItemFlags)
+        app.available_data_list_performance.addItem(subheader_item)
+        print(f"  Added subheader: {item_name}")
+
+        for file_name in performance_files.get(item_name, []):
+            file_item = QListWidgetItem(file_name)
+            file_item.setFlags(file_item.flags() | Qt.ItemIsUserCheckable)
+            file_item.setCheckState(Qt.Checked)
+            app.available_data_list_performance.addItem(file_item)
+            print(f"    Added file: {file_name}")
+
+        if index < len(performance_items_ordered) - 1:
+            spacer_item = QListWidgetItem("")
+            spacer_item.setFlags(Qt.NoItemFlags)
+            app.available_data_list_performance.addItem(spacer_item)
+            print("    Added spacer")
+
+    # Fetch fresh waveform data from folder, respecting dictionary
+    waveform_folder = app.waveforms_path.text()
+    waveform_items = set()
+    if waveform_folder and os.path.isdir(waveform_folder):
+        for file in os.listdir(waveform_folder):
+            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
+                first_two_words = get_first_two_words(file)
+                if first_two_words in waveform_testnames:
+                    waveform_items.add(waveform_testnames[first_two_words])
+
+    # Populate waveform checklist with discovered items
+    for item_name in sorted(waveform_items):
+        item = QListWidgetItem(item_name)
+        item_font = QFont()
+        item_font.setPointSize(16)
+        item.setFont(item_font)
+        item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+        item.setCheckState(Qt.Checked)
+        app.waveforms_list.addItem(item)
+        print(f"Added waveform item from folder: {item_name}")
+
+    # Get ordered items from checklist (all items, as just populated)
+    waveform_items_ordered = [
+        app.waveforms_list.item(i).text()
+        for i in range(app.waveforms_list.count())
+    ]
+
+    # Populate waveform_files dict for discovered items
+    waveform_files = {}
+    if waveform_folder and os.path.isdir(waveform_folder):
+        for item_name in waveform_items_ordered:
+            waveform_files[item_name] = []
+            for file in sorted(os.listdir(waveform_folder)):
+                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
+                    first_two_words = get_first_two_words(file)
+                    if first_two_words in waveform_testnames and waveform_testnames[first_two_words] == item_name:
+                        waveform_files[item_name].append(file)
+
+    # Populate available waveform list in checklist order
+    print("Populating waveform data list:")
+    for index, item_name in enumerate(waveform_items_ordered):
+        subheader_item = QListWidgetItem(item_name)
+        subheader_item.setBackground(QBrush(QColor(34,35,39)))
+        subheader_font = QFont()
+        subheader_font.setBold(True)
+        subheader_font.setPointSize(12)
+        subheader_item.setFont(subheader_font)
+        subheader_item.setFlags(Qt.NoItemFlags)
+        app.available_data_list__waveforms.addItem(subheader_item)
+        print(f"  Added subheader: {item_name}")
+
+        for file_name in waveform_files.get(item_name, []):
+            file_item = QListWidgetItem(file_name)
+            file_item.setFlags(file_item.flags() | Qt.ItemIsUserCheckable)
+            file_item.setCheckState(Qt.Checked)
+            app.available_data_list__waveforms.addItem(file_item)
+            print(f"    Added file: {file_name}")
+
+        if index < len(waveform_items_ordered) - 1:
+            spacer_item = QListWidgetItem("")
+            spacer_item.setFlags(Qt.NoItemFlags)
+            app.available_data_list__waveforms.addItem(spacer_item)
+            print("    Added spacer")
+
+    show_popup(app, "Data Loaded", "Successfully loaded data.", "info")
+    print("Lists updated")
+
+def refresh_data_lists(app):
+    # Clear the available lists
+    app.available_data_list_performance.clear()
+    app.available_data_list__waveforms.clear()
+
+    # Helper function to get first two words from a filename
+    def get_first_two_words(filename):
+        words = re.split(r'\s+|-|_', filename.lower())
+        return ' '.join(words[:2]).strip()
+
+    # Get checked items from checklists in their current order
+    performance_items_ordered = [
+        app.performancedata_list.item(i).text()
+        for i in range(app.performancedata_list.count())
+        if app.performancedata_list.item(i).checkState() == Qt.Checked
+    ]
+    waveform_items_ordered = [
+        app.waveforms_list.item(i).text()
+        for i in range(app.waveforms_list.count())
+        if app.waveforms_list.item(i).checkState() == Qt.Checked
+    ]
+
+    # Fetch fresh performance files for checked items
+    performance_folder = app.performancedata_path.text()
+    performance_files = {item_name: [] for item_name in performance_items_ordered}
+    if performance_folder and os.path.isdir(performance_folder):
+        for file in os.listdir(performance_folder):
+            if file.lower().endswith(('.xlsx', '.xls')):
+                first_two_words = get_first_two_words(file)
+                if first_two_words in performancedata_testnames:
+                    value = performancedata_testnames[first_two_words]
+                    if value in performance_files:
+                        performance_files[value].append(file)
+
+    # Fetch fresh waveform files for checked items
+    waveform_folder = app.waveforms_path.text()
+    waveform_files = {item_name: [] for item_name in waveform_items_ordered}
+    if waveform_folder and os.path.isdir(waveform_folder):
+        for file in os.listdir(waveform_folder):
+            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
+                first_two_words = get_first_two_words(file)
+                if first_two_words in waveform_testnames:
+                    value = waveform_testnames[first_two_words]
+                    if value in waveform_files:
+                        waveform_files[value].append(file)
+
+    # Populate performance available list (filtered by checks, in checklist order)
+    print("Populating performance data list:")
+    for index, item_name in enumerate(performance_items_ordered):
+        if not performance_files.get(item_name):  # Skip if no files for this item
+            continue
+        subheader_item = QListWidgetItem(item_name)
+        subheader_item.setBackground(QBrush(QColor(34,35,39)))
+        subheader_font = QFont()
+        subheader_font.setBold(True)
+        subheader_font.setPointSize(12)
+        subheader_item.setFont(subheader_font)
+        subheader_item.setFlags(Qt.NoItemFlags)
+        app.available_data_list_performance.addItem(subheader_item)
+        print(f"  Added subheader: {item_name}")
+
+        for file_name in sorted(performance_files.get(item_name, [])):
+            file_item = QListWidgetItem(file_name)
+            file_item.setFlags(file_item.flags() | Qt.ItemIsUserCheckable)
+            file_item.setCheckState(Qt.Checked)
+            app.available_data_list_performance.addItem(file_item)
+            print(f"    Added file: {file_name}")
+
+        if index < len(performance_items_ordered) - 1:
+            spacer_item = QListWidgetItem("")
+            spacer_item.setFlags(Qt.NoItemFlags)
+            app.available_data_list_performance.addItem(spacer_item)
+            print("    Added spacer")
+
+    # Populate waveform available list (filtered by checks, in checklist order)
+    print("Populating waveform data list:")
+    for index, item_name in enumerate(waveform_items_ordered):
+        if not waveform_files.get(item_name):  # Skip if no files for this item
+            continue
+        subheader_item = QListWidgetItem(item_name)
+        subheader_item.setBackground(QBrush(QColor(34,35,39)))
+        subheader_font = QFont()
+        subheader_font.setBold(True)
+        subheader_font.setPointSize(12)
+        subheader_item.setFont(subheader_font)
+        subheader_item.setFlags(Qt.NoItemFlags)
+        app.available_data_list__waveforms.addItem(subheader_item)
+        print(f"  Added subheader: {item_name}")
+
+        for file_name in sorted(waveform_files.get(item_name, [])):
+            file_item = QListWidgetItem(file_name)
+            file_item.setFlags(file_item.flags() | Qt.ItemIsUserCheckable)
+            file_item.setCheckState(Qt.Checked)
+            app.available_data_list__waveforms.addItem(file_item)
+            print(f"    Added file: {file_name}")
+
+        if index < len(waveform_items_ordered) - 1:
+            spacer_item = QListWidgetItem("")
+            spacer_item.setFlags(Qt.NoItemFlags)
+            app.available_data_list__waveforms.addItem(spacer_item)
+            print("    Added spacer")
+
+    print("Available lists refreshed based on checked checklist items")
+</file>
+
+<file path="main.py">
+# main.py
+import sys
+import os
+import ctypes
+from PyQt5 import QtWidgets, QtCore
+from app import DocuApp
+
+def main():
+    # 1. FIX: Taskbar Icon (Windows only)
+    # This prevents Windows from grouping your app under the Python icon.
+    if os.name == 'nt':
+        myappid = 'mycompany.myproduct.subproduct.version' # arbitrary string
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
+    # 2. DPI SCALING SETTINGS
+    # These must be set BEFORE the QApplication is created.
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
+    
+    # Safely set rounding policy (only available in Qt 5.14+)
+    if hasattr(QtCore.Qt, 'HighDpiScaleFactorRoundingPolicy'):
+        QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(
+            QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+        )
+
+    # 3. START APPLICATION
+    app = QtWidgets.QApplication(sys.argv)
+    
+    # Instantiate your window
+    window = DocuApp()
+    
+    # Show the window
+    window.show()
+    
+    # Run the event loop
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
+</file>
+
+<file path="performance_section.py">
+import os
+import openpyxl
+import re
+from docx.shared import Pt, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from PyQt5.QtCore import Qt
+
+from utils import log_message
+from excel_utils import extract_excel_table
+from word_utils import add_styled_table, add_caption_field, format_value_units
+from image_utils import crop_and_save
+from list_updater import performancedata_testnames
+
+class PerformanceSection:
+    def __init__(self, app, temp_dir):
+        self.app = app
+        self.temp_dir = temp_dir
+
+    def get_first_two_words(self, filename):
+        words = re.split(r'\s+|-|_', filename.lower())
+        return ' '.join(words[:2]).strip()
+
+    def get_data(self, performance_items):
+        """
+        Gathers both chart images and Excel table data based on UI selection.
+        """
+        performance_folder = self.app.performancedata_path.text()
+        charts_base_dir = os.path.join(performance_folder, "Performance Data Charts")
+        performance_data = {}
+        
+        # 1. Capture what is checked in the 'Available Performance Data' list
+        checked_metadata = []
+        current_test_category = None
+        for i in range(self.app.available_data_list_performance.count()):
+            item = self.app.available_data_list_performance.item(i)
+            if not item: continue
+            
+            if item.text() in performance_items:
+                current_test_category = item.text()
+            elif current_test_category and item.checkState() == Qt.Checked:
+                # Store (Category, Filename, Custom Caption Metadata)
+                checked_metadata.append((current_test_category, item.text(), item.data(Qt.UserRole)))
+
+        # 2. Process gathered files
+        for item_name in performance_items:
+            performance_data[item_name] = {'charts': [], 'tables': []}
+            prefix = next((key for key, value in performancedata_testnames.items() if value == item_name), '')
+            item_chart_folder = os.path.join(charts_base_dir, f"{item_name} Charts")
+            
+            for parent_cat, file_name, custom_cap in checked_metadata:
+                if parent_cat != item_name:
+                    continue
+
+                # Handle Chart Images (Exported via chart_extractor.py)
+                if os.path.isdir(item_chart_folder):
+                    subfolder = os.path.splitext(file_name)[0]
+                    subfolder_path = os.path.join(item_chart_folder, subfolder)
+                    if os.path.isdir(subfolder_path):
+                        for file in sorted(os.listdir(subfolder_path)):
+                            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
+                                performance_data[item_name]['charts'].append({
+                                    'path': os.path.join(subfolder_path, file), 
+                                    'custom_cap': custom_cap
+                                })
+
+                # Handle Table Data (Directly from Excel)
+                if self.get_first_two_words(file_name) == prefix:
+                    file_path = os.path.join(performance_folder, file_name)
+                    try:
+                        wb = openpyxl.load_workbook(file_path, data_only=True)
+                        ws = wb.active
+                        table_data, merged_cells = extract_excel_table(ws)
+                        if table_data:
+                            performance_data[item_name]['tables'].append({
+                                'file_name': file_name,
+                                'data': table_data,
+                                'merged_cells': merged_cells,
+                                'custom_cap': custom_cap
+                            })
+                        wb.close()
+                    except Exception as e:
+                        log_message(f"Error extracting table from {file_name}: {str(e)}")
+                        
+        return performance_data
+
+    def add_section(self, doc, last_element, performance_items, performance_data, efficiency_table):
+        # Capture UI crops for consistency
+        try:
+            c_left = int(self.app.left_input.text()) if self.app.left_input.text() else 0
+            c_top = int(self.app.upper_input.text()) if self.app.upper_input.text() else 0
+            c_right = int(self.app.right_input.text()) if self.app.right_input.text() else 0
+            c_bottom = int(self.app.lower_input.text()) if self.app.lower_input.text() else 0
+        except:
+            c_left = c_top = c_right = c_bottom = 0
+
+        for item in performance_items:
+            log_message(f"Adding performance subheader: {item}")
+            new_para = doc.add_paragraph(item, style='Heading 2')
+            new_para.runs[0].font.size = Pt(12)
+            last_element.getparent().insert(last_element.getparent().index(last_element) + 1, new_para._element)
+            last_element = new_para._element
+
+            # --- ADD CHARTS ---
+            for chart_data in performance_data.get(item, {}).get('charts', []):
+                image_path = chart_data['path']
+                custom_cap = chart_data.get('custom_cap')
+                
+                # FIX: Apply centralized crop logic
+                # For charts, we typically use 2px unless specified, but for WYSIWYG, we use UI values
+                cropped_path = crop_and_save(image_path, c_left, c_top, c_right, c_bottom, self.temp_dir)
+                
+                if cropped_path:
+                    img_para = doc.add_paragraph()
+                    img_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    run = img_para.add_run()
+                    run.add_picture(cropped_path, width=Inches(6.0))
+                    last_element.getparent().insert(last_element.getparent().index(last_element) + 1, img_para._element)
+                    last_element = img_para._element
+                    
+                    # Generate Caption
+                    caption_text = self._get_caption_text(item, os.path.basename(image_path), custom_cap)
+                    caption_para = doc.add_paragraph()
+                    add_caption_field(caption_para, caption_text, "Figure")
+                    last_element.getparent().insert(last_element.getparent().index(last_element) + 1, caption_para._element)
+                    last_element = caption_para._element
+                    
+                    # Add extra metadata lines (CH info, etc)
+                    last_element = self._add_custom_metadata_lines(doc, last_element, custom_cap)
+
+            # --- ADD TABLES ---
+            for table_info in performance_data.get(item, {}).get('tables', []):
+                table = add_styled_table(
+                    doc, len(table_info['data']), len(table_info['data'][0]), 
+                    table_info['data'], table_info['merged_cells'], 
+                    header_color='#0078AB', font_name='Calibri', font_size=9
+                )
+                last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
+                last_element = table._element
+                
+                # Generate Table Caption
+                caption_text = self._get_caption_text(item, table_info['file_name'], table_info.get('custom_cap'))
+                caption_para = doc.add_paragraph()
+                add_caption_field(caption_para, caption_text, "Table")
+                last_element.getparent().insert(last_element.getparent().index(last_element) + 1, caption_para._element)
+                last_element = caption_para._element
+                
+                last_element = self._add_custom_metadata_lines(doc, last_element, table_info.get('custom_cap'))
+
+        return last_element
+
+    def _get_caption_text(self, item_name, file_name, custom_cap):
+        """Helper to determine the caption text."""
+        if isinstance(custom_cap, dict) and custom_cap.get('caption'):
+            return custom_cap['caption']
+        if isinstance(custom_cap, str) and custom_cap:
+            return custom_cap
+        
+        # Fallback to automatic naming
+        clean_name = os.path.splitext(file_name)[0].replace('_', ' ')
+        return format_value_units(f"{item_name} - {clean_name}")
+
+    def _add_custom_metadata_lines(self, doc, last_element, custom_cap):
+        """Helper to append CH, Zoom, and Meas info below captions."""
+        if not isinstance(custom_cap, dict):
+            return last_element
+            
+        for key in ['ch_info', 'zoom_info', 'meas_info']:
+            text_val = custom_cap.get(key, "")
+            if text_val:
+                p = doc.add_paragraph(text_val)
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                p.paragraph_format.space_after = Pt(2)
+                p.paragraph_format.space_before = Pt(0)
+                last_element.getparent().insert(last_element.getparent().index(last_element) + 1, p._element)
+                last_element = p._element
+        return last_element
+</file>
+
+<file path="preview.py">
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
+import os
+from image_utils import crop_and_save
+
+def get_ui_crop_values(app):
+    """Safely parse crop values from the UI text boxes."""
+    try:
+        return {
+            'left': int(app.left_input.text()) if app.left_input.text() else 0,
+            'top': int(app.upper_input.text()) if app.upper_input.text() else 0,
+            'right': int(app.right_input.text()) if app.right_input.text() else 0,
+            'bottom': int(app.lower_input.text()) if app.lower_input.text() else 0
+        }
+    except ValueError:
+        return {'left': 0, 'top': 0, 'right': 0, 'bottom': 0}
+
+def crop_and_update_preview(app):
+    """Triggered by the CROP button."""
+    wave_items = app.available_data_list__waveforms.selectedItems()
+    perf_items = app.available_data_list_performance.selectedItems()
+    
+    selected_item = wave_items[0] if wave_items else (perf_items[0] if perf_items else None)
+    if not selected_item:
+        app.file_view.setText("Select an image first")
+        return
+
+    source_folder = app.waveforms_path.text() if wave_items else app.performancedata_path.text()
+    file_path = os.path.join(source_folder, selected_item.text())
+    
+    v = get_ui_crop_values(app)
+    # Use a specific preview folder to avoid permission conflicts
+    cropped_path = crop_and_save(file_path, v['left'], v['top'], v['right'], v['bottom'], "temp_preview")
+    
+    if cropped_path:
+        pixmap = QPixmap(cropped_path)
+        scaled = pixmap.scaled(app.file_view.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        app.file_view.setPixmap(scaled)
+    else:
+        app.file_view.setText("Preview failed")
+
+def show_file_preview(app):
+    """Triggered when an item is clicked in the list."""
+    # Synchronize selection between the two lists
+    if app.available_data_list_performance.selectedItems():
+        app.available_data_list__waveforms.clearSelection()
+    
+    # Run the same crop logic immediately so the user sees the current crop settings
+    crop_and_update_preview(app)
+</file>
+
+<file path="SAMPLE.PY">
+import os
+from win32com import client
+
+def _base_dir():
+    try:
+        return os.path.dirname(os.path.abspath(__file__))
+    except NameError:
+        return os.getcwd()
+
+# Absolute paths to your files (adjust filenames as needed)
+excel_path = os.path.abspath(os.path.join(_base_dir(), '..', 'Efficiency Test 15V.xlsx'))
+word_path = os.path.abspath(os.path.join(_base_dir(), '..', 'output.docx'))
+
+if not os.path.exists(excel_path):
+    raise FileNotFoundError(f"Excel file not found: {excel_path}")
+if not os.path.exists(word_path):
+    raise FileNotFoundError(f"Word file not found: {word_path}")
+
+excel = client.Dispatch("Excel.Application")
+word = client.Dispatch("Word.Application")
+
+doc = word.Documents.Open(word_path)
+book = excel.Workbooks.Open(excel_path)
+
+# Adjust the sheet and range as needed
+sheet = book.Worksheets(1)  # or use sheet name
+named_range = "table"  # Change if your range is named differently
+
+# Validate named range exists
+try:
+    rng = sheet.Range(named_range)
+except Exception:
+    raise ValueError(f"Named range '{named_range}' not found in Excel sheet.")
+rng.Copy()
+
+# Find placeholder in Word and paste table
+findtext = "table here"  # Set this to the placeholder text in your Word doc (required)
+if not findtext:
+    raise ValueError("Please set 'findtext' to the placeholder text in the Word document where the table should be pasted.")
+
+target = doc.Content
+if target.Find.Execute(FindText=findtext):
+    table_range = doc.Range(Start=target.Start, End=target.End)
+    table_range.PasteExcelTable(False, False, False)
+else:
+    print(f"Placeholder '{findtext}' not found in Word document.")
+</file>
+
+<file path="TARDIS.spec">
+# -*- mode: python ; coding: utf-8 -*-
+
+
+a = Analysis(
+    ['main.py'],
+    pathex=[],
+    binaries=[],
+    datas=[('DocuApp_ver6.ui', '.'), ('..\\..\\templates', 'templates'), ('..\\..\\resource\\BOM_PIXL.xlsx', 'resource')],
+    hiddenimports=[],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    noarchive=False,
+    optimize=0,
+)
+pyz = PYZ(a.pure)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='TARDIS',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+)
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='TARDIS',
+)
+</file>
+
+<file path="test.txt">
+Write-Host "Collecting pyqt5-tools"
+Start-Sleep -Seconds 5
+Write-Host "  Using cached pyqt5_tools-5.15.9.3.3-py3-none-any.whl.metadata (8.3 kB)"
+Start-Sleep -Seconds 5
+Write-Host "Collecting click (from pyqt5-tools)"
+Start-Sleep -Seconds 5
+Write-Host "  Using cached click-8.3.3-py3-none-any.whl.metadata (2.6 kB)"
+Start-Sleep -Seconds 5
+Write-Host "Collecting pyqt5==5.15.9 (from pyqt5-tools)"
+Start-Sleep -Seconds 5
+Write-Host "  Using cached PyQt5-5.15.9-cp37-abi3-win_amd64.whl.metadata (2.2 kB)"
+Start-Sleep -Seconds 10
+Write-Host "INFO: pip is looking at multiple versions of pyqt5-tools to determine which version is compatible with other requirements. This could take a while."
+
+# Fake long dependency resolution
+for ($i=1; $i -le 20; $i++) {
+    Write-Host "  Resolving dependencies... ($i/20)"
+    Start-Sleep -Seconds 10
+}
+
+Write-Host "Collecting pyqt5==5.15.4 (from pyqt5-tools)"
+Start-Sleep -Seconds 5
+Write-Host "  Using cached PyQt5-5.15.4.tar.gz (3.3 MB)"
+Start-Sleep -Seconds 5
+Write-Host "  Installing build dependencies ... done"
+Start-Sleep -Seconds 5
+Write-Host "  Getting requirements to build wheel ... done"
+Start-Sleep -Seconds 5
+Write-Host "  Building wheel for PyQt5 (pyproject.toml) ... error"
+Start-Sleep -Seconds 3
+
+Write-Host ""
+Write-Host "ERROR: Failed building wheel for PyQt5"
+Write-Host "ERROR: Could not build wheels for PyQt5, which is required to install pyproject.toml-based projects"
+Write-Host ""
+Write-Host "note: This error originates from a subprocess, and is likely not a problem with pip." -ForegroundColor Yellow
+</file>
+
+<file path="test2.txt">
+asdasdsa
+</file>
+
+<file path="utils.py">
+import os
+import shutil
+import sys
+from pathlib import Path
+import time
+from PyQt5.QtWidgets import QMessageBox
+
+def ensure_directory(path):
+    os.makedirs(path, exist_ok=True)
+
+def remove_directory(path):
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+def get_default_base_folder(folder_path):
+    if folder_path and os.path.isdir(folder_path):
+        return folder_path
+    return str(Path.home())
+
+def log_message(message):
+    timestamp = time.strftime('%H:%M:%S', time.localtime())
+    print(f"[{timestamp}] {message}")
+
+def get_resource_path(relative_path):
+    if getattr(sys, 'frozen', False):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath(os.path.dirname(__file__))
+    return os.path.join(base_path, relative_path)
+
+def show_popup(parent, title, text, icon_type="info"):
+    msg_box = QMessageBox(parent)
+    msg_box.setStyleSheet("""a  
+                          QMessageBox {
+                              background-color: #f5f5f5;
+                              }
+                              QLabel {
+                                  color: #000000;
+                                  font-size: 13px;
+                                  font-weight: bold;
+                                  
+                              }QPushButton {
+                                  background-color: #0085ca;
+                                  color: #ffffff;
+                                  border-radius: 4px;
+                                  padding: 6px 20px;
+                                  font-weight: bold;
+                                  min-width: 60px;
+                              }
+                              QPushButton:hover {
+                                  background-color: #3c649f;
+                              }
+                          """)
+    msg_box.setWindowTitle(title)
+    msg_box.setText(text)
+    
+    if icon_type == "info":
+        msg_box.setIcon(QMessageBox.Information)
+    elif icon_type == "warning":
+        msg_box.setIcon(QMessageBox.Warning)
+    elif icon_type == "error":
+        msg_box.setIcon(QMessageBox.Critical)
+    
+    msg_box.exec_()
+</file>
+
+<file path="waveform_section.py">
+import os
+import re
+from PyQt5.QtCore import Qt
+from docx.shared import Pt, Inches, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from utils import log_message
+from word_utils import add_caption_field, format_value_units
+from image_utils import crop_and_save
+from list_updater import waveform_testnames
+
+class WaveformSection:
+    def __init__(self, app, temp_dir):
+        self.app = app
+        self.temp_dir = temp_dir
+
+    def get_first_two_words(self, filename):
+        words = re.split(r'\s+|-|_', filename.lower())
+        return ' '.join(words[:2]).strip()
+
+    def get_images_with_custom_crop(self, waveform_items):
+        """Gather and crop images based on UI settings."""
+        try:
+            c_left = int(self.app.left_input.text()) if self.app.left_input.text() else 0
+            c_top = int(self.app.upper_input.text()) if self.app.upper_input.text() else 0
+            c_right = int(self.app.right_input.text()) if self.app.right_input.text() else 0
+            c_bottom = int(self.app.lower_input.text()) if self.app.lower_input.text() else 0
+        except ValueError:
+            c_left = c_top = c_right = c_bottom = 0
+
+        waveform_folder = self.app.waveforms_path.text()
+        if not waveform_folder or not os.path.isdir(waveform_folder):
+            return {}
+
+        checked_files_metadata = []
+        current_test_category = None
+        for i in range(self.app.available_data_list__waveforms.count()):
+            item = self.app.available_data_list__waveforms.item(i)
+            if not item: continue
+            
+            if item.text() in waveform_items:
+                current_test_category = item.text()
+            elif current_test_category and item.checkState() == Qt.Checked:
+                checked_files_metadata.append((current_test_category, item.text(), item.data(Qt.UserRole)))
+
+        waveform_files = {}
+        for category in waveform_items:
+            waveform_files[category] = []
+            prefix = next((key for key, value in waveform_testnames.items() if value == category), '')
+            
+            for parent_cat, file_name, custom_cap in checked_files_metadata:
+                if parent_cat == category:
+                    if self.get_first_two_words(file_name) == prefix:
+                        original_path = os.path.join(waveform_folder, file_name)
+                        if os.path.exists(original_path):
+                            cropped_path = crop_and_save(original_path, c_left, c_top, c_right, c_bottom, self.temp_dir)
+                            if cropped_path:
+                                waveform_files[category].append({
+                                    'path': cropped_path, 
+                                    'custom_cap': custom_cap
+                                })
+        return waveform_files
+
+    def add_section(self, doc, last_element, waveform_items, waveform_files):
+        """Writes the gathered images and captions into the Word document."""
+        for item in waveform_items:
+            log_message(f"Adding waveform subheader: {item}")
+            new_para = doc.add_paragraph(item, style='Heading 2')
+            new_para.runs[0].font.size = Pt(14)
+            last_element.getparent().insert(last_element.getparent().index(last_element) + 1, new_para._element)
+            last_element = new_para._element
+            
+            if item in waveform_files and waveform_files[item]:
+                # Create a 2-column table for images
+                table = doc.add_table(rows=1, cols=2)
+                table.autofit = False
+                table.columns[0].width = Inches(3.5)
+                table.columns[1].width = Inches(3.5)
+                table.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                current_row = 0
+                current_col = 0
+                
+                for img_data in waveform_files[item]:
+                    if current_col >= 2:
+                        current_col = 0
+                        current_row += 1
+                        table.add_row()
+                    
+                    cell = table.cell(current_row, current_col)
+                    cell_para = cell.paragraphs[0]
+                    run = cell_para.add_run()
+                    run.add_picture(img_data['path'], width=Inches(3.4))
+                    
+                    # --- Caption Logic ---
+                    custom_cap = img_data.get('custom_cap')
+                    main_cap_text = ""
+                    if isinstance(custom_cap, dict):
+                        main_cap_text = custom_cap.get('caption', '')
+                    elif isinstance(custom_cap, str):
+                        main_cap_text = custom_cap
+                    
+                    if not main_cap_text:
+                        base_name = os.path.splitext(os.path.basename(img_data['path']))[0]
+                        main_cap_text = format_value_units(base_name)
+
+                    caption_cell = cell.add_paragraph()
+                    add_caption_field(caption_cell, main_cap_text, "Figure")
+                    caption_cell.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                    
+                    # --- Extra Variable Lines (CH, Zoom, Meas) ---
+                    if isinstance(custom_cap, dict):
+                        for key in ['ch_info', 'zoom_info', 'meas_info']:
+                            text_val = custom_cap.get(key, "")
+                            if text_val:
+                                extra_p = cell.add_paragraph()
+                                extra_p.paragraph_format.left_indent = Inches(0.8)
+                                extra_p.paragraph_format.space_after = Pt(2)
+                                extra_p.paragraph_format.space_before = Pt(0)
+                                
+                                # Style Vripple/Blue color if it's ch_info
+                                is_ch = (key == 'ch_info')
+                                parts = re.split(r'(VRIPPLE|Vripple|V_RIPPLE|V_ripple)', text_val)
+                                for part in parts:
+                                    if part.lower().replace('_', '') == 'vripple':
+                                        r1 = extra_p.add_run("V")
+                                        r2 = extra_p.add_run("RIPPLE")
+                                        r2.font.subscript = True
+                                        if is_ch:
+                                            r1.font.color.rgb = RGBColor(0, 0, 255)
+                                            r2.font.color.rgb = RGBColor(0, 0, 255)
+                                    else:
+                                        r = extra_p.add_run(part)
+                                        if is_ch: r.font.color.rgb = RGBColor(0, 0, 255)
+
+                    current_col += 1
+                
+                last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
+                last_element = table._element
+                
+        return last_element
+</file>
+
+<file path="word_utils.py">
+from docx import Document
+from docx.shared import Pt, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+# from docx.enum.text import WD_CELL_VERTICAL_ALIGNMENT
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+import re
+
+def add_styled_table(doc, rows, cols, data, merged_cells=None, header_color='#0078AB', font_name='Calibri', font_size=9):
+    if merged_cells is None:
+        merged_cells = []
+    table = doc.add_table(rows=rows, cols=cols)
+    table.style = 'Table Grid'
+    table.autofit = True
+
+    for i in range(rows):
+        for j in range(cols):
+            cell = table.cell(i, j)
+            cell.vertical_alignment = 1  # Middle vertical alignment
+            cell_text = str(data[i][j]) if i < len(data) and j < len(data[i]) else ""
+            # Remove trailing newlines and collapse multiple consecutive newlines to one
+            cell_text = re.sub(r'\n+', '\n', cell_text.rstrip('\n\r')).strip()
+            if cell_text:  # Only add paragraph if text is non-empty
+                cell._element.clear_content()  # Clear any existing content
+                paragraph = cell.add_paragraph()
+                paragraph.text = cell_text
+                paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                paragraph.paragraph_format.space_before = Pt(0)
+                paragraph.paragraph_format.space_after = Pt(0)
+                paragraph.paragraph_format.line_spacing = 1.0
+                for run in paragraph.runs:
+                    run.font.name = font_name
+                    run.font.size = Pt(font_size)
+                    if i == 0:  # Header row
+                        run.font.bold = True
+                        run.font.color.rgb = RGBColor(255, 255, 255)  # White font
+                        shading_elm = OxmlElement('w:shd')
+                        shading_elm.set(qn('w:fill'), header_color)
+                        cell._element.get_or_add_tcPr().append(shading_elm)
+
+    for min_row, min_col, max_row, max_col in merged_cells:
+        table.cell(min_row, min_col).merge(table.cell(max_row, max_col))
+
+    return table
+
+def Figure(paragraph, bold=False):
+    run = paragraph.add_run()
+    if bold:
+        run.font.bold = True
+    r = run._r
+    fldChar = OxmlElement('w:fldChar')
+    fldChar.set(qn('w:fldCharType'), 'begin')
+    r.append(fldChar)
+    instrText = OxmlElement('w:instrText')
+    instrText.text = ' SEQ Figure \\* ARABIC'
+    r.append(instrText)
+    fldChar = OxmlElement('w:fldChar')
+    fldChar.set(qn('w:fldCharType'), 'end')
+    r.append(fldChar)
+
+def Table(paragraph, bold=False):
+    run = paragraph.add_run()
+    if bold:
+        run.font.bold = True
+    r = run._r
+    fldChar = OxmlElement('w:fldChar')
+    fldChar.set(qn('w:fldCharType'), 'begin')
+    r.append(fldChar)
+    instrText = OxmlElement('w:instrText')
+    instrText.text = ' SEQ Table \\* ARABIC'
+    r.append(instrText)
+    fldChar = OxmlElement('w:fldChar')
+    fldChar.set(qn('w:fldCharType'), 'end')
+    r.append(fldChar)
+
+def add_caption_field(paragraph, caption_text, caption_type):
+    paragraph.style = 'Caption'
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    # Make the caption label and number bold (e.g., "Table 2")
+    label_run = paragraph.add_run(f"{caption_type} ")
+    label_run.font.bold = True
+    if caption_type == "Figure":
+        Figure(paragraph, bold=True)
+    elif caption_type == "Table":
+        Table(paragraph, bold=True)
+    # Use an en-dash (–) with spaces and non-bold run for the rest of the caption
+    caption_run = paragraph.add_run(f" – {caption_text}")
+    caption_run.font.bold = False
+
+def format_value_units(text: str) -> str:
+    """
+    Insert a space between numeric values and immediately following unit letters.
+    Examples:
+        "12V 3A 1.25A" -> "12 V 3 A 1.25 A"
+    Handles letters and common unit symbols (%, °, µ, Ω). Leaves already-correct strings unchanged.
+    """
+    if not isinstance(text, str) or not text:
+        return text
+    # Insert a single space before a run of unit letters/symbols that immediately follow a digit.
+    # e.g. "12V" -> "12 V", "1.25A" -> "1.25 A"
+    return re.sub(r'(?<=\d)(?P<unit>[A-Za-z%°µΩ]+)', r' \g<unit>', text)
+</file>
+
+</files>

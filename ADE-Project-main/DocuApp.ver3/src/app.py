@@ -1,6 +1,6 @@
 import os
 import sys
-from PyQt5 import QtWidgets, uic, QtCore
+from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from PyQt5.QtCore import Qt, QPoint
 import resource_rc
 
@@ -82,6 +82,7 @@ class DocuApp(QtWidgets.QMainWindow):
         super(DocuApp, self).__init__()
         # Load the UI file 
         uic.loadUi(get_resource_path('DocuApp_ver6.ui'), self)
+        self.setWindowIcon(QtGui.QIcon(get_resource_path('tardis_icon.png')))
         
         # 1. WINDOW SETTINGS
         self.setWindowFlags(Qt.FramelessWindowHint)
