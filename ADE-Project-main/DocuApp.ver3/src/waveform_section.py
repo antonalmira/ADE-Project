@@ -13,12 +13,10 @@ class WaveformSection:
         self.app = app
         self.temp_dir = temp_dir
 
-    def get_first_two_words(self, filename):
-        words = re.split(r'\s+|-|_', filename.lower())
-        return ' '.join(words[:2]).strip()
+    def get_prefix(self, filename):
+        return filename.split('_')[0].strip().lower()
 
     def get_images_with_custom_crop(self, waveform_items):
-        """Gather and crop images based on UI settings."""
         try:
             c_left = int(self.app.left_input.text()) if self.app.left_input.text() else 0
             c_top = int(self.app.upper_input.text()) if self.app.upper_input.text() else 0
@@ -49,7 +47,7 @@ class WaveformSection:
             
             for parent_cat, file_name, custom_cap in checked_files_metadata:
                 if parent_cat == category:
-                    if self.get_first_two_words(file_name) == prefix:
+                    if self.get_prefix(file_name) == prefix:
                         original_path = os.path.join(waveform_folder, file_name)
                         if os.path.exists(original_path):
                             cropped_path = crop_and_save(original_path, c_left, c_top, c_right, c_bottom, self.temp_dir)
@@ -61,7 +59,6 @@ class WaveformSection:
         return waveform_files
 
     def add_section(self, doc, last_element, waveform_items, waveform_files):
-        """Writes the gathered images and captions into the Word document."""
         for item in waveform_items:
             log_message(f"Adding waveform subheader: {item}")
             new_para = doc.add_paragraph(item, style='Heading 2')
@@ -70,7 +67,6 @@ class WaveformSection:
             last_element = new_para._element
             
             if item in waveform_files and waveform_files[item]:
-                # Create a 2-column table for images
                 table = doc.add_table(rows=1, cols=2)
                 table.autofit = False
                 table.columns[0].width = Inches(3.5)
@@ -91,7 +87,6 @@ class WaveformSection:
                     run = cell_para.add_run()
                     run.add_picture(img_data['path'], width=Inches(3.4))
                     
-                    # --- Caption Logic ---
                     custom_cap = img_data.get('custom_cap')
                     main_cap_text = ""
                     if isinstance(custom_cap, dict):
@@ -107,7 +102,6 @@ class WaveformSection:
                     add_caption_field(caption_cell, main_cap_text, "Figure")
                     caption_cell.alignment = WD_ALIGN_PARAGRAPH.LEFT
                     
-                    # --- Extra Variable Lines (CH, Zoom, Meas) ---
                     if isinstance(custom_cap, dict):
                         for key in ['ch_info', 'zoom_info', 'meas_info']:
                             text_val = custom_cap.get(key, "")
@@ -117,7 +111,6 @@ class WaveformSection:
                                 extra_p.paragraph_format.space_after = Pt(2)
                                 extra_p.paragraph_format.space_before = Pt(0)
                                 
-                                # Style Vripple/Blue color if it's ch_info
                                 is_ch = (key == 'ch_info')
                                 parts = re.split(r'(VRIPPLE|Vripple|V_RIPPLE|V_ripple)', text_val)
                                 for part in parts:
