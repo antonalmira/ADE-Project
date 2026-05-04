@@ -54,11 +54,17 @@ list_updater.py
 main.py
 performance_section.py
 preview.py
+resources/icons/exit.png
+resources/icons/image-removebg-preview.png
+resources/icons/maximize.png
+resources/icons/minimize.png
+resources/icons/POWI_BIG.D-8e645f4d.png
+resources/icons/POWI.D-16de9fb7.png
+resources/icons/tardis_icon.ico
+resources/icons/tardis_icon.png
 SAMPLE.PY
-TARDIS.spec
 temp_preview/Load transient 90VAC, 5V, 2.1A.png
 test.txt
-test2.txt
 utils.py
 waveform_section.py
 word_utils.py
@@ -75,7 +81,7 @@ main.spec
 <file path="app.py">
 import os
 import sys
-from PyQt5 import QtWidgets, uic, QtCore
+from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from PyQt5.QtCore import Qt, QPoint
 import resource_rc
 
@@ -154,9 +160,28 @@ class CaptionDialog(QtWidgets.QDialog):
 
 class DocuApp(QtWidgets.QMainWindow):
     def __init__(self):
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QtGui.QIcon(icon_path))
+            
+            # 2. Update the UI Logo
+            pixmap = QtGui.QPixmap(icon_path)
+            
+            # Scale the pixmap to fit the label's height while keeping its shape (not stretching)
+            # 35 is the height set in your .ui file for 'power_integrations_icon'
+            scaled_pixmap = pixmap.scaled(35, 35, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            
+            self.power_integrations_icon.setPixmap(scaled_pixmap)
+            
+            # CRUCIAL: This centers the image inside the QLabel box
+            self.power_integrations_icon.setAlignment(Qt.AlignCenter)
+            
+            # Ensure setScaledContents is FALSE so it doesn't stretch to fill the width
+            self.power_integrations_icon.setScaledContents(False)
         super(DocuApp, self).__init__()
+        
         # Load the UI file 
         uic.loadUi(get_resource_path('DocuApp_ver6.ui'), self)
+        self.setWindowIcon(QtGui.QIcon(get_resource_path('resources/icons/tardis_icon.png')))
         
         # 1. WINDOW SETTINGS
         self.setWindowFlags(Qt.FramelessWindowHint)
@@ -1697,14 +1722,12 @@ from PyQt5 import QtWidgets, QtCore
 from app import DocuApp
 
 def main():
-    # 1. FIX: Taskbar Icon (Windows only)
-    # This prevents Windows from grouping your app under the Python icon.
+  
     if os.name == 'nt':
-        myappid = 'mycompany.myproduct.subproduct.version' # arbitrary string
+        myappid = 'powerintegrations.tardis.v1'
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
-    # 2. DPI SCALING SETTINGS
-    # These must be set BEFORE the QApplication is created.
+
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
     
@@ -2010,53 +2033,6 @@ else:
     print(f"Placeholder '{findtext}' not found in Word document.")
 </file>
 
-<file path="TARDIS.spec">
-# -*- mode: python ; coding: utf-8 -*-
-
-
-a = Analysis(
-    ['main.py'],
-    pathex=[],
-    binaries=[],
-    datas=[('DocuApp_ver6.ui', '.'), ('..\\..\\templates', 'templates'), ('..\\..\\resource\\BOM_PIXL.xlsx', 'resource')],
-    hiddenimports=[],
-    hookspath=[],
-    hooksconfig={},
-    runtime_hooks=[],
-    excludes=[],
-    noarchive=False,
-    optimize=0,
-)
-pyz = PYZ(a.pure)
-
-exe = EXE(
-    pyz,
-    a.scripts,
-    [],
-    exclude_binaries=True,
-    name='TARDIS',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    console=False,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-)
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name='TARDIS',
-)
-</file>
-
 <file path="test.txt">
 Write-Host "Collecting pyqt5-tools"
 Start-Sleep -Seconds 5
@@ -2094,10 +2070,6 @@ Write-Host "ERROR: Failed building wheel for PyQt5"
 Write-Host "ERROR: Could not build wheels for PyQt5, which is required to install pyproject.toml-based projects"
 Write-Host ""
 Write-Host "note: This error originates from a subprocess, and is likely not a problem with pip." -ForegroundColor Yellow
-</file>
-
-<file path="test2.txt">
-asdasdsa
 </file>
 
 <file path="utils.py">

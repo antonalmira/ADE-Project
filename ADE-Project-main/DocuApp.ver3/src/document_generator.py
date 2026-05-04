@@ -185,56 +185,97 @@ def add_pixls_designer_table(document, excel_path):
                 header_idx = i
                 break
 
-        df = pd.read_excel(excel_path, sheet_name=sheet_name, skiprows=header_idx).iloc[:, :6]
-        df.columns = ['Parameter', 'INPUT', 'INFO', 'OUTPUT', 'UNIT', 'Description']
+        # Extract exactly 7 columns (Including the numbering column on the far left)
+        df = pd.read_excel(excel_path, sheet_name=sheet_name, skiprows=header_idx).iloc[:, :7]
+        
+        # Capture actual headers from Excel, cleaning up any empty 'Unnamed' columns from pandas
+        raw_headers = df.columns.tolist()
+        clean_headers = ["" if "Unnamed" in str(col) else str(col) for col in raw_headers]
+        
+        # Rename internal df columns for easier logic mapping
+        df.columns = ['Row Num', 'Parameter Name', 'INPUT', 'INFO', 'OUTPUT', 'UNIT', 'Description']
         
         document.add_paragraph("Design Spreadsheet", style='Heading 2')
         table = document.add_table(rows=1, cols=len(df.columns))
         set_table_all_borders(table, 'C0C0C0') # POWI Gray
 
-        # Format Headers
-        for i, col_name in enumerate(df.columns):
+        # Format Headers (Row 1)
+        for i, col_name in enumerate(clean_headers):
             cell = table.rows[0].cells[i]
-            cell.text = str(col_name)
+            cell.text = format_text_specs(col_name)
             cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            set_cell_background(cell, 'FFFFFF') # White background per spec
             
             p = cell.paragraphs[0]
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            run = p.runs[0]
+            run = p.runs[0] if p.runs else p.add_run()
             run.font.name = 'Calibri'
             run.font.size = Pt(8)
             run.font.bold = True
-            run.font.color.rgb = RGBColor(0, 0, 0)
+            run.font.color.rgb = RGBColor(0, 0, 0) # Black font per spec
 
-        # Insert Rows
+        # Insert Data Rows
         for _, row in df.iterrows():
-            if pd.isna(row['Parameter']) and pd.isna(row['INPUT']): continue
+            if pd.isna(row['Parameter Name']) and pd.isna(row['INPUT']): continue
             row_cells = table.add_row().cells
             is_subheader = pd.isna(row['INPUT']) and pd.isna(row['OUTPUT']) and pd.isna(row['UNIT'])
 
             if is_subheader:
-                cell = row_cells[0]
-                cell.merge(row_cells[-1])
-                cell.text = format_text_specs(str(row['Parameter']))
-                set_cell_background(cell, 'D9D9D9') # Light Gray
-                cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+                # 1. Number Column (Index 0) stays separate
+                cell_0 = row_cells[0]
+                num_val = str(row['Row Num']) if not pd.isna(row['Row Num']) else ""
+                if num_val.endswith('.0'): num_val = num_val[:-2] # Clean up floats
+                cell_0.text = num_val
+                cell_0.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+                p0 = cell_0.paragraphs[0]
+                p0.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                r0 = p0.runs[0]
+                r0.font.name = 'Calibri'
+                r0.font.size = Pt(8)
+
+                # 2. Merge Columns 1 through 5 (Parameter Name to UNIT)
+                main_cell = row_cells[1]
+                main_cell.merge(row_cells[5]) 
+                main_cell.text = format_text_specs(str(row['Parameter Name']))
+                set_cell_background(main_cell, 'D9D9D9') # Light Gray
+                main_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
                 
-                p = cell.paragraphs[0]
+                p = main_cell.paragraphs[0]
                 p.alignment = WD_ALIGN_PARAGRAPH.LEFT
                 for run in p.runs:
                     run.font.name = 'Calibri'
                     run.font.size = Pt(8)
                     run.font.bold = True
                     run.font.color.rgb = RGBColor(255, 255, 255) # White Font
+
+                # 3. Description Column (Index 6) stays separate
+                desc_cell = row_cells[6]
+                desc_val = "" if pd.isna(row['Description']) else format_text_specs(str(row['Description']))
+                desc_cell.text = desc_val
+                set_cell_background(desc_cell, 'FFFFFF') # White Background
+                desc_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+                
+                p_desc = desc_cell.paragraphs[0]
+                p_desc.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                for run in p_desc.runs:
+                    run.font.name = 'Calibri'
+                    run.font.size = Pt(8)
+                    run.font.bold = False
+                    run.font.color.rgb = RGBColor(0, 0, 0)
+
             else:
+                # Standard Data Row
                 for i, col_name in enumerate(df.columns):
                     val = "" if pd.isna(row[col_name]) else format_text_specs(str(row[col_name]))
+                    if col_name == 'Row Num' and val.endswith('.0'): 
+                        val = val[:-2] # Clean up floats
+
                     cell = row_cells[i]
                     cell.text = val
                     cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
                     
                     p = cell.paragraphs[0]
-                    if col_name in ['Parameter', 'Description']:
+                    if col_name in ['Parameter Name', 'Description']:
                         p.alignment = WD_ALIGN_PARAGRAPH.LEFT
                     else:
                         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -245,9 +286,8 @@ def add_pixls_designer_table(document, excel_path):
                         run.font.bold = False
                         run.font.color.rgb = RGBColor(0, 0, 0)
 
-        # Apply exact Column Widths (Scaled down by 10 to fit 6.5" page)
-        # Spec ratios: 13.7", 7", 7", 7", 5", 25.2"
-        apply_column_widths(table, [1.37, 0.7, 0.7, 0.7, 0.5, 2.52])
+        # Apply exact Column Widths per your spec image
+        apply_column_widths(table, [0.32, 1.37, 0.7, 0.7, 0.7, 0.5, 2.52])
 
     except Exception as e:
         print(f"PIXls Error: {e}")
