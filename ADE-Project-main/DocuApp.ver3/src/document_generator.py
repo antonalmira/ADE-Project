@@ -4,7 +4,7 @@ import pandas as pd
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_ALIGN_VERTICAL
+from docx.enum.table import WD_ALIGN_VERTICAL, WD_ROW_HEIGHT_RULE
 from docx.oxml.shared import OxmlElement, qn
 from PyQt5.QtCore import Qt
 from performance_section import PerformanceSection
@@ -117,6 +117,9 @@ def add_bom_table(document, excel_path):
         document.add_paragraph("Bill of Materials", style='Heading 2')
         table = document.add_table(rows=1, cols=len(df.columns))
         set_table_inner_borders(table, 'C0C0C0')
+        
+        table.rows[0].height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+        table.rows[0].height = Pt(35) # Standard 8pt font row is ~15pt, so 35pt is double + padding
 
         # Format Headers
         for i, col_name in enumerate(df.columns):
