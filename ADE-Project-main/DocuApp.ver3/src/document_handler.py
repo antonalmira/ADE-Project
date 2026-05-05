@@ -1,11 +1,12 @@
 import os
 import sys
-import pythoncom
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog
 from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtWidgets import QFileDialog, QProgressDialog, QMessageBox
+import pythoncom
+
 from document_generator import DocGenerator
 from chart_extractor import save_chart_screenshots
-from utils import log_message
+from utils import show_popup, ensure_directory, remove_directory
 
 class DocumentWorker(QThread):
     progress_signal = pyqtSignal(int, str)
@@ -15,47 +16,42 @@ class DocumentWorker(QThread):
         super().__init__()
         self.app = app
         self.is_update = is_update
+        self.output_path = app.final_save_destination
 
     def run(self):
         pythoncom.CoInitialize()
         try:
-            self.progress_signal.emit(5, "Starting chart extraction...")
-            save_chart_screenshots(self.app, headless=True, progress_callback=self.progress_signal.emit)
-            
-            self.progress_signal.emit(55, "Opening Document Template...")
-            output_path = getattr(self.app, 'final_save_destination', "Generated_Document.docx")
-            update_path = getattr(self.app, 'update_document_path', "") if self.is_update else ""
-            
-            generator = DocGenerator(self.app, output_path, update_path)
-            
-            self.progress_signal.emit(60, "Processing Sections and Cropping...")
-            generator.generate(progress_callback=self.progress_signal.emit)
-            
-            self.progress_signal.emit(100, "Finalizing...")
-            self.finished_signal.emit(True, "Document successfully generated!")
+            has_perf = any(self.app.performancedata_list.item(i).checkState() == 2 for i in range(self.app.performancedata_list.count()))
+            if has_perf:
+                self.progress_signal.emit(10, "Extracting Excel Charts...")
+                try:
+                    save_chart_screenshots(self.app, headless=True, progress_callback=self.progress_signal.emit)
+                except Exception as e:
+                    self.finished_signal.emit(False, f"Excel Chart Extraction Failed: {e}")
+                    return
+
+            self.progress_signal.emit(50, "Generating Word Document...")
+            doc_gen = DocGenerator(self.app, self.output_path, self.app.update_document_path if self.is_update else "")
+            doc_gen.generate(self.progress_signal.emit)
+
+            self.progress_signal.emit(100, "Done!")
+            self.finished_signal.emit(True, "Document generated successfully!")
         except Exception as e:
-            log_message(f"Worker Error: {str(e)}")
             self.finished_signal.emit(False, str(e))
         finally:
             pythoncom.CoUninitialize()
 
 def get_project_paths():
-    """
-    Calculates paths depending on whether running as a Python script or a compiled .exe
-    """
+    """ Calculates paths depending on whether running as a Python script or a compiled .exe """
     if getattr(sys, 'frozen', False):
-        # Running as a compiled .exe
-        # sys._MEIPASS is the internal folder where PyInstaller bundles everything
         project_root = sys._MEIPASS
         output_folder = os.path.join(os.path.dirname(sys.executable), "output")
     else:
-        # Running as a .py script
         current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
         output_folder = os.path.join(project_root, "output")
-    
+
     paths = {
-        "bom": os.path.join(project_root, "resource", "BOM_PIXL.xlsx"),
         "templates": os.path.join(project_root, "templates"),
         "output_dir": output_folder
     }
@@ -65,7 +61,7 @@ def run_document_job(app, is_update=False):
     app.progress_dialog = QProgressDialog("Initializing...", None, 0, 100, app)
     app.progress_dialog.setWindowTitle("Processing Document")
     app.progress_dialog.setModal(True)
-    app.progress_dialog.setMinimumDuration(0) 
+    app.progress_dialog.setMinimumDuration(0)
     app.progress_dialog.setStyleSheet("QProgressDialog { background-color: #f5f5f5; } QLabel { color: black; }")
     app.progress_dialog.setValue(0)
     app.progress_dialog.show()
@@ -75,18 +71,16 @@ def run_document_job(app, is_update=False):
     app.worker.finished_signal.connect(lambda success, msg: _finish_ui(app, success, msg))
     app.worker.start()
 
-def _update_ui(app, value, text):
-    if hasattr(app, 'progress_dialog'):
-        app.progress_dialog.setValue(value)
-        app.progress_dialog.setLabelText(f'<span style="color: black;">{text}</span>')
+def _update_ui(app, val, text):
+    app.progress_dialog.setValue(val)
+    app.progress_dialog.setLabelText(text)
 
-def _finish_ui(app, success, message):
-    if hasattr(app, 'progress_dialog'): app.progress_dialog.close()
-    msg = QMessageBox(app)
-    msg.setStyleSheet("QMessageBox { background-color: #f5f5f5; } QLabel { color: black; }")
-    msg.setIcon(QMessageBox.Information if success else QMessageBox.Critical)
-    msg.setText(message)
-    msg.exec_()
+def _finish_ui(app, success, msg):
+    app.progress_dialog.close()
+    if success:
+        show_popup(app, "Success", msg, "info")
+    else:
+        show_popup(app, "Error", f"Failed to generate document:\n{msg}", "error")
 
 def generate_document(app):
     paths = get_project_paths()
@@ -98,8 +92,9 @@ def generate_document(app):
         return
     app.selected_template_path = os.path.join(paths["templates"], sel)
 
-    # 2. Automatic BOM/PIX File
-    app.bom_file_path = paths["bom"] if os.path.exists(paths["bom"]) else None
+    # 2. Prompt for BOM and PIXL Files individually
+    app.bom_file_path, _ = QFileDialog.getOpenFileName(app, "Select BOM File", paths["output_dir"], "Excel (*.xlsx *.xls)")
+    app.pixl_file_path, _ = QFileDialog.getOpenFileName(app, "Select PIXLs / Design Spreadsheet File", paths["output_dir"], "Excel (*.xlsx *.xls)")
 
     # 3. Output Path
     if not os.path.exists(paths["output_dir"]):
@@ -115,13 +110,17 @@ def generate_document(app):
         app.final_save_destination = save_path
         run_document_job(app, is_update=False)
 
+
 def update_document_prompt(app):
     paths = get_project_paths()
-    update_path, _ = QFileDialog.getOpenFileName(app, "Select Report", paths["output_dir"], "Word (*.docx)")
+    update_path, _ = QFileDialog.getOpenFileName(app, "Select Report to Update", paths["output_dir"], "Word (*.docx)")
     if not update_path: return
 
     app.update_document_path = update_path
-    app.bom_file_path = paths["bom"] if os.path.exists(paths["bom"]) else None
+    
+    # Prompt for BOM and PIXL Files
+    app.bom_file_path, _ = QFileDialog.getOpenFileName(app, "Select BOM File", paths["output_dir"], "Excel (*.xlsx *.xls)")
+    app.pixl_file_path, _ = QFileDialog.getOpenFileName(app, "Select PIXLs / Design Spreadsheet File", paths["output_dir"], "Excel (*.xlsx *.xls)")
 
     save_path, _ = QFileDialog.getSaveFileName(app, "Save As", update_path, "Word (*.docx)")
     if save_path:
