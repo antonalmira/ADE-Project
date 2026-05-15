@@ -1,0 +1,36 @@
+Write-Host "Collecting pyqt5-tools"
+Start-Sleep -Seconds 5
+Write-Host "  Using cached pyqt5_tools-5.15.9.3.3-py3-none-any.whl.metadata (8.3 kB)"
+Start-Sleep -Seconds 5
+Write-Host "Collecting click (from pyqt5-tools)"
+Start-Sleep -Seconds 5
+Write-Host "  Using cached click-8.3.3-py3-none-any.whl.metadata (2.6 kB)"
+Start-Sleep -Seconds 5
+Write-Host "Collecting pyqt5==5.15.9 (from pyqt5-tools)"
+Start-Sleep -Seconds 5
+Write-Host "  Using cached PyQt5-5.15.9-cp37-abi3-win_amd64.whl.metadata (2.2 kB)"
+Start-Sleep -Seconds 10
+Write-Host "INFO: pip is looking at multiple versions of pyqt5-tools to determine which version is compatible with other requirements. This could take a while."
+
+# Fake long dependency resolution
+for ($i=1; $i -le 20; $i++) {
+    Write-Host "  Resolving dependencies... ($i/20)"
+    Start-Sleep -Seconds 10
+}
+
+Write-Host "Collecting pyqt5==5.15.4 (from pyqt5-tools)"
+Start-Sleep -Seconds 5
+Write-Host "  Using cached PyQt5-5.15.4.tar.gz (3.3 MB)"
+Start-Sleep -Seconds 5
+Write-Host "  Installing build dependencies ... done"
+Start-Sleep -Seconds 5
+Write-Host "  Getting requirements to build wheel ... done"
+Start-Sleep -Seconds 5
+Write-Host "  Building wheel for PyQt5 (pyproject.toml) ... error"
+Start-Sleep -Seconds 3
+
+Write-Host ""
+Write-Host "ERROR: Failed building wheel for PyQt5"
+Write-Host "ERROR: Could not build wheels for PyQt5, which is required to install pyproject.toml-based projects"
+Write-Host ""
+Write-Host "note: This error originates from a subprocess, and is likely not a problem with pip." -ForegroundColor Yellow
