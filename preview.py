@@ -15,16 +15,32 @@ def get_ui_crop_values(app):
     except ValueError:
         return {'left': 0, 'top': 0, 'right': 0, 'bottom': 0}
 
+def _get_first_image_path(item):
+    """Recursively search a folder item to find the first available image file."""
+    for i in range(item.childCount()):
+        child = item.child(i)
+        if child.data(0, Qt.UserRole + 2) == "file":
+            return child.data(0, Qt.UserRole + 1)
+        elif child.data(0, Qt.UserRole + 2) == "folder":
+            res = _get_first_image_path(child)
+            if res: return res
+    return None
+
 def crop_and_update_preview(app):
     wave_items = app.waveform_tree.selectedItems()
     perf_items = app.performance_tree.selectedItems()
     
+    item = None
+    if wave_items: item = wave_items[0]
+    elif perf_items: item = perf_items[0]
+
     file_path = None
-    if wave_items and wave_items[0].data(0, Qt.UserRole + 2) == "file":
-        file_path = wave_items[0].data(0, Qt.UserRole + 1)
-        
-    elif perf_items and perf_items[0].data(0, Qt.UserRole + 2) == "file":
-        file_path = perf_items[0].data(0, Qt.UserRole + 1) # Both trees now use physical PNG paths!
+    if item:
+        is_folder = item.data(0, Qt.UserRole + 2) == "folder"
+        if is_folder:
+            file_path = _get_first_image_path(item)
+        else:
+            file_path = item.data(0, Qt.UserRole + 1)
 
     if not file_path or not os.path.exists(file_path):
         app.file_view.clear()
@@ -51,8 +67,13 @@ def show_file_preview(app):
         app.performance_tree.clearSelection()
         item = app.waveform_tree.selectedItems()[0]
     else:
+        app.images_preview_text.setText("PREVIEW")
         return
         
+    # --- Update Preview Label Dynamically ---
+    clean_name = item.text(0).replace(" CROPPED", "").strip()
+    app.images_preview_text.setText(f"PREVIEW: {clean_name}")
+
     current = item
     while current:
         saved_crop = current.data(0, Qt.UserRole + 3)

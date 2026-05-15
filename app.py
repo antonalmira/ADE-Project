@@ -85,7 +85,6 @@ class DocuApp(QtWidgets.QMainWindow):
         self.waveforms_path.editingFinished.connect(lambda: update_waveform_tree(self))
         self.populate_templates_dropdown()
 
-    # --- PHYSICAL DRAG AND DROP (RELOCATION) ---
     def custom_drop_event(self, event, tree_widget, original_event_call):
         dragged_items = tree_widget.selectedItems()
         if not dragged_items:
@@ -117,7 +116,6 @@ class DocuApp(QtWidgets.QMainWindow):
         if not target_dir or not os.path.isdir(target_dir):
             return original_event_call(event)
 
-        # Pre-capture state before doing physical moves to prevent state loss
         tree_type = "wave" if tree_widget == self.waveform_tree else "perf"
         if tree_type == "wave": capture_wave_state(self)
         else: capture_perf_state(self)
@@ -148,11 +146,9 @@ class DocuApp(QtWidgets.QMainWindow):
         original_event_call(event)
         
         if physically_moved:
-            # We already captured state manually, so we pass capture=False
             if tree_widget == self.waveform_tree: QtCore.QTimer.singleShot(50, lambda: update_waveform_tree(self, capture=False))
             else: QtCore.QTimer.singleShot(50, lambda: update_performance_tree(self, capture=False))
 
-    # --- PHYSICAL RENAME ---
     def on_tree_item_changed(self, item, column):
         if column != 0: return
         tree_widget = item.treeWidget()
@@ -160,7 +156,7 @@ class DocuApp(QtWidgets.QMainWindow):
         if not old_path or not os.path.exists(old_path): return
         
         original_ui_name = item.data(0, Qt.UserRole + 6)
-        new_display_name = item.text(0).replace(" [CROP SET]", "").strip()
+        new_display_name = item.text(0).replace(" CROPPED", "").strip()
         if new_display_name == original_ui_name: return
 
         is_folder = item.data(0, Qt.UserRole + 2) == "folder"
@@ -207,12 +203,11 @@ class DocuApp(QtWidgets.QMainWindow):
             
     def revert_item_text(self, tree_widget, item, old_display_name):
         revert_text = old_display_name
-        if item.data(0, Qt.UserRole + 3): revert_text += " [CROP SET]"
+        if item.data(0, Qt.UserRole + 3): revert_text += " CROPPED"
         tree_widget.blockSignals(True)
         item.setText(0, revert_text)
         tree_widget.blockSignals(False)
 
-    # --- CONTEXT MENU LOGIC ---
     def show_context_menu(self, position):
         tree_widget = self.sender()
         item = tree_widget.itemAt(position)
@@ -375,8 +370,8 @@ class DocuApp(QtWidgets.QMainWindow):
         if items:
             for item in items:
                 item.setData(0, Qt.UserRole + 3, crop_data) 
-                base_text = item.text(0).replace(" [CROP SET]", "")
-                item.setText(0, f"{base_text} [CROP SET]")
+                base_text = item.text(0).replace(" CROPPED", "")
+                item.setText(0, f"{base_text} CROPPED")
             crop_and_update_preview(self)
         else:
             QtWidgets.QMessageBox.warning(self, "Selection", "Select a folder or file to apply crop.")

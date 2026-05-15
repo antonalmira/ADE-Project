@@ -17,7 +17,7 @@ def capture_perf_state(app):
                 "check_state": item.checkState(0), 
                 "crop": item.data(0, Qt.UserRole + 3), 
                 "caption": item.data(0, Qt.UserRole),
-                "custom_name": item.text(0).replace(" [CROP SET]", ""),
+                "custom_name": item.text(0).replace(" CROPPED", ""),
                 "expanded": item.isExpanded()
             }
             if is_folder:
@@ -87,7 +87,7 @@ def build_perf_tree(parent_widget, current_path, metadata):
             
         if item_state.get("crop"):
             new_item.setData(0, Qt.UserRole + 3, item_state["crop"])
-            new_item.setText(0, f"{display_name} [CROP SET]") 
+            new_item.setText(0, f"{display_name} CROPPED") 
             
         cap = item_state.get("caption")
         if cap:
@@ -130,7 +130,7 @@ def capture_wave_state(app):
                 "check_state": item.checkState(0), 
                 "crop": item.data(0, Qt.UserRole + 3), 
                 "caption": item.data(0, Qt.UserRole),
-                "custom_name": item.text(0).replace(" [CROP SET]", ""),
+                "custom_name": item.text(0).replace(" CROPPED", ""),
                 "expanded": item.isExpanded()
             }
             if is_folder:
@@ -189,7 +189,7 @@ def build_tree(parent_widget, current_path):
             
         if item_state.get("crop"):
             new_item.setData(0, Qt.UserRole + 3, item_state["crop"])
-            new_item.setText(0, f"{display_name} [CROP SET]") 
+            new_item.setText(0, f"{display_name} CROPPED") 
             
         cap = item_state.get("caption")
         if cap:
