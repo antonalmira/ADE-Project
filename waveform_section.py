@@ -85,7 +85,7 @@ class WaveformSection:
 
         # 1. PROCESS FOLDER HEADINGS
         if not is_root and node.data(0, Qt.UserRole + 2) == "folder":
-            clean_name = node.text(0).replace(" CROPPED", "")
+            clean_name = node.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
             
             # Strip physical numbering (7.1, 7.2) so Word's auto-numbering doesn't double it
             clean_name = self._strip_chapter_numbering(clean_name)
@@ -166,7 +166,7 @@ class WaveformSection:
             run.add_picture(cropped_path, width=Inches(3.4))
             
             # LINK THE UI RENAME TO THE WORD CAPTION
-            clean_base_name = node.text(0).replace(" CROPPED", "")
+            clean_base_name = node.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
             
             # Strip physical numbering so image captions aren't prefixed with "7.2.1 "
             clean_base_name = self._strip_chapter_numbering(clean_base_name)

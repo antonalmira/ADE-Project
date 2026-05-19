@@ -65,7 +65,7 @@ class PerformanceSection:
         current_anchor = last_element
 
         if not is_root and node.data(0, Qt.UserRole + 2) == "folder":
-            clean_name = self._strip_chapter_numbering(node.text(0).replace(" CROPPED", ""))
+            clean_name = self._strip_chapter_numbering(node.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip())
             
             # Print Category Heading
             new_para = doc.add_paragraph(clean_name, style='Heading 2')
@@ -139,7 +139,7 @@ class PerformanceSection:
         voltage = node.data(0, Qt.UserRole + 10)
         custom_cap = node.data(0, Qt.UserRole)
         
-        clean_name = self._strip_chapter_numbering(node.text(0).replace(" CROPPED", ""))
+        clean_name = self._strip_chapter_numbering(node.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip())
 
         if item_type == "table":
             if excel_path and os.path.exists(excel_path):

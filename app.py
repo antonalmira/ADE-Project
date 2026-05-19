@@ -55,6 +55,7 @@ class DocuApp(QtWidgets.QMainWindow):
         self.crop_button.clicked.connect(self.save_crop_to_selected)
         self.generate_document_button.clicked.connect(lambda: generate_document(self))
 
+        # --- UNIFIED TREE SETUP ---
         for tree in [self.performance_tree, self.waveform_tree]:
             tree.itemSelectionChanged.connect(lambda: show_file_preview(self))
             tree.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
@@ -64,6 +65,7 @@ class DocuApp(QtWidgets.QMainWindow):
             tree.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
             tree.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked | QtWidgets.QAbstractItemView.EditKeyPressed)
             
+            # Allow smooth scrolling when dragging an item near the top/bottom edges
             tree.setAutoScroll(True)
             tree.setAutoScrollMargin(35)
             tree.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
@@ -72,6 +74,7 @@ class DocuApp(QtWidgets.QMainWindow):
             tree.setContextMenuPolicy(Qt.CustomContextMenu)
             tree.customContextMenuRequested.connect(self.show_context_menu)
 
+        # Override Drag and Drop 
         self.original_waveform_drop_event = self.waveform_tree.dropEvent
         self.waveform_tree.dropEvent = lambda event: self.custom_drop_event(event, self.waveform_tree, self.original_waveform_drop_event)
         
@@ -85,6 +88,7 @@ class DocuApp(QtWidgets.QMainWindow):
         self.waveforms_path.editingFinished.connect(lambda: update_waveform_tree(self))
         self.populate_templates_dropdown()
 
+    # --- PHYSICAL DRAG AND DROP (RELOCATION) ---
     def custom_drop_event(self, event, tree_widget, original_event_call):
         dragged_items = tree_widget.selectedItems()
         if not dragged_items:
@@ -98,13 +102,15 @@ class DocuApp(QtWidgets.QMainWindow):
         if target_item:
             is_folder = target_item.data(0, Qt.UserRole + 2) == "folder"
             if indicator == QtWidgets.QAbstractItemView.OnItem:
-                if is_folder: target_dir = target_item.data(0, Qt.UserRole + 1)
+                if is_folder:
+                    target_dir = target_item.data(0, Qt.UserRole + 1)
                 else:
                     parent = target_item.parent()
                     if parent: target_dir = parent.data(0, Qt.UserRole + 1)
             elif indicator in [QtWidgets.QAbstractItemView.AboveItem, QtWidgets.QAbstractItemView.BelowItem]:
                 parent = target_item.parent()
-                if parent: target_dir = parent.data(0, Qt.UserRole + 1)
+                if parent:
+                    target_dir = parent.data(0, Qt.UserRole + 1)
         
         if not target_dir:
             if tree_widget == self.waveform_tree:
@@ -121,6 +127,7 @@ class DocuApp(QtWidgets.QMainWindow):
         else: capture_perf_state(self)
 
         physically_moved = False
+        
         for item in dragged_items:
             old_path = item.data(0, Qt.UserRole + 1)
             if not old_path or not os.path.exists(old_path): continue
@@ -149,6 +156,7 @@ class DocuApp(QtWidgets.QMainWindow):
             if tree_widget == self.waveform_tree: QtCore.QTimer.singleShot(50, lambda: update_waveform_tree(self, capture=False))
             else: QtCore.QTimer.singleShot(50, lambda: update_performance_tree(self, capture=False))
 
+    # --- PHYSICAL RENAME ---
     def on_tree_item_changed(self, item, column):
         if column != 0: return
         tree_widget = item.treeWidget()
@@ -156,7 +164,10 @@ class DocuApp(QtWidgets.QMainWindow):
         if not old_path or not os.path.exists(old_path): return
         
         original_ui_name = item.data(0, Qt.UserRole + 6)
-        new_display_name = item.text(0).replace(" CROPPED", "").strip()
+        
+        # Safely strip any crop tag
+        new_display_name = item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
+        
         if new_display_name == original_ui_name: return
 
         is_folder = item.data(0, Qt.UserRole + 2) == "folder"
@@ -203,11 +214,15 @@ class DocuApp(QtWidgets.QMainWindow):
             
     def revert_item_text(self, tree_widget, item, old_display_name):
         revert_text = old_display_name
-        if item.data(0, Qt.UserRole + 3): revert_text += " CROPPED"
+        if item.data(0, Qt.UserRole + 3): 
+            is_folder = item.data(0, Qt.UserRole + 2) == "folder"
+            revert_text += " [FOLDER CROPPED]" if is_folder else " [IMAGE CROPPED]"
+            
         tree_widget.blockSignals(True)
         item.setText(0, revert_text)
         tree_widget.blockSignals(False)
 
+    # --- CONTEXT MENU LOGIC ---
     def show_context_menu(self, position):
         tree_widget = self.sender()
         item = tree_widget.itemAt(position)
@@ -370,8 +385,13 @@ class DocuApp(QtWidgets.QMainWindow):
         if items:
             for item in items:
                 item.setData(0, Qt.UserRole + 3, crop_data) 
-                base_text = item.text(0).replace(" CROPPED", "")
-                item.setText(0, f"{base_text} CROPPED")
+                
+                # Apply the correct tag based on type
+                base_text = item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
+                is_folder = item.data(0, Qt.UserRole + 2) == "folder"
+                tag = " [FOLDER CROPPED]" if is_folder else " [IMAGE CROPPED]"
+                item.setText(0, f"{base_text}{tag}")
+                
             crop_and_update_preview(self)
         else:
             QtWidgets.QMessageBox.warning(self, "Selection", "Select a folder or file to apply crop.")

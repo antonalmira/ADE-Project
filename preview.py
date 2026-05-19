@@ -71,7 +71,7 @@ def show_file_preview(app):
         return
         
     # --- Update Preview Label Dynamically ---
-    clean_name = item.text(0).replace(" CROPPED", "").strip()
+    clean_name = item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
     app.images_preview_text.setText(f"PREVIEW: {clean_name}")
 
     current = item
