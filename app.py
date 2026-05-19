@@ -55,6 +55,10 @@ class DocuApp(QtWidgets.QMainWindow):
         self.crop_button.clicked.connect(self.save_crop_to_selected)
         self.generate_document_button.clicked.connect(lambda: generate_document(self))
 
+        # Default state: Performance Data tab is open, so disable Crop button initially
+        self.crop_button.setEnabled(False)
+        self.crop_button.setStyleSheet("background-color: #3a3a40; color: #777777;")
+
         # --- UNIFIED TREE SETUP ---
         for tree in [self.performance_tree, self.waveform_tree]:
             tree.itemSelectionChanged.connect(lambda: show_file_preview(self))
@@ -355,6 +359,14 @@ class DocuApp(QtWidgets.QMainWindow):
         width = self.stackedWidget.width()
         height = self.stackedWidget.height()
         offset_x = width if self.stackedWidget.currentIndex() < index else -width
+
+        # Toggle Crop Button visibility based on tab
+        if index == 0:
+            self.crop_button.setEnabled(False)
+            self.crop_button.setStyleSheet("background-color: #3a3a40; color: #777777;")
+        else:
+            self.crop_button.setEnabled(True)
+            self.crop_button.setStyleSheet("")
 
         next_widget.setGeometry(0, 0, width, height)
         next_widget.move(offset_x, 0)
