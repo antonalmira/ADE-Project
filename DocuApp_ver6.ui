@@ -138,7 +138,7 @@
                 <property name="minimumSize"><size><width>110</width><height>0</height></size></property>
                 <property name="text"><string>Add File</string></property>
                </widget></item>
-               <item><widget class="QLineEdit" name="waveforms_path"><property name="placeholderText"><string>Optional: Append folders...</string></property></widget></item>
+               <item><widget class="QLineEdit" name="waveforms_path"></widget></item>
               </layout>
              </item>
              <item>

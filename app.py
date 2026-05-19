@@ -12,7 +12,7 @@ from handlers import (
 )
 from document_handler import generate_document
 from utils import get_resource_path
-from preview import show_file_preview, crop_and_update_preview
+from preview import show_file_preview, crop_and_update_preview, open_expanded_preview
 from list_updater import (
     update_performance_tree, update_waveform_tree,
     capture_wave_state, capture_perf_state,
@@ -55,9 +55,10 @@ class DocuApp(QtWidgets.QMainWindow):
         self.crop_button.clicked.connect(self.save_crop_to_selected)
         self.generate_document_button.clicked.connect(lambda: generate_document(self))
 
-        # Default state: Performance Data tab is open, so disable Crop button initially
-        self.crop_button.setEnabled(False)
-        self.crop_button.setStyleSheet("background-color: #3a3a40; color: #777777;")
+        # --- PREVIEW CLICK LOGIC ---
+        self.file_view.installEventFilter(self)
+        self.file_view.setCursor(Qt.PointingHandCursor)
+        self.file_view.setToolTip("Double-click to expand and edit")
 
         # --- UNIFIED TREE SETUP ---
         for tree in [self.performance_tree, self.waveform_tree]:
@@ -69,7 +70,6 @@ class DocuApp(QtWidgets.QMainWindow):
             tree.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
             tree.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked | QtWidgets.QAbstractItemView.EditKeyPressed)
             
-            # Allow smooth scrolling when dragging an item near the top/bottom edges
             tree.setAutoScroll(True)
             tree.setAutoScrollMargin(35)
             tree.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
@@ -91,6 +91,12 @@ class DocuApp(QtWidgets.QMainWindow):
 
         self.waveforms_path.editingFinished.connect(lambda: update_waveform_tree(self))
         self.populate_templates_dropdown()
+
+    def eventFilter(self, source, event):
+        if source == self.file_view and event.type() == QtCore.QEvent.MouseButtonDblClick:
+            open_expanded_preview(self)
+            return True
+        return super(DocuApp, self).eventFilter(source, event)
 
     # --- PHYSICAL DRAG AND DROP (RELOCATION) ---
     def custom_drop_event(self, event, tree_widget, original_event_call):
@@ -169,7 +175,6 @@ class DocuApp(QtWidgets.QMainWindow):
         
         original_ui_name = item.data(0, Qt.UserRole + 6)
         
-        # Safely strip any crop tag
         new_display_name = item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
         
         if new_display_name == original_ui_name: return
@@ -359,14 +364,6 @@ class DocuApp(QtWidgets.QMainWindow):
         width = self.stackedWidget.width()
         height = self.stackedWidget.height()
         offset_x = width if self.stackedWidget.currentIndex() < index else -width
-
-        # Toggle Crop Button visibility based on tab
-        if index == 0:
-            self.crop_button.setEnabled(False)
-            self.crop_button.setStyleSheet("background-color: #3a3a40; color: #777777;")
-        else:
-            self.crop_button.setEnabled(True)
-            self.crop_button.setStyleSheet("")
 
         next_widget.setGeometry(0, 0, width, height)
         next_widget.move(offset_x, 0)
