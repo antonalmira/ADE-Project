@@ -74,7 +74,8 @@ def build_perf_tree(parent_widget, current_path, metadata):
         if not display_name:
             if is_dir: display_name = item_name
             else:
-                display_name = os.path.splitext(item_name)[0].rstrip('.')
+                # Removed .rstrip('.') to preserve user's intended trailing periods (e.g. Hz.)
+                display_name = os.path.splitext(item_name)[0]
                 if not display_name: display_name = item_name
 
         new_item = QTreeWidgetItem([display_name])
@@ -177,7 +178,8 @@ def build_tree(parent_widget, current_path):
         if not display_name:
             if is_dir: display_name = item_name
             else:
-                display_name = os.path.splitext(item_name)[0].rstrip('.')
+                # Removed .rstrip('.') to preserve user's intended trailing periods (e.g. Hz.)
+                display_name = os.path.splitext(item_name)[0]
                 if not display_name: display_name = item_name
 
         new_item = QTreeWidgetItem([display_name])
