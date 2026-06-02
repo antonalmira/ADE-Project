@@ -18,7 +18,8 @@ def capture_perf_state(app):
                 "crop": item.data(0, Qt.UserRole + 3), 
                 "caption": item.data(0, Qt.UserRole),
                 "custom_name": item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip(),
-                "expanded": item.isExpanded()
+                "expanded": item.isExpanded(),
+                "setup_table": item.data(0, Qt.UserRole + 11)
             }
             if is_folder:
                 order = [item.child(i).data(0, Qt.UserRole + 4) for i in range(item.childCount()) if item.child(i).data(0, Qt.UserRole + 4)]
@@ -74,7 +75,6 @@ def build_perf_tree(parent_widget, current_path, metadata):
         if not display_name:
             if is_dir: display_name = item_name
             else:
-                # Removed .rstrip('.') to preserve user's intended trailing periods (e.g. Hz.)
                 display_name = os.path.splitext(item_name)[0]
                 if not display_name: display_name = item_name
 
@@ -109,14 +109,15 @@ def build_perf_tree(parent_widget, current_path, metadata):
             new_item.setData(0, Qt.UserRole + 10, meta.get("voltage"))
             if is_dir: new_item.setData(0, Qt.UserRole + 11, meta.get("include_setup_table", False))
         else:
-            if is_dir: new_item.setData(0, Qt.UserRole + 11, False)
+            if is_dir: new_item.setData(0, Qt.UserRole + 11, item_state.get("setup_table", False))
 
         if isinstance(parent_widget, QTreeWidgetItem): parent_widget.addChild(new_item)
         else: parent_widget.addTopLevelItem(new_item)
 
         if is_dir:
-            new_item.setExpanded(item_state.get("expanded", True))
             build_perf_tree(new_item, item_path, metadata)
+            # Expand after children are added
+            new_item.setExpanded(item_state.get("expanded", False))
             
     return True
 
@@ -133,7 +134,8 @@ def capture_wave_state(app):
                 "crop": item.data(0, Qt.UserRole + 3), 
                 "caption": item.data(0, Qt.UserRole),
                 "custom_name": item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip(),
-                "expanded": item.isExpanded()
+                "expanded": item.isExpanded(),
+                "setup_table": item.data(0, Qt.UserRole + 11)
             }
             if is_folder:
                 order = [item.child(i).data(0, Qt.UserRole + 4) for i in range(item.childCount()) if item.child(i).data(0, Qt.UserRole + 4)]
@@ -178,7 +180,6 @@ def build_tree(parent_widget, current_path):
         if not display_name:
             if is_dir: display_name = item_name
             else:
-                # Removed .rstrip('.') to preserve user's intended trailing periods (e.g. Hz.)
                 display_name = os.path.splitext(item_name)[0]
                 if not display_name: display_name = item_name
 
@@ -204,13 +205,19 @@ def build_tree(parent_widget, current_path):
         new_item.setData(0, Qt.UserRole + 2, "folder" if is_dir else "file")
         new_item.setData(0, Qt.UserRole + 4, item_name) 
         new_item.setData(0, Qt.UserRole + 6, display_name) 
+        
+        if is_dir:
+            setup_val = item_state.get("setup_table", False)
+            if setup_val is None: setup_val = False
+            new_item.setData(0, Qt.UserRole + 11, setup_val)
 
         if isinstance(parent_widget, QTreeWidgetItem): parent_widget.addChild(new_item)
         else: parent_widget.addTopLevelItem(new_item)
 
         if is_dir:
-            new_item.setExpanded(item_state.get("expanded", True))
             build_tree(new_item, item_path)
+            # Expand after children are added
+            new_item.setExpanded(item_state.get("expanded", False))
 
     return True
 

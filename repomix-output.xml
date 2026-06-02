@@ -53,6 +53,19 @@ handlers.py
 image_utils.py
 list_updater.py
 main.py
+Performance Data/Average and 10% Efficiency/Eff (Table) - 115 VAC.png
+Performance Data/Average and 10% Efficiency/Eff (Table) - 230 VAC.png
+Performance Data/Average and 10% Efficiency/Eff (Table) - 265 VAC.png
+Performance Data/Average and 10% Efficiency/Eff (Table) - 85 VAC.png
+Performance Data/Efficiency vs. Load/Load Eff (Graph).png
+Performance Data/Full Load Efficiency vs. Line/Line Eff (Graph).png
+Performance Data/Line Regulation/Line Reg (Graph).png
+Performance Data/Load Regulation/Load Reg (Graph).png
+Performance Data/metadata.json
+Performance Data/No-Load Input Power/No-load (Graph).png
+Performance Data/Ripple/Ripple (Graph).png
+Performance Data/Stby Eff/Stby Eff (Graph).png
+Performance Data/Stby Pin/Stby Pin (Graph).png
 performance_section.py
 preview.py
 resources/icons/exit.png
@@ -64,19 +77,31 @@ resources/icons/POWI.D-16de9fb7.png
 resources/icons/tardis_icon.ico
 resources/icons/tardis_icon.png
 SAMPLE.PY
+TARDIS.spec
 temp_preview/076a3f791c231fd81eab37f22d3addf4.png
 temp_preview/115 VAC 60 Hz..png
 temp_preview/115Vac FL Running.png
 temp_preview/115Vac FL Startup.png
 temp_preview/115Vac NL Startup.png
+temp_preview/115VAC_FLOAT_NTRL.PNG
+temp_preview/115VAC_FLOATDELTA_NTRL.PNG
+temp_preview/115VAC.png
 temp_preview/1fc55bb0c9eb059ea16e455458553ca4.png
 temp_preview/230 VAC 50 Hz..png
+temp_preview/230Vac FL Running.png
+temp_preview/230Vac FL Startup.png
 temp_preview/230Vac NL Running.png
 temp_preview/230Vac NL Startup.png
+temp_preview/230VAC_FLOAT_LINE.PNG
+temp_preview/230VAC_FLOATDELTA_NTRL.PNG
+temp_preview/230VAC.png
 temp_preview/250c6252bd267defc20e46eff12a0810.png
 temp_preview/265 VAC 50 Hz..png
 temp_preview/265Vac FL Running.png
 temp_preview/265Vac FL Startup.png
+temp_preview/265Vac NL Running.png
+temp_preview/265Vac NL Startup.png
+temp_preview/265VAC.png
 temp_preview/360ecf9e39d843c6071e4093e97dea85.png
 temp_preview/36fcdde5b0d6db8630ecfb734715dc34.png
 temp_preview/4095332e5653a57811503ff70b2ced2d.png
@@ -91,17 +116,45 @@ temp_preview/7f66b8b07106d86b4037b34299adcab7.png
 temp_preview/85 VAC 60 Hz..png
 temp_preview/85Vac FL Running.png
 temp_preview/85Vac FL Startup.png
+temp_preview/85VAC.png
 temp_preview/acc9443eee5dc968fb3b1ef400d03f5e.png
 temp_preview/b075bf7143e51e7bd19f374240288d90.png
+temp_preview/Brown-In_10% Load.png
+temp_preview/Brown-In_Full Load.png
 temp_preview/Brown-Out_10% Load.png
 temp_preview/ec1c6f95c84b4c919f3bb66b8ede7486.png
+temp_preview/Eff (Table) - 115 VAC.png
+temp_preview/Eff (Table) - 230 VAC.png
+temp_preview/Eff (Table) - 265 VAC.png
+temp_preview/Eff (Table) - 85 VAC.png
 temp_preview/fca02901f251082189453cd6cf850ac1.png
+temp_preview/Line Eff (Graph).png
+temp_preview/Line Reg (Graph).png
+temp_preview/Load Eff (Graph).png
+temp_preview/Load Reg (Graph).png
 temp_preview/Load transient 90VAC, 5V, 2.1A.png
 temp_preview/Load transient 90VAC, 5V, 2.4A.png
 temp_preview/Load transient 90VAC, 5V, 3A.png
 temp_preview/Load transient 90VAC, 9V, 1.5A.png
 temp_preview/Load transient 90VAC, 9V, 1.8A.png
+temp_preview/No-load (Graph).png
+temp_preview/Output Voltage Ripple_25% Load_85 VAC.png
+temp_preview/Output Voltage Ripple_50% Load_230 VAC.png
+temp_preview/Output Voltage Ripple_75% Load_115 VAC.png
 temp_preview/PowerRename.png
+temp_preview/Ripple (Graph).png
+temp_preview/Stby Eff (Graph).png
+temp_preview/Stby Pin (Graph).png
+temp_preview/Suge_1kV_90deg_1.png
+temp_preview/Suge_1kV_90deg_2.png
+temp_preview/Surge_1kV_180deg_1.png
+temp_preview/Surge_1kV_180deg.png
+temp_preview/Surge_1kV_90deg.png
+templates/Automotive DER Template.docx
+templates/BridgeSwitch DER Template.docx
+templates/DER-template.docx
+templates/Low Power DER Template (no data).docx
+templates/Low Power DER Template.docx
 test.txt
 utils.py
 waveform_section.py
@@ -110,6 +163,54 @@ word_utils.py
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="TARDIS.spec">
+# -*- mode: python ; coding: utf-8 -*-
+
+
+a = Analysis(
+    ['main.py'],
+    pathex=[],
+    binaries=[],
+    datas=[('DocuApp_ver6.ui', '.'), ('resources', 'resources'), ('templates', 'templates')],
+    hiddenimports=['win32com.client', 'pythoncom', 'openpyxl'],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    noarchive=False,
+    optimize=0,
+)
+pyz = PYZ(a.pure)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='TARDIS',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon=['resources\\icons\\tardis_icon.ico'],
+)
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='TARDIS',
+)
+</file>
 
 <file path=".gitignore">
 dist/
@@ -121,222 +222,6 @@ __pycache__/
 <file path=".repomixignore">
 resource_rc.py
 main.spec
-</file>
-
-<file path="app.py">
-import os
-import sys
-import shutil
-from PyQt5 import QtWidgets, uic, QtCore, QtGui
-from PyQt5.QtCore import Qt, QPoint
-import resource_rc
-
-# Import handlers
-from handlers import (
-    select_bom_file, select_pixls_file, select_performance_file, 
-    add_waveform_folder, clear_waveform_folders, clear_performance_folders
-)
-from document_handler import generate_document
-from utils import get_resource_path
-from preview import show_file_preview, crop_and_update_preview
-from list_updater import update_performance_tree, update_waveform_tree
-
-class DocuApp(QtWidgets.QMainWindow):
-    def __init__(self):
-        super(DocuApp, self).__init__()
-        uic.loadUi(get_resource_path('DocuApp_ver6.ui'), self)
-        
-        icon_path = get_resource_path(os.path.join('resources', 'icons', 'tardis_icon.ico'))
-        self.setWindowIcon(QtGui.QIcon(icon_path))
-        
-        self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.old_pos = None
-
-        for line_edit in [self.upper_input, self.lower_input, self.left_input, self.right_input]:
-            line_edit.setText("0")
-
-        self.tab_group = QtWidgets.QButtonGroup(self)
-        self.tab_group.addButton(self.btn_tab_perf, 0)
-        self.tab_group.addButton(self.btn_tab_wave, 1)
-        self.btn_tab_perf.clicked.connect(lambda: self.switch_tab(0))
-        self.btn_tab_wave.clicked.connect(lambda: self.switch_tab(1))
-
-        self.performancedata_sel.clicked.connect(lambda: select_performance_file(self))
-        self.waveforms_add_folder.clicked.connect(lambda: add_waveform_folder(self))
-        
-        self.refresh_button_perf.clicked.connect(lambda: update_performance_tree(self))
-        self.clear_perf_button.clicked.connect(lambda: clear_performance_folders(self))
-        self.refresh_button_wave.clicked.connect(lambda: update_waveform_tree(self))
-        self.waveforms_clear_folders.clicked.connect(lambda: clear_waveform_folders(self))
-
-        self.exit_button.clicked.connect(self.close)
-        self.minimize_button.clicked.connect(self.showMinimized)
-        self.maximize_button.clicked.connect(self.toggle_maximize)
-        
-        self.crop_button.clicked.connect(self.save_crop_to_selected)
-        self.generate_document_button.clicked.connect(lambda: generate_document(self))
-
-        self.performance_tree.itemSelectionChanged.connect(lambda: show_file_preview(self))
-        self.waveform_tree.itemSelectionChanged.connect(lambda: show_file_preview(self))
-
-        self.performance_tree.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
-        self.performance_tree.setDragEnabled(True)
-        self.performance_tree.setAcceptDrops(True)
-        self.performance_tree.setDropIndicatorShown(True)
-        
-        self.waveform_tree.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
-        self.waveform_tree.setDragEnabled(True)
-        self.waveform_tree.setAcceptDrops(True)
-        self.waveform_tree.setDropIndicatorShown(True)
-
-        # Enable double-click to rename inline
-        self.performance_tree.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked | QtWidgets.QAbstractItemView.EditKeyPressed)
-        self.waveform_tree.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked | QtWidgets.QAbstractItemView.EditKeyPressed)
-
-        # Enable Right-Click Context Menu for Waveforms
-        self.waveform_tree.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.waveform_tree.customContextMenuRequested.connect(self.show_waveform_context_menu)
-
-        if hasattr(self, 'select_bom_button'):
-            self.select_bom_button.clicked.connect(lambda: select_bom_file(self))
-            self.select_pixls_button.clicked.connect(lambda: select_pixls_file(self))
-
-        self.performancedata_path.editingFinished.connect(lambda: update_performance_tree(self))
-        self.waveforms_path.editingFinished.connect(lambda: update_waveform_tree(self))
-
-        self.populate_templates_dropdown()
-
-    # --- NEW CONTEXT MENU LOGIC ---
-    def show_waveform_context_menu(self, position):
-        item = self.waveform_tree.itemAt(position)
-        if not item: return
-        
-        is_folder = item.data(0, Qt.UserRole + 2) == "folder"
-        if not is_folder:
-            item = item.parent() # If right-clicked a file, default to its parent folder
-            if not item: return
-
-        menu = QtWidgets.QMenu()
-        menu.setStyleSheet("""
-            QMenu { background-color: #202025; color: white; border: 1px solid #3a3a40; }
-            QMenu::item { padding: 5px 25px; }
-            QMenu::item:selected { background-color: #0085ca; }
-        """)
-        
-        add_folder_action = menu.addAction("Add New Folder")
-        add_file_action = menu.addAction("Add New File(s)")
-        
-        action = menu.exec_(self.waveform_tree.viewport().mapToGlobal(position))
-        parent_path = item.data(0, Qt.UserRole + 1)
-        
-        if action == add_folder_action:
-            self.create_physical_folder(parent_path)
-        elif action == add_file_action:
-            self.add_physical_files(parent_path)
-
-    def create_physical_folder(self, parent_path):
-        if not parent_path or not os.path.exists(parent_path): return
-        new_path = os.path.join(parent_path, "New Folder")
-        counter = 1
-        while os.path.exists(new_path):
-            new_path = os.path.join(parent_path, f"New Folder ({counter})")
-            counter += 1
-        try:
-            os.makedirs(new_path)
-            update_waveform_tree(self)
-        except Exception as e:
-            print(f"Error creating folder: {e}")
-
-    def add_physical_files(self, parent_path):
-        if not parent_path or not os.path.exists(parent_path): return
-        files, _ = QtWidgets.QFileDialog.getOpenFileNames(self, "Select Images", "", "Images (*.png *.jpg *.jpeg *.bmp)")
-        if not files: return
-        for f in files:
-            try:
-                shutil.copy(f, parent_path)
-            except Exception as e:
-                print(f"Error copying {f}: {e}")
-        update_waveform_tree(self)
-    # ------------------------------
-
-    def switch_tab(self, index):
-        if self.stackedWidget.currentIndex() == index: return
-        current_widget = self.stackedWidget.currentWidget()
-        next_widget = self.stackedWidget.widget(index)
-        width = self.stackedWidget.width()
-        height = self.stackedWidget.height()
-        offset_x = width if self.stackedWidget.currentIndex() < index else -width
-
-        next_widget.setGeometry(0, 0, width, height)
-        next_widget.move(offset_x, 0)
-        next_widget.show()
-        next_widget.raise_()
-
-        self.anim_group = QtCore.QParallelAnimationGroup()
-        anim_out = QtCore.QPropertyAnimation(current_widget, b"pos")
-        anim_out.setDuration(300); anim_out.setEasingCurve(QtCore.QEasingCurve.InOutQuart)
-        anim_out.setStartValue(QtCore.QPoint(0, 0)); anim_out.setEndValue(QtCore.QPoint(-offset_x, 0))
-        
-        anim_in = QtCore.QPropertyAnimation(next_widget, b"pos")
-        anim_in.setDuration(300); anim_in.setEasingCurve(QtCore.QEasingCurve.InOutQuart)
-        anim_in.setStartValue(QtCore.QPoint(offset_x, 0)); anim_in.setEndValue(QtCore.QPoint(0, 0))
-        
-        self.anim_group.addAnimation(anim_out); self.anim_group.addAnimation(anim_in)
-        self.anim_group.finished.connect(lambda: self.stackedWidget.setCurrentIndex(index))
-        self.anim_group.start()
-
-    def save_crop_to_selected(self):
-        wave_items = self.waveform_tree.selectedItems()
-        perf_items = self.performance_tree.selectedItems()
-        
-        crop_data = {
-            'left': self.left_input.text() or '0',
-            'top': self.upper_input.text() or '0',
-            'right': self.right_input.text() or '0',
-            'bottom': self.lower_input.text() or '0'
-        }
-
-        item = None
-        if wave_items: item = wave_items[0]
-        elif perf_items: item = perf_items[0]
-        
-        if item:
-            item.setData(0, Qt.UserRole + 3, crop_data) 
-            base_text = item.text(0).replace(" [CROP SET]", "")
-            item.setText(0, f"{base_text} [CROP SET]")
-            crop_and_update_preview(self)
-        else:
-            QtWidgets.QMessageBox.warning(self, "Selection", "Select a folder or file to apply crop.")
-
-    def populate_templates_dropdown(self):
-        if getattr(sys, 'frozen', False): base_path = sys._MEIPASS
-        else: base_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-        templates_folder = os.path.join(base_path, "templates")
-        self.template_dropdown.clear()
-        if os.path.exists(templates_folder):
-            template_files = [f for f in os.listdir(templates_folder) if f.endswith('.docx')]
-            if template_files: self.template_dropdown.addItems(template_files)
-            else: self.template_dropdown.addItem("No templates found"); self.template_dropdown.setEnabled(False)
-        else:
-            self.template_dropdown.addItem("Templates folder missing!"); self.template_dropdown.setEnabled(False)
-
-    def toggle_maximize(self):
-        if self.isMaximized(): self.showNormal()
-        else: self.showMaximized()
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            if self.headerr.underMouse(): self.old_pos = event.globalPos()
-
-    def mouseMoveEvent(self, event):
-        if self.old_pos:
-            delta = QPoint(event.globalPos() - self.old_pos)
-            self.move(self.x() + delta.x(), self.y() + delta.y())
-            self.old_pos = event.globalPos()
-
-    def mouseReleaseEvent(self, event):
-        self.old_pos = None
 </file>
 
 <file path="chart_extractor.py">
@@ -412,259 +297,6 @@ def save_chart_screenshots(app, headless=True, progress_callback=None):
             excel.Quit()
 </file>
 
-<file path="DocuApp_ver6.ui">
-<?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>1280</width>
-    <height>750</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>TARDIS</string>
-  </property>
-  <property name="styleSheet">
-   <string notr="true">
-    QMainWindow { background: transparent; }
-    QWidget#centralwidget { background: #16161a; border: 1px solid #3a3a40; border-radius: 12px; }
-    QFrame#headerr, QFrame#footer { background: transparent; border: none; }
-    QFrame#selectionframe, QFrame#generate_frame { background: #202025; border: 1px solid #3a3a40; border-radius: 8px; }
-    
-    #centralwidget QPushButton { padding: 0px 15px; background: #0085ca; color: white; border-radius: 5px; font-weight: bold; min-height: 28px; }
-    #centralwidget QPushButton:hover { background: #3c649f; }
-    
-    #headerr QPushButton { padding: 0px; }
-    #crop_button { padding: 0px; }
-    
-    QPushButton#btn_tab_perf, QPushButton#btn_tab_wave {
-        padding: 0px; background-color: transparent; color: #777777; border: none; border-bottom: 3px solid transparent; border-radius: 0px; font-size: 14px;
-    }
-    QPushButton#btn_tab_perf:hover, QPushButton#btn_tab_wave:hover { background-color: #2a2a30; }
-    QPushButton#btn_tab_perf:checked, QPushButton#btn_tab_wave:checked { color: white; border-bottom: 3px solid #0085ca; }
-
-    #centralwidget QLineEdit { background: #1a1a1e; color: #e0e0e0; border-radius: 4px; padding-left: 5px; border: 1px solid #3a3a40; }
-    #centralwidget QListWidget, #centralwidget QTreeWidget { background: #121214; color: #f0f0f0; border: 1px solid #3a3a40; border-radius: 5px; }
-    #centralwidget QLabel { color: white; border: none; }
-    
-    /* PERFECT ALIGNMENT: 15px left (matches bottom container), 6px top (centers it) */
-    QLabel#data_exporter { padding-left: 6px; padding-top: 12px; }
-   </string>
-  </property>
-  <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_main">
-    <property name="spacing"><number>0</number></property>
-    <property name="margin"><number>0</number></property>
-    <item>
-     <widget class="QFrame" name="headerr">
-      <property name="minimumSize"><size><width>0</width><height>50</height></size></property>
-      <layout class="QHBoxLayout" name="horizontalLayout_header">
-       <item><widget class="QLabel" name="data_exporter"><property name="font"><font><family>Bahnschrift</family><pointsize>18</pointsize><bold>true</bold></font></property><property name="text"><string>T.A.R.D.I.S.</string></property></widget></item>
-       <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
-       <item><widget class="QPushButton" name="minimize_button"><property name="maximumSize"><size><width>30</width><height>30</height></size></property><property name="text"><string>—</string></property></widget></item>
-       <item><widget class="QPushButton" name="maximize_button"><property name="maximumSize"><size><width>30</width><height>30</height></size></property><property name="text"><string>▢</string></property></widget></item>
-       <item><widget class="QPushButton" name="exit_button"><property name="maximumSize"><size><width>30</width><height>30</height></size></property><property name="text"><string>✕</string></property></widget></item>
-      </layout>
-     </widget>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_body">
-      <property name="margin"><number>15</number></property>
-      <property name="spacing"><number>15</number></property>
-      
-      <item>
-       <widget class="QFrame" name="selectionframe">
-        <layout class="QVBoxLayout" name="verticalLayout_selection">
-         <property name="margin"><number>15</number></property>
-         <property name="spacing"><number>15</number></property>
-         
-         <item>
-          <layout class="QHBoxLayout" name="tab_layout">
-           <item>
-            <widget class="QPushButton" name="btn_tab_perf">
-             <property name="minimumSize"><size><width>0</width><height>40</height></size></property>
-             <property name="text"><string>PERFORMANCE DATA</string></property>
-             <property name="checkable"><bool>true</bool></property>
-             <property name="checked"><bool>true</bool></property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="btn_tab_wave">
-             <property name="minimumSize"><size><width>0</width><height>40</height></size></property>
-             <property name="text"><string>WAVEFORMS</string></property>
-             <property name="checkable"><bool>true</bool></property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         
-         <item>
-          <widget class="QStackedWidget" name="stackedWidget">
-           <property name="currentIndex"><number>0</number></property>
-           
-           <!-- PAGE 0: PERFORMANCE DATA -->
-           <widget class="QWidget" name="page_perf">
-            <layout class="QVBoxLayout" name="layout_page_perf">
-             <property name="margin"><number>0</number></property>
-             <item>
-              <layout class="QHBoxLayout">
-               <item><widget class="QPushButton" name="performancedata_sel">
-                <property name="minimumSize"><size><width>110</width><height>0</height></size></property>
-                <property name="text"><string>Add File</string></property>
-               </widget></item>
-               <item><widget class="QLineEdit" name="performancedata_path"></widget></item>
-              </layout>
-             </item>
-             <item>
-              <widget class="QTreeWidget" name="performance_tree">
-               <property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>1</horstretch><verstretch>1</verstretch></sizepolicy></property>
-               <property name="headerHidden"><bool>true</bool></property>
-               <column><property name="text"><string>Name</string></property></column>
-              </widget>
-             </item>
-             <item>
-              <layout class="QHBoxLayout">
-               <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
-               <item><widget class="QPushButton" name="refresh_button_perf">
-                <property name="minimumSize"><size><width>160</width><height>35</height></size></property>
-                <property name="text"><string>REFRESH LIST</string></property>
-               </widget></item>
-               <item><widget class="QPushButton" name="clear_perf_button">
-                <property name="minimumSize"><size><width>160</width><height>35</height></size></property>
-                <property name="text"><string>CLEAR DATA</string></property>
-               </widget></item>
-               <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
-              </layout>
-             </item>
-            </layout>
-           </widget>
-           
-           <!-- PAGE 1: WAVEFORMS -->
-           <widget class="QWidget" name="page_wave">
-            <layout class="QVBoxLayout" name="layout_page_wave">
-             <property name="margin"><number>0</number></property>
-             <item>
-              <layout class="QHBoxLayout">
-               <item><widget class="QPushButton" name="waveforms_add_folder">
-                <property name="minimumSize"><size><width>110</width><height>0</height></size></property>
-                <property name="text"><string>Add File</string></property>
-               </widget></item>
-               <item><widget class="QLineEdit" name="waveforms_path"><property name="placeholderText"><string>Optional: Append folders...</string></property></widget></item>
-              </layout>
-             </item>
-             <item>
-              <widget class="QTreeWidget" name="waveform_tree">
-               <property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>1</horstretch><verstretch>1</verstretch></sizepolicy></property>
-               <property name="headerHidden"><bool>true</bool></property>
-               <column><property name="text"><string>Name</string></property></column>
-              </widget>
-             </item>
-             <item>
-              <layout class="QHBoxLayout">
-               <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
-               <item><widget class="QPushButton" name="refresh_button_wave">
-                <property name="minimumSize"><size><width>160</width><height>35</height></size></property>
-                <property name="text"><string>REFRESH LIST</string></property>
-               </widget></item>
-               <item><widget class="QPushButton" name="waveforms_clear_folders">
-                <property name="minimumSize"><size><width>160</width><height>35</height></size></property>
-                <property name="text"><string>CLEAR WAVEFORMS</string></property>
-               </widget></item>
-               <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
-              </layout>
-             </item>
-            </layout>
-           </widget>
-           
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      
-      <!-- RIGHT PANEL (Fixed Preview) -->
-      <item>
-       <widget class="QFrame" name="generate_frame">
-        <property name="maximumSize"><size><width>400</width><height>16777215</height></size></property>
-        <layout class="QVBoxLayout" name="verticalLayout_gen">
-         <property name="margin"><number>15</number></property>
-         <item><widget class="QLabel" name="images_preview_text">
-          <property name="font"><font><bold>true</bold><pointsize>11</pointsize></font></property>
-          <property name="text"><string>PREVIEW</string></property>
-          <property name="alignment"><set>Qt::AlignCenter</set></property>
-         </widget></item>
-         <item><widget class="QLabel" name="file_view">
-          <property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>0</horstretch><verstretch>1</verstretch></sizepolicy></property>
-          <property name="minimumSize"><size><width>0</width><height>220</height></size></property>
-          <property name="styleSheet"><string>background: #0b0b0d; border-radius: 4px; border: 1px solid #3a3a40;</string></property>
-         </widget></item>
-         <item>
-          <layout class="QGridLayout" name="gridLayout_crop">
-           <item row="0" column="0"><widget class="QLabel" name="tl"><property name="text"><string>Up/Down:</string></property></widget></item>
-           <item row="0" column="1"><widget class="QLineEdit" name="upper_input"></widget></item>
-           <item row="0" column="2"><widget class="QLineEdit" name="lower_input"></widget></item>
-           <item row="1" column="0"><widget class="QLabel" name="tr"><property name="text"><string>Left/Right:</string></property></widget></item>
-           <item row="1" column="1"><widget class="QLineEdit" name="left_input"></widget></item>
-           <item row="1" column="2"><widget class="QLineEdit" name="right_input"></widget></item>
-           <item row="0" column="3" rowspan="2"><widget class="QPushButton" name="crop_button"><property name="minimumSize"><size><width>55</width><height>55</height></size></property><property name="text"><string>CROP</string></property></widget></item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="layout_template">
-           <item><widget class="QLabel" name="template_label"><property name="text"><string>Template:</string></property></widget></item>
-           <item><widget class="QComboBox" name="template_dropdown">
-            <property name="minimumSize"><size><width>0</width><height>30</height></size></property>
-            <property name="styleSheet"><string>QComboBox { background: #1a1a1e; color: white; border: 1px solid #3a3a40; border-radius: 4px; padding-left: 5px; } QComboBox::drop-down { border: none; }</string></property>
-           </widget></item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="layout_bom_sel">
-           <item><widget class="QPushButton" name="select_bom_button">
-            <property name="minimumSize"><size><width>80</width><height>0</height></size></property>
-            <property name="maximumSize"><size><width>80</width><height>16777215</height></size></property>
-            <property name="text"><string>BOM</string></property>
-           </widget></item>
-           <item><widget class="QLineEdit" name="bom_path_display"><property name="placeholderText"><string>Optional: Selected BOM file...</string></property><property name="readOnly"><bool>true</bool></property></widget></item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="layout_pixls_sel">
-           <item><widget class="QPushButton" name="select_pixls_button">
-            <property name="minimumSize"><size><width>80</width><height>0</height></size></property>
-            <property name="maximumSize"><size><width>80</width><height>16777215</height></size></property>
-            <property name="text"><string>PIXI</string></property>
-           </widget></item>
-           <item><widget class="QLineEdit" name="pix_path_display"><property name="placeholderText"><string>Optional: Selected PIXls file...</string></property><property name="readOnly"><bool>true</bool></property></widget></item>
-          </layout>
-         </item>
-         <item><widget class="QPushButton" name="generate_document_button"><property name="minimumSize"><size><width>0</width><height>50</height></size></property><property name="font"><font><bold>true</bold></font></property><property name="text"><string>Generate Document</string></property></widget></item>
-        </layout>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <widget class="QFrame" name="footer">
-      <property name="minimumSize"><size><width>0</width><height>30</height></size></property>
-      <layout class="QHBoxLayout" name="horizontalLayout_footer">
-       <item><widget class="QLabel" name="l_copy"><property name="styleSheet"><string>color: #777;</string></property><property name="text"><string>© 2025 Power Integrations</string></property></widget></item>
-       <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
-      </layout>
-     </widget>
-    </item>
-   </layout>
-  </widget>
- </widget>
- <resources/>
- <connections/>
-</ui>
-</file>
-
 <file path="document_generator.py">
 import os
 import re
@@ -675,6 +307,9 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_ALIGN_VERTICAL, WD_ROW_HEIGHT_RULE
 from docx.oxml.shared import OxmlElement, qn
 from PyQt5.QtCore import Qt
+
+import win32com.client
+import pythoncom
 
 from performance_section import PerformanceSection
 from waveform_section import WaveformSection
@@ -744,15 +379,45 @@ class DocGenerator:
         self.performance = PerformanceSection(app, self.temp_dir)
         self.waveform = WaveformSection(app, self.temp_dir)
 
+    def _update_word_fields(self, filepath):
+        """Silently opens Word to force-update all SEQ Fields (Figure/Table numbers) and TOCs."""
+        word = None
+        try:
+            word = win32com.client.DispatchEx("Word.Application")
+            word.Visible = False
+            word.DisplayAlerts = False
+            
+            doc_com = word.Documents.Open(os.path.abspath(filepath))
+            
+            # Select all and update fields (equivalent to Ctrl+A -> F9)
+            word.Selection.WholeStory()
+            word.Selection.Fields.Update()
+            
+            # Update Table of Contents if it exists
+            for toc in doc_com.TablesOfContents:
+                toc.Update()
+                
+            # Update Table of Figures if it exists
+            for tof in doc_com.TablesOfFigures:
+                tof.Update()
+                
+            doc_com.Close(SaveChanges=True)
+        except Exception as e:
+            print(f"Non-critical Error: Could not automatically update Word fields: {e}")
+        finally:
+            if word:
+                try:
+                    word.Quit()
+                except:
+                    pass
+
     def generate(self, progress_callback=None):
         doc = Document(self.template_path)
         
         # --- PERFORMANCE DATA ---
         if self.app.performance_tree.topLevelItemCount() > 0:
             if progress_callback: progress_callback(70, "Writing Performance Data...")
-            perf_data = self.performance.get_data()
-            if perf_data:
-                self.performance.add_section(doc, doc.element.body[-1], perf_data)
+            self.performance.add_section(doc, doc.element.body[-1])
 
         # --- WAVEFORMS ---
         if self.app.waveform_tree.topLevelItemCount() > 0:
@@ -768,7 +433,13 @@ class DocGenerator:
             if progress_callback: progress_callback(95, "Appending Design Spreadsheet...")
             add_pixls_designer_table(doc, self.app.pixls_file_path)
 
+        # Save the raw output
         doc.save(self.output_path)
+        
+        # Force Word to calculate Figure/Table numbers!
+        if progress_callback: progress_callback(98, "Calculating Figure and Table numbers...")
+        self._update_word_fields(self.output_path)
+
         os.startfile(self.output_path)
         remove_directory(self.temp_dir)
 
@@ -1362,7 +1033,14 @@ def peek_table_voltages(file_path, sheet_name):
 
 <file path="handlers.py">
 import os
-from PyQt5.QtWidgets import QFileDialog
+import shutil
+import json
+import re
+from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtWidgets import QFileDialog, QProgressDialog, QMessageBox
+import win32com.client
+import pythoncom
+from excel_utils import peek_table_voltages
 from list_updater import update_performance_tree, update_waveform_tree
 
 def select_template_file(app):
@@ -1376,23 +1054,23 @@ def select_template_file(app):
         app.template_path_display.setText(file)
         app.template_path_display.setToolTip(file)
 
-def select_performance_file(app):
-    """Now selects a single Excel file instead of a folder."""
-    file, _ = QFileDialog.getOpenFileName(app, "Select Performance Data File", "", "Excel Files (*.xlsx *.xls *.xlsm)")
-    if file:
-        app.performancedata_path.setText(file)
-        update_performance_tree(app)
-
-def clear_performance_folders(app):
-    app.performancedata_path.clear()
-    app.performance_tree.clear()
-
 def add_waveform_folder(app):
-    folder = QFileDialog.getExistingDirectory(app, "Add Waveform Folder")
+    # Restored to Native Windows Explorer. 
+    # Note: Native Windows limits to 1 folder per selection, but we append them smoothly.
+    folder = QFileDialog.getExistingDirectory(app, "Select Waveform Folder", "")
+    
     if folder:
+        folder = os.path.normpath(folder)
         current = app.waveforms_path.text().strip()
-        if current: app.waveforms_path.setText(f"{current}; {folder}")
-        else: app.waveforms_path.setText(folder)
+        
+        if current:
+            existing_folders = [p.strip() for p in current.split(';') if p.strip()]
+            if folder not in existing_folders:
+                existing_folders.append(folder)
+            app.waveforms_path.setText("; ".join(existing_folders))
+        else:
+            app.waveforms_path.setText(folder)
+            
         update_waveform_tree(app)
 
 def clear_waveform_folders(app):
@@ -1404,8 +1082,182 @@ def select_bom_file(app):
     if file: app.bom_path_display.setText(file)
 
 def select_pixls_file(app):
-    file, _ = QFileDialog.getOpenFileName(app, "Select Design Spreadsheet (PIXls)", "", "Excel Files (*.xlsx *.xls)")
+    file, _ = QFileDialog.getOpenFileName(app, "Select Design Spreadsheet (PIXLs)", "", "Excel Files (*.xlsx *.xls)")
     if file: app.pix_path_display.setText(file)
+
+def clear_performance_folders(app):
+    app.performancedata_path.clear()
+    app.performance_tree.clear()
+    perf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Performance Data")
+    if os.path.exists(perf_dir): shutil.rmtree(perf_dir)
+
+
+# --- PERFORMANCE DATA EXTRACTION WORKER ---
+
+def _map_sheet_to_category(sheet_name):
+    name_lower = sheet_name.lower().replace("-", " ").replace("_", " ")
+    if "no load" in name_lower: return "No-Load Input Power"
+    if "line eff" in name_lower: return "Full Load Efficiency vs. Line"
+    if "load eff" in name_lower or "efficiency vs" in name_lower: return "Efficiency vs. Load"
+    if "line reg" in name_lower: return "Line Regulation"
+    if "load reg" in name_lower or "load ref" in name_lower: return "Load Regulation"
+    if "eff" in name_lower and "table" in name_lower: return "Average and 10% Efficiency"
+    if "average" in name_lower or "10%" in name_lower: return "Average and 10% Efficiency"
+    return re.sub(r'\((Graph|Table|graph|table)\)', '', name_lower).strip().title()
+
+class PerfImportWorker(QThread):
+    progress = pyqtSignal(int, str)
+    finished = pyqtSignal(bool, str)
+
+    def __init__(self, excel_paths, perf_dir):
+        super().__init__()
+        # Allow handling a single path or a list of paths
+        if isinstance(excel_paths, str):
+            self.excel_paths = [excel_paths]
+        else:
+            self.excel_paths = excel_paths
+        self.perf_dir = perf_dir
+
+    def run(self):
+        pythoncom.CoInitialize()
+        excel = None
+        try:
+            self.progress.emit(5, "Opening Excel...")
+            excel = win32com.client.DispatchEx("Excel.Application")
+            excel.Visible = False
+            excel.DisplayAlerts = False
+            
+            os.makedirs(self.perf_dir, exist_ok=True)
+            metadata = {}
+            
+            total_files = len(self.excel_paths)
+            if total_files == 0:
+                raise Exception("No files selected.")
+                
+            for file_idx, excel_path in enumerate(self.excel_paths):
+                base_pct = 5 + (file_idx / total_files) * 90
+                next_pct = 5 + ((file_idx + 1) / total_files) * 90
+                
+                filename = os.path.basename(excel_path)
+                self.progress.emit(int(base_pct), f"Processing {filename}...")
+                
+                wb = excel.Workbooks.Open(os.path.abspath(excel_path), ReadOnly=True)
+                sheets = [s for s in wb.Sheets if re.search(r'\((Graph|Table)\)', s.Name, re.IGNORECASE)]
+                
+                if not sheets:
+                    wb.Close(SaveChanges=False)
+                    continue
+                
+                for i, sheet in enumerate(sheets):
+                    pct = int(base_pct + (i / len(sheets)) * (next_pct - base_pct))
+                    self.progress.emit(pct, f"Extracting {sheet.Name} from {filename}...")
+                    
+                    category = _map_sheet_to_category(sheet.Name)
+                    cat_dir = os.path.join(self.perf_dir, category)
+                    os.makedirs(cat_dir, exist_ok=True)
+                    
+                    is_table = "(Table)" in sheet.Name
+                    
+                    png_name = f"{sheet.Name}.png"
+                    if total_files > 1:
+                        base_filename = os.path.splitext(filename)[0]
+                        png_name = f"{base_filename} - {sheet.Name}.png"
+                        
+                    png_path = os.path.abspath(os.path.join(cat_dir, png_name))
+                    
+                    try:
+                        if is_table:
+                            rng = sheet.UsedRange
+                            rng.CopyPicture(Appearance=1, Format=2)
+                            chart_obj = sheet.ChartObjects().Add(0, 0, rng.Width, rng.Height)
+                            chart_obj.Chart.Paste()
+                            chart_obj.Chart.Export(png_path, "PNG")
+                            chart_obj.Delete()
+                        else:
+                            if sheet.Type in [-4169, 3]: sheet.Export(png_path, "PNG")
+                            elif sheet.ChartObjects().Count > 0: sheet.ChartObjects(1).Chart.Export(png_path, "PNG")
+                    except Exception as e:
+                        print(f"Failed to export png for {sheet.Name}: {e}")
+                        
+                    if not os.path.exists(png_path): continue
+
+                    if is_table:
+                        voltages = peek_table_voltages(excel_path, sheet.Name)
+                        if voltages:
+                            for volt in voltages:
+                                split_name = f"{sheet.Name} - {volt} VAC"
+                                if total_files > 1:
+                                    base_filename = os.path.splitext(filename)[0]
+                                    split_name = f"{base_filename} - {split_name}"
+                                    
+                                split_png = os.path.abspath(os.path.join(cat_dir, f"{split_name}.png"))
+                                shutil.copy(png_path, split_png) 
+                                metadata[split_png] = {
+                                    "type": "table", "excel_path": excel_path,
+                                    "sheet_name": sheet.Name, "voltage": volt,
+                                    "original_name": f"{split_name}.png"
+                                }
+                            os.remove(png_path) 
+                            continue
+                            
+                    metadata[png_path] = {
+                        "type": "table" if is_table else "graph",
+                        "excel_path": excel_path,
+                        "sheet_name": sheet.Name,
+                        "voltage": None,
+                        "original_name": png_name
+                    }
+                    
+                wb.Close(SaveChanges=False)
+                
+            with open(os.path.join(self.perf_dir, "metadata.json"), "w") as f:
+                json.dump(metadata, f)
+                
+            self.progress.emit(100, "Done!")
+            self.finished.emit(True, "Success")
+        except Exception as e:
+            self.finished.emit(False, str(e))
+        finally:
+            if excel:
+                try:
+                    excel.Quit()
+                except:
+                    pass
+            pythoncom.CoUninitialize()
+
+
+def update_perf_progress(app, val, text):
+    if hasattr(app, 'progress_dialog'):
+        app.progress_dialog.setValue(val)
+        app.progress_dialog.setLabelText(text)
+
+def select_performance_file(app):
+    # Native Multiple selection works perfectly here because these are FILES, not folders.
+    files, _ = QFileDialog.getOpenFileNames(app, "Select Performance Data File(s)", "", "Excel Files (*.xlsx *.xls *.xlsm)")
+    if files:
+        app.performancedata_path.setText("; ".join(files))
+        
+        perf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Performance Data")
+        if os.path.exists(perf_dir): shutil.rmtree(perf_dir)
+        
+        app.progress_dialog = QProgressDialog("Importing Excel and Generating Structure...", "Cancel", 0, 100, app)
+        app.progress_dialog.setWindowTitle("Processing")
+        app.progress_dialog.setModal(True)
+        app.progress_dialog.setMinimumDuration(0)
+        app.progress_dialog.show()
+        
+        app.perf_worker = PerfImportWorker(files, perf_dir)
+        app.perf_worker.progress.connect(lambda val, text: update_perf_progress(app, val, text))
+        app.perf_worker.finished.connect(lambda s, m: on_perf_import_finished(app, s, m))
+        app.perf_worker.start()
+        
+def on_perf_import_finished(app, success, msg):
+    if hasattr(app, 'progress_dialog'):
+        app.progress_dialog.close()
+    if success:
+        update_performance_tree(app)
+    else:
+        QMessageBox.warning(app, "Error", f"Import failed: {msg}")
 </file>
 
 <file path="image_utils.py">
@@ -1455,246 +1307,6 @@ def crop_and_save(image_path, crop_left=0, crop_top=0, crop_right=0, crop_bottom
         return None
 </file>
 
-<file path="list_updater.py">
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QBrush, QColor, QFont
-from PyQt5.QtWidgets import QListWidgetItem, QTreeWidgetItem
-import os
-import re
-import json
-from pathlib import Path
-from utils import get_resource_path, ensure_directory
-from excel_utils import peek_table_voltages
-
-# --- PERFORMANCE CONFIGURATION ---
-DEFAULT_PERFORMANCE = {
-    "efficiency test": "Efficiency Test", "line regulation": "Line Regulation Test", "load regulation": "Load Regulation",
-    "no load": "No load Input Power Test", "power factor": "Power Factor", "load transient": "Load Transient Response",
-    "output voltage": "Output Voltage Distortion", "line input": "Line Input Harmonic Content",
-    "led dimming": "LED Dimming Test", "thermal test": "Thermal Test", "standby input": "Standby Input Power"
-}
-
-config_dir = os.path.join(str(Path.home()), '.docuapp')
-ensure_directory(config_dir)
-user_perf_path = os.path.join(config_dir, 'performancedata_testnames.json')
-bundled_perf_path = get_resource_path('performancedata_testnames.json')
-performancedata_testnames = DEFAULT_PERFORMANCE.copy()
-
-if os.path.exists(user_perf_path):
-    try:
-        with open(user_perf_path, 'r', encoding='utf-8') as f: performancedata_testnames = json.load(f)
-    except Exception: pass
-elif os.path.exists(bundled_perf_path):
-    try:
-        with open(bundled_perf_path, 'r', encoding='utf-8') as f: performancedata_testnames = json.load(f)
-    except Exception: pass
-
-
-# --- PERFORMANCE TREE ENGINE & STATE CACHE ---
-
-global_perf_state = {}
-
-def capture_perf_state(app):
-    global global_perf_state
-    for i in range(app.performance_tree.topLevelItemCount()):
-        parent = app.performance_tree.topLevelItem(i)
-        parent_name = parent.text(0).replace(" [CROP SET]", "")
-        
-        global_perf_state[parent_name] = {"check_state": parent.checkState(0), "order": []}
-        for j in range(parent.childCount()):
-            child = parent.child(j)
-            node_name = child.text(0).replace(" [CROP SET]", "")
-            global_perf_state[parent_name]["order"].append(node_name)
-            global_perf_state[node_name] = {
-                "check_state": child.checkState(0),
-                "crop": child.data(0, Qt.UserRole + 3),
-                "caption": child.data(0, Qt.UserRole),
-                "custom_name": child.text(0).replace(" [CROP SET]", "") # Save UI renames
-            }
-
-def get_excel_sheets(file_path):
-    import win32com.client
-    import pythoncom
-    pythoncom.CoInitialize()
-    sheets = []
-    excel = None
-    try:
-        excel = win32com.client.DispatchEx("Excel.Application")
-        excel.Visible = False
-        excel.DisplayAlerts = False
-        wb = excel.Workbooks.Open(os.path.abspath(file_path), ReadOnly=True)
-        for sheet in wb.Sheets:
-            sheets.append(sheet.Name)
-        wb.Close(SaveChanges=False)
-    except Exception as e:
-        print(f"Failed to read sheets: {e}")
-    finally:
-        if excel: excel.Quit()
-        pythoncom.CoUninitialize()
-    return sheets
-
-def update_performance_tree(app):
-    capture_perf_state(app)
-    app.performance_tree.clear()
-
-    excel_path = app.performancedata_path.text().strip()
-    if not excel_path or not os.path.isfile(excel_path): return
-
-    sheet_names = get_excel_sheets(excel_path)
-    
-    target_sheets = [s for s in sheet_names if re.search(r'\((Graph|Table)\)', s, re.IGNORECASE)]
-    if not target_sheets: return
-
-    file_name = os.path.basename(excel_path)
-    parent_state = global_perf_state.get(file_name, {})
-    saved_order = parent_state.get("order", [])
-
-    file_node = QTreeWidgetItem([file_name])
-    file_node.setFlags(file_node.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsAutoTristate | Qt.ItemIsDropEnabled)
-    file_node.setCheckState(0, parent_state.get("check_state", Qt.Checked))
-    file_node.setData(0, Qt.UserRole + 1, excel_path) 
-    file_node.setData(0, Qt.UserRole + 2, "folder") 
-    file_node.setExpanded(True)
-
-    final_nodes = []
-    for sheet in target_sheets:
-        if "(Table)" in sheet:
-            voltages = peek_table_voltages(excel_path, sheet)
-            if voltages:
-                for volt in voltages:
-                    final_nodes.append((f"{sheet} - {volt} VAC", sheet, volt))
-            else:
-                final_nodes.append((sheet, sheet, None))
-        else:
-            final_nodes.append((sheet, sheet, None))
-
-    final_nodes.sort(key=lambda x: saved_order.index(x[0]) if x[0] in saved_order else 999999)
-
-    for node_name, sheet, volt in final_nodes:
-        sheet_state = global_perf_state.get(node_name, {})
-        
-        # Restore renamed string if it exists
-        display_name = sheet_state.get("custom_name", node_name)
-        sheet_item = QTreeWidgetItem([display_name])
-        
-        # ADDED ItemIsEditable flag
-        sheet_item.setFlags((sheet_item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsDragEnabled | Qt.ItemIsEditable) & ~Qt.ItemIsDropEnabled)
-        sheet_item.setCheckState(0, sheet_state.get("check_state", Qt.Checked))
-        
-        if sheet_state.get("crop"):
-            sheet_item.setData(0, Qt.UserRole + 3, sheet_state["crop"])
-            sheet_item.setText(0, f"{display_name} [CROP SET]")
-        
-        cap = sheet_state.get("caption")
-        if cap:
-            sheet_item.setData(0, Qt.UserRole, cap)
-            sheet_item.setBackground(0, Qt.darkBlue)
-            
-        sheet_item.setData(0, Qt.UserRole + 1, excel_path)
-        sheet_item.setData(0, Qt.UserRole + 2, "file") 
-        sheet_item.setData(0, Qt.UserRole + 4, sheet) 
-        sheet_item.setData(0, Qt.UserRole + 5, volt)  
-
-        file_node.addChild(sheet_item)
-        
-    app.performance_tree.addTopLevelItem(file_node)
-
-
-# --- WAVEFORM N-TIER ENGINE & STATE CACHE ---
-
-global_wave_state = {}
-
-def capture_wave_state(app):
-    global global_wave_state
-    def process_item(item):
-        item_path = item.data(0, Qt.UserRole + 1)
-        is_folder = item.data(0, Qt.UserRole + 2) == "folder"
-        if item_path:
-            global_wave_state[item_path] = {
-                "check_state": item.checkState(0), 
-                "crop": item.data(0, Qt.UserRole + 3), 
-                "caption": item.data(0, Qt.UserRole),
-                "custom_name": item.text(0).replace(" [CROP SET]", "") # Save UI renames
-            }
-            if is_folder:
-                order = [item.child(i).data(0, Qt.UserRole + 4) for i in range(item.childCount()) if item.child(i).data(0, Qt.UserRole + 4)]
-                global_wave_state[item_path]["order"] = order
-                for i in range(item.childCount()): process_item(item.child(i))
-
-    root_paths = {os.path.dirname(app.waveform_tree.topLevelItem(i).data(0, Qt.UserRole + 1)) 
-                  for i in range(app.waveform_tree.topLevelItemCount()) if app.waveform_tree.topLevelItem(i).data(0, Qt.UserRole + 1)}
-            
-    for rp in root_paths:
-        if rp not in global_wave_state: global_wave_state[rp] = {}
-        global_wave_state[rp]["order"] = [app.waveform_tree.topLevelItem(i).data(0, Qt.UserRole + 4) 
-                                          for i in range(app.waveform_tree.topLevelItemCount()) 
-                                          if app.waveform_tree.topLevelItem(i).data(0, Qt.UserRole + 1) and os.path.dirname(app.waveform_tree.topLevelItem(i).data(0, Qt.UserRole + 1)) == rp]
-    
-    for i in range(app.waveform_tree.topLevelItemCount()): process_item(app.waveform_tree.topLevelItem(i))
-
-def update_waveform_tree(app):
-    capture_wave_state(app)
-    app.waveform_tree.clear()
-    valid_paths = [p.strip() for p in app.waveforms_path.text().split(';') if p.strip() and os.path.isdir(p.strip())]
-    for path in valid_paths: build_tree(app.waveform_tree, path)
-
-def build_tree(parent_widget, current_path):
-    try: items = os.listdir(current_path)
-    except PermissionError: return False
-
-    saved_order = global_wave_state.get(current_path, {}).get("order", [])
-    items.sort(key=lambda x: saved_order.index(x) if x in saved_order else 999999)
-
-    for item_name in items:
-        item_path = os.path.join(current_path, item_name)
-        item_state = global_wave_state.get(item_path, {}) 
-        is_dir = os.path.isdir(item_path)
-        is_img = item_name.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp'))
-        
-        if not is_dir and not is_img: continue
-
-        # Fetch custom UI rename if it exists, otherwise clean the raw file name
-        display_name = item_state.get("custom_name")
-        if not display_name:
-            display_name = re.sub(r'^[\d\.\s\-_]+', '', item_name).strip()
-            if not display_name: display_name = item_name
-
-        new_item = QTreeWidgetItem([display_name])
-        
-        # ADDED ItemIsEditable flag so user can double click to edit
-        base_flags = new_item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsDragEnabled | Qt.ItemIsEditable
-        if is_dir: new_item.setFlags(base_flags | Qt.ItemIsAutoTristate | Qt.ItemIsDropEnabled)
-        else: new_item.setFlags(base_flags & ~Qt.ItemIsDropEnabled)
-        
-        new_item.setCheckState(0, item_state.get("check_state", Qt.Checked))
-            
-        if item_state.get("crop"):
-            new_item.setData(0, Qt.UserRole + 3, item_state["crop"])
-            new_item.setText(0, f"{display_name} [CROP SET]") 
-            
-        cap = item_state.get("caption")
-        if cap:
-            new_item.setData(0, Qt.UserRole, cap)
-            new_item.setBackground(0, Qt.darkBlue)
-
-        new_item.setData(0, Qt.UserRole + 1, item_path)
-        new_item.setData(0, Qt.UserRole + 2, "folder" if is_dir else "file")
-        new_item.setData(0, Qt.UserRole + 4, item_name) # Hidden original name for sorting
-
-        # UNCONDITIONALLY ADD TO THE UI (Even if empty)
-        if isinstance(parent_widget, QTreeWidgetItem): 
-            parent_widget.addChild(new_item)
-        else: 
-            parent_widget.addTopLevelItem(new_item)
-
-        # If it's a directory, recursively scan inside it
-        if is_dir:
-            new_item.setExpanded(True)
-            build_tree(new_item, item_path)
-
-    return True
-</file>
-
 <file path="main.py">
 # main.py
 import sys
@@ -1739,660 +1351,8 @@ if __name__ == '__main__':
     main()
 </file>
 
-<file path="performance_section.py">
-import os
-import math
-import openpyxl
-import re
-from docx.shared import Pt, Inches, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from PyQt5.QtCore import Qt
-
-from utils import log_message, ensure_directory
-from word_utils import add_styled_table, add_caption_field, format_value_units
-from image_utils import crop_and_save
-
-class PerformanceSection:
-    def __init__(self, app, temp_dir):
-        self.app = app
-        self.temp_dir = temp_dir
-        self.perf_start_idx = 0
-
-    def get_data(self):
-        performance_data = {}
-        parsed_sheets_cache = {}
-        
-        for i in range(self.app.performance_tree.topLevelItemCount()):
-            file_node = self.app.performance_tree.topLevelItem(i)
-            if file_node.checkState(0) == Qt.Unchecked: continue
-            
-            file_name_clean = os.path.splitext(file_node.text(0))[0].replace(" [CROP SET]", "")
-            
-            if file_name_clean not in performance_data:
-                performance_data[file_name_clean] = {'charts': [], 'tables': []}
-
-            for j in range(file_node.childCount()):
-                sheet_node = file_node.child(j)
-                if sheet_node.checkState(0) == Qt.Unchecked: continue
-                
-                node_name = sheet_node.text(0).replace(" [CROP SET]", "")
-                sheet_name = sheet_node.data(0, Qt.UserRole + 4)
-                target_voltage = sheet_node.data(0, Qt.UserRole + 5)
-                excel_path = sheet_node.data(0, Qt.UserRole + 1) 
-                custom_cap = sheet_node.data(0, Qt.UserRole)
-                crop_data = self._get_crop_for_node(sheet_node)
-                
-                if not excel_path or not os.path.exists(excel_path): continue
-                
-                if "(Table)" in sheet_name:
-                    try:
-                        if sheet_name not in parsed_sheets_cache:
-                            parsed_sheets_cache[sheet_name] = self._parse_split_table(excel_path, sheet_name)
-                        
-                        split_tables = parsed_sheets_cache[sheet_name]
-                        
-                        if target_voltage and target_voltage in split_tables:
-                            performance_data[file_name_clean]['tables'].append({
-                                'sheet_name': sheet_name,
-                                'target_voltage': target_voltage,
-                                'split_table_data': split_tables[target_voltage],
-                                'custom_cap': custom_cap,
-                                'node_name': node_name
-                            })
-                        elif not target_voltage and "" in split_tables:
-                            performance_data[file_name_clean]['tables'].append({
-                                'sheet_name': sheet_name,
-                                'target_voltage': None,
-                                'split_table_data': split_tables[""],
-                                'custom_cap': custom_cap,
-                                'node_name': node_name
-                            })
-                    except Exception as e:
-                        log_message(f"Error extracting table from {sheet_name}: {str(e)}")
-                        
-                elif "(Graph)" in sheet_name:
-                    performance_data[file_name_clean]['charts'].append({
-                        'excel_path': excel_path,
-                        'sheet_name': sheet_name,
-                        'custom_cap': custom_cap,
-                        'crop': crop_data
-                    })
-                        
-        return performance_data
-
-    def _parse_split_table(self, file_path, sheet_name):
-        wb = openpyxl.load_workbook(file_path, data_only=True)
-        ws = wb[sheet_name]
-        
-        raw_data = [list(row) for row in ws.iter_rows(values_only=True)]
-        raw_merges = [(m.min_row - 1, m.min_col - 1, m.max_row - 1, m.max_col - 1) for m in ws.merged_cells.ranges]
-        wb.close()
-
-        valid_rows = [i for i, row in enumerate(raw_data) if any(c is not None and str(c).strip() != "" for c in row)]
-        if not valid_rows: return {}
-
-        valid_cols = []
-        for j in range(len(raw_data[0])):
-            col_cells = [raw_data[i][j] for i in valid_rows]
-            is_empty = not any(c is not None and str(c).strip() != "" for c in col_cells)
-            is_margin_col = any(c is not None and "margin" in str(c).lower() for c in col_cells)
-            
-            if not is_empty and not is_margin_col:
-                valid_cols.append(j)
-
-        if not valid_cols: return {}
-
-        row_mapping = {old_i: new_i for new_i, old_i in enumerate(valid_rows)}
-        col_mapping = {old_j: new_j for new_j, old_j in enumerate(valid_cols)}
-        
-        trimmed_data = []
-        for old_i in valid_rows:
-            trimmed_data.append([raw_data[old_i][old_j] for old_j in valid_cols])
-            
-        trimmed_merges = []
-        for r_min, c_min, r_max, c_max in raw_merges:
-            new_r_min = next((row_mapping[r] for r in range(r_min, r_max+1) if r in row_mapping), None)
-            new_r_max = next((row_mapping[r] for r in range(r_max, r_min-1, -1) if r in row_mapping), None)
-            new_c_min = next((col_mapping[c] for c in range(c_min, c_max+1) if c in col_mapping), None)
-            new_c_max = next((col_mapping[c] for c in range(c_max, c_min-1, -1) if c in col_mapping), None)
-            
-            if new_r_min is not None and new_r_max is not None and new_c_min is not None and new_c_max is not None:
-                if new_r_min <= new_r_max and new_c_min <= new_c_max:
-                    trimmed_merges.append((new_r_min, new_c_min, new_r_max, new_c_max))
-
-        raw_data = trimmed_data
-        raw_merges = trimmed_merges
-
-        group_col_idx = -1
-        header_end_idx = -1
-        
-        header_keywords = ['vac', 'vin', 'v_in', 'input', 'input voltage', 'input (vac)', 'line voltage']
-        for i, row in enumerate(raw_data[:10]):
-            for j, cell in enumerate(row):
-                val = str(cell).strip().lower()
-                if val in header_keywords or 'input voltage' in val or 'input (vac)' in val:
-                    group_col_idx = j
-                    break
-            if group_col_idx != -1: break
-
-        if group_col_idx == -1:
-            safe_pattern = re.compile(r'^(85|90|100|115|132|180|230|264|265|277)(\.0)?\s*(vac|v)?$', re.IGNORECASE)
-            for i, row in enumerate(raw_data):
-                for j, cell in enumerate(row):
-                    val = str(cell).strip() if cell is not None else ""
-                    if safe_pattern.match(val):
-                        group_col_idx = j
-                        header_end_idx = i
-                        break
-                if group_col_idx != -1: break
-
-        if group_col_idx == -1:
-            return {"": { "data": self._format_data(raw_data), "merged_cells": raw_merges, "header_rows": 2 }}
-
-        generic_pattern = re.compile(r'^(\d{2,3}(\.\d+)?)\s*(vac|v)?$', re.IGNORECASE)
-        if header_end_idx == -1:
-            for i in range(len(raw_data)):
-                val = str(raw_data[i][group_col_idx]).strip() if raw_data[i][group_col_idx] is not None else ""
-                if generic_pattern.match(val):
-                    header_end_idx = i
-                    break
-
-        if header_end_idx == -1:
-            return {"": { "data": self._format_data(raw_data), "merged_cells": raw_merges, "header_rows": 2 }}
-
-        headers = raw_data[:header_end_idx]
-        groups = {}
-        current_group = None
-        for i in range(header_end_idx, len(raw_data)):
-            row = raw_data[i]
-            if not any(v is not None for v in row): continue 
-            
-            val = str(row[group_col_idx]).strip() if row[group_col_idx] is not None else ""
-            match = generic_pattern.match(val)
-            if match: current_group = match.group(1)
-            
-            if current_group not in groups: groups[current_group] = []
-            if current_group: groups[current_group].append((i, row))
-                
-        split_tables = {}
-        is_eff_table = "eff" in sheet_name.lower()
-        
-        for group_name, rows_with_idx in groups.items():
-            if is_eff_table:
-                # Top-Left population ONLY so text isn't concatenated by word_utils
-                group_data = [
-                    ["Load", "Design Performance", "", "", "", "", "", "Efficiency Standards", "", "Remarks"],
-                    ["", "PIN", "VOUT at\nPCB", "IOUT", "POUT", "Efficiency\nat PCB", "Average\nEfficiency", "DOE6\nLimit", "CoC v5\nTier 2", ""],
-                    ["(A)", "(W)", "(VDC)", "(mADC)", "(W)", "(%)", "(%)", "(%)", "(%)", ""]
-                ]
-                # Includes the vertical merges for Load (col 0) and Remarks (col 9)
-                group_merges = [(0,0,1,0), (0,1,0,6), (0,7,0,8), (0,9,2,9)]
-                
-                start_old_row_idx = rows_with_idx[0][0]
-                for old_idx, row in rows_with_idx:
-                    clean_row = list(row[:group_col_idx] + row[group_col_idx+1:])
-                    while len(clean_row) < 10: clean_row.append("")
-                    clean_row = clean_row[:10]
-                    
-                    load_val = str(clean_row[0]).strip()
-                    if load_val.isdigit() or load_val.replace('.', '', 1).isdigit():
-                        val = float(load_val)
-                        clean_row[0] = f"{int(val)}%" if val.is_integer() else f"{val}%"
-                        
-                    clean_row[9] = ""
-                    group_data.append(clean_row)
-
-                # Inject the original data body merges shifted down by the 3 header rows
-                for r_min, c_min, r_max, c_max in raw_merges:
-                    new_c_min = c_min if c_min <= group_col_idx else c_min - 1
-                    new_c_max = c_max if c_max < group_col_idx else c_max - 1
-                    
-                    if c_min == group_col_idx and c_max == group_col_idx: continue
-                        
-                    if r_min >= start_old_row_idx and r_max <= rows_with_idx[-1][0]:
-                        new_r_min = (r_min - start_old_row_idx) + 3
-                        new_r_max = (r_max - start_old_row_idx) + 3
-                        
-                        # Block any accidental merges inside the Remarks column
-                        if new_c_min <= 9 <= new_c_max: continue
-                            
-                        if new_c_max >= new_c_min:
-                            group_merges.append((new_r_min, new_c_min, new_r_max, new_c_max))
-                    
-                split_tables[group_name] = {
-                    "data": self._format_data(group_data),
-                    "merged_cells": group_merges,
-                    "header_rows": 3,
-                    "widths": [0.6, 0.55, 0.7, 0.6, 0.55, 0.7, 0.7, 0.6, 0.6, 0.8] 
-                }
-            else:
-                group_data = []
-                group_merges = []
-                
-                for h_row in headers:
-                    group_data.append(h_row[:group_col_idx] + h_row[group_col_idx+1:])
-                    
-                start_old_row_idx = rows_with_idx[0][0]
-                for old_idx, row in rows_with_idx:
-                    group_data.append(row[:group_col_idx] + row[group_col_idx+1:])
-                    
-                for r_min, c_min, r_max, c_max in raw_merges:
-                    new_c_min = c_min if c_min <= group_col_idx else c_min - 1
-                    new_c_max = c_max if c_max < group_col_idx else c_max - 1
-                    
-                    if c_min == group_col_idx and c_max == group_col_idx: continue
-                        
-                    if r_max < header_end_idx:
-                        if new_c_max >= new_c_min:
-                            group_merges.append((r_min, new_c_min, r_max, new_c_max))
-                    elif r_min >= start_old_row_idx and r_max <= rows_with_idx[-1][0]:
-                        new_r_min = (r_min - start_old_row_idx) + len(headers)
-                        new_r_max = (r_max - start_old_row_idx) + len(headers)
-                        if new_c_max >= new_c_min:
-                            group_merges.append((new_r_min, new_c_min, new_r_max, new_c_max))
-                            
-                split_tables[group_name] = {
-                    "data": self._format_data(group_data), 
-                    "merged_cells": group_merges,
-                    "header_rows": len(headers),
-                    "widths": None
-                }
-            
-        return split_tables
-
-    def _format_data(self, data):
-        formatted = []
-        for row in data:
-            new_row = []
-            for cell in row:
-                if isinstance(cell, float):
-                    if cell == 0.0: new_row.append("0")
-                    else:
-                        try:
-                            val_str = f"{cell:.3g}"
-                            if 'e' in val_str.lower(): val_str = f"{float(val_str):g}"
-                            new_row.append(val_str)
-                        except:
-                            new_row.append(str(cell))
-                elif cell is None: new_row.append("")
-                else: new_row.append(str(cell))
-            formatted.append(new_row)
-        return formatted
-
-    def _get_crop_for_node(self, node):
-        current = node
-        while current:
-            data = current.data(0, Qt.UserRole + 3)
-            if data: return data
-            current = current.parent()
-        return {'left': '0', 'top': '0', 'right': '0', 'bottom': '0'}
-
-    def _extract_all_checked_graphs(self, performance_data):
-        import win32com.client
-        import pythoncom
-        
-        extracted_map = {}
-        tasks = []
-        for file_name, data in performance_data.items():
-            for chart in data['charts']: tasks.append(chart)
-                
-        if not tasks: return extracted_map
-
-        ensure_directory(self.temp_dir)
-        pythoncom.CoInitialize()
-        try:
-            excel = win32com.client.DispatchEx("Excel.Application")
-            excel.Visible = False
-            excel.DisplayAlerts = False
-            
-            paths = set(t['excel_path'] for t in tasks if t.get('excel_path'))
-            for path in paths:
-                if not path: continue
-                wb = excel.Workbooks.Open(os.path.abspath(path), ReadOnly=True)
-                file_tasks = [t for t in tasks if t['excel_path'] == path]
-                
-                for task in file_tasks:
-                    sheet_name = task['sheet_name']
-                    img_path = os.path.abspath(os.path.join(self.temp_dir, f"{sheet_name}_exported.png"))
-                    try:
-                        sheet = wb.Sheets(sheet_name)
-                        if sheet.Type in [-4169, 3]: sheet.Export(img_path, "PNG")
-                        elif sheet.ChartObjects().Count > 0: sheet.ChartObjects(1).Chart.Export(img_path, "PNG")
-                        if os.path.exists(img_path): extracted_map[sheet_name] = img_path
-                    except Exception as e:
-                        print(f"Excel Extraction Error on {sheet_name}: {e}")
-                wb.Close(SaveChanges=False)
-            excel.Quit()
-        finally:
-            pythoncom.CoUninitialize()
-        return extracted_map
-
-    def _clean_heading(self, text):
-        cleaned = re.sub(r'^\d+(\.\d+)*\s*[-\._]*\s*', '', text.lower())
-        cleaned = re.sub(r'[^\w\s]', ' ', cleaned)
-        return re.sub(r'\s+', ' ', cleaned).strip()
-
-    def _map_sheet_to_category(self, sheet_name):
-        name_lower = sheet_name.lower().replace("-", " ").replace("_", " ")
-        
-        if "no load" in name_lower: return "no load"
-        if "line eff" in name_lower: return "full load efficiency"
-        if "load eff" in name_lower or "efficiency vs" in name_lower: return "efficiency vs load"
-        if "line reg" in name_lower: return "line regulation"
-        if "load reg" in name_lower or "load ref" in name_lower: return "load regulation"
-        if "eff" in name_lower and "table" in name_lower: return "average and 10"
-        if "average" in name_lower or "10%" in name_lower: return "average and 10"
-        
-        return re.sub(r'\((Graph|Table|graph|table)\)', '', name_lower).strip()
-
-    def _get_main_performance_anchor(self, doc):
-        for idx, p in enumerate(doc.paragraphs):
-            if p.style and p.style.name.startswith('Heading'):
-                clean_p_text = self._clean_heading(p.text)
-                if "performance data" in clean_p_text:
-                    return idx, p
-        return 0, None
-
-    def _find_graph_anchor(self, doc, sheet_name):
-        mapped_cat = self._clean_heading(self._map_sheet_to_category(sheet_name))
-        parent_p = None
-        parent_idx = -1
-        
-        for idx in range(self.perf_start_idx, len(doc.paragraphs)):
-            p = doc.paragraphs[idx]
-            if p.style and p.style.name.startswith('Heading'):
-                clean_p_text = self._clean_heading(p.text)
-                if "waveform" in clean_p_text: break
-                
-                if mapped_cat in clean_p_text:
-                    parent_p = p
-                    parent_idx = idx
-                    break
-                    
-        if not parent_p: return None
-        
-        stop_words = ["no load", "efficiency", "regulation", "ripple", "harmonic", "waveform", "thermal", "standby"]
-        for i in range(parent_idx + 1, len(doc.paragraphs)):
-            p = doc.paragraphs[i]
-            if p.style and p.style.name.startswith('Heading'):
-                clean_next = self._clean_heading(p.text)
-                if "test result" in clean_next: return p 
-                if any(word in clean_next for word in stop_words): break
-                    
-        return parent_p
-
-    def _find_table_anchor(self, doc, node_name, fallback_sheet_name, voltage=None):
-        clean_node = self._clean_heading(node_name.replace(" (Table)", "").replace(" (Graph)", ""))
-        mapped_cat = self._clean_heading(self._map_sheet_to_category(fallback_sheet_name))
-        
-        for idx in range(self.perf_start_idx, len(doc.paragraphs)):
-            p = doc.paragraphs[idx]
-            if p.style and p.style.name.startswith('Heading'):
-                clean_p = self._clean_heading(p.text)
-                if "waveform" in clean_p: break
-                if clean_p == clean_node: return p
-
-        if voltage:
-            volt_str = str(voltage)
-            for idx in range(self.perf_start_idx, len(doc.paragraphs)):
-                p = doc.paragraphs[idx]
-                if p.style and p.style.name.startswith('Heading'):
-                    clean_p = self._clean_heading(p.text)
-                    if "waveform" in clean_p: break
-                    if volt_str in clean_p and mapped_cat in clean_p: return p
-                        
-        for idx in range(self.perf_start_idx, len(doc.paragraphs)):
-            p = doc.paragraphs[idx]
-            if p.style and p.style.name.startswith('Heading'):
-                clean_p = self._clean_heading(p.text)
-                if "waveform" in clean_p: break
-                if mapped_cat in clean_p: return p
-                
-        return None
-
-    def add_section(self, doc, last_element, performance_data):
-        extracted_graphs = self._extract_all_checked_graphs(performance_data)
-        
-        self.perf_start_idx, main_perf_anchor = self._get_main_performance_anchor(doc)
-        
-        if main_perf_anchor: 
-            last_element = main_perf_anchor._element
-        else:
-            new_para = doc.add_paragraph("Performance Data", style='Heading 1')
-            last_element.getparent().insert(last_element.getparent().index(last_element) + 1, new_para._element)
-            last_element = new_para._element
-            self.perf_start_idx = len(doc.paragraphs) - 1
-        
-        for file_name, data in performance_data.items():
-            if not data['charts'] and not data['tables']: continue
-
-            # --- PROCESS TABLES ---
-            for table_info in data['tables']:
-                sheet_name = table_info['sheet_name']
-                voltage = table_info.get('target_voltage')
-                tb_data = table_info['split_table_data']
-                node_name = table_info['node_name']
-                custom_cap = table_info.get('custom_cap')
-                sheet_name_clean = sheet_name.replace(" (Table)", "").strip()
-                
-                anchor_p = self._find_table_anchor(doc, node_name, sheet_name, voltage)
-                
-                if anchor_p:
-                    last_element = anchor_p._element
-                else:
-                    heading_text = node_name.replace(" (Table)", "")
-                    new_para = doc.add_paragraph(heading_text, style='Heading 3')
-                    last_element.getparent().insert(last_element.getparent().index(last_element) + 1, new_para._element)
-                    last_element = new_para._element
-
-                table = add_styled_table(
-                    doc, len(tb_data['data']), len(tb_data['data'][0]), 
-                    tb_data['data'], tb_data['merged_cells'], 
-                    header_color='#0085CA', 
-                    font_name='Calibri', 
-                    font_size=9,
-                    num_header_rows=tb_data.get('header_rows', 1),
-                    widths=tb_data.get('widths', None) 
-                )
-                last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
-                last_element = table._element
-                
-                caption_text = self._get_caption_text(sheet_name_clean, custom_cap)
-                caption_para = doc.add_paragraph()
-                add_caption_field(caption_para, caption_text, "Table")
-                last_element.getparent().insert(last_element.getparent().index(last_element) + 1, caption_para._element)
-                last_element = caption_para._element
-                last_element = self._add_custom_metadata_lines(doc, last_element, custom_cap)
-
-            # --- PROCESS GRAPHS ---
-            for chart_data in data['charts']:
-                sheet_name = chart_data['sheet_name']
-                image_path = extracted_graphs.get(sheet_name)
-                if not image_path: continue
-                
-                anchor_p = self._find_graph_anchor(doc, sheet_name)
-                sheet_name_clean = sheet_name.replace(" (Graph)", "").strip()
-                
-                if anchor_p: 
-                    last_element = anchor_p._element
-                else:
-                    new_para = doc.add_paragraph(sheet_name_clean, style='Heading 3')
-                    last_element.getparent().insert(last_element.getparent().index(last_element) + 1, new_para._element)
-                    last_element = new_para._element
-                
-                custom_cap = chart_data.get('custom_cap')
-                crop = chart_data.get('crop', {'left': 0, 'top': 0, 'right': 0, 'bottom': 0})
-                
-                c_left = int(crop.get('left', 0)); c_top = int(crop.get('top', 0))
-                c_right = int(crop.get('right', 0)); c_bottom = int(crop.get('bottom', 0))
-
-                cropped_path = crop_and_save(image_path, c_left, c_top, c_right, c_bottom, self.temp_dir)
-                if cropped_path:
-                    img_para = doc.add_paragraph()
-                    img_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    run = img_para.add_run()
-                    run.add_picture(cropped_path, width=Inches(6.0))
-                    last_element.getparent().insert(last_element.getparent().index(last_element) + 1, img_para._element)
-                    last_element = img_para._element
-                    
-                    caption_text = self._get_caption_text(sheet_name_clean, custom_cap)
-                    caption_para = doc.add_paragraph()
-                    add_caption_field(caption_para, caption_text, "Figure")
-                    last_element.getparent().insert(last_element.getparent().index(last_element) + 1, caption_para._element)
-                    last_element = caption_para._element
-                    last_element = self._add_custom_metadata_lines(doc, last_element, custom_cap)
-
-        return last_element
-
-    def _get_caption_text(self, item_name, custom_cap):
-        if isinstance(custom_cap, dict) and custom_cap.get('caption'): return custom_cap['caption']
-        if isinstance(custom_cap, str) and custom_cap: return custom_cap
-        return format_value_units(item_name)
-
-    def _add_custom_metadata_lines(self, doc, last_element, custom_cap):
-        if not isinstance(custom_cap, dict): return last_element
-        for key in ['ch_info', 'zoom_info', 'meas_info']:
-            text_val = custom_cap.get(key, "")
-            if text_val:
-                p = doc.add_paragraph(text_val)
-                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                p.paragraph_format.space_after = Pt(2)
-                p.paragraph_format.space_before = Pt(0)
-                last_element.getparent().insert(last_element.getparent().index(last_element) + 1, p._element)
-                last_element = p._element
-        return last_element
-</file>
-
-<file path="preview.py">
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap
-import os
-import hashlib
-from utils import ensure_directory
-from image_utils import crop_and_save
-
-def _extract_live_excel_preview(excel_path, sheet_name):
-    """Uses COM to export an Excel chart or an Excel Range (Table) to a temporary PNG."""
-    import win32com.client
-    import pythoncom
-    
-    hash_name = hashlib.md5(f"{excel_path}_{sheet_name}".encode()).hexdigest()
-    temp_dir = "temp_preview"
-    ensure_directory(temp_dir)
-    out_path = os.path.abspath(os.path.join(temp_dir, f"{hash_name}.png"))
-    
-    if os.path.exists(out_path): return out_path
-
-    pythoncom.CoInitialize()
-    excel = None
-    try:
-        excel = win32com.client.DispatchEx("Excel.Application")
-        excel.Visible = False
-        excel.DisplayAlerts = False
-        wb = excel.Workbooks.Open(os.path.abspath(excel_path), ReadOnly=True)
-        try:
-            sheet = wb.Sheets(sheet_name)
-            
-            # 1. Handle Table Sheets
-            if "(Table)" in sheet_name:
-                rng = sheet.UsedRange
-                rng.CopyPicture(Appearance=1, Format=2) # Copy as Picture
-                
-                # Create a temporary chart to hold the pasted picture, then export
-                chart_obj = sheet.ChartObjects().Add(0, 0, rng.Width, rng.Height)
-                chart_obj.Chart.Paste()
-                chart_obj.Chart.Export(out_path, "PNG")
-                chart_obj.Delete()
-                
-            # 2. Handle Graph Sheets
-            else:
-                if sheet.Type in [-4169, 3]:
-                    sheet.Export(out_path, "PNG")
-                elif sheet.ChartObjects().Count > 0:
-                    sheet.ChartObjects(1).Chart.Export(out_path, "PNG")
-                    
-        finally:
-            wb.Close(SaveChanges=False)
-            excel.Quit()
-    except Exception as e:
-        print(f"Preview extraction failed: {e}")
-    finally:
-        pythoncom.CoUninitialize()
-        
-    return out_path if os.path.exists(out_path) else None
-
-
-def get_ui_crop_values(app):
-    try:
-        return {
-            'left': int(app.left_input.text()) if app.left_input.text() else 0,
-            'top': int(app.upper_input.text()) if app.upper_input.text() else 0,
-            'right': int(app.right_input.text()) if app.right_input.text() else 0,
-            'bottom': int(app.lower_input.text()) if app.lower_input.text() else 0
-        }
-    except ValueError:
-        return {'left': 0, 'top': 0, 'right': 0, 'bottom': 0}
-
-
-def crop_and_update_preview(app):
-    wave_items = app.waveform_tree.selectedItems()
-    perf_items = app.performance_tree.selectedItems()
-    
-    file_path = None
-    if wave_items and wave_items[0].data(0, Qt.UserRole + 2) == "file":
-        file_path = wave_items[0].data(0, Qt.UserRole + 1)
-        
-    elif perf_items and perf_items[0].data(0, Qt.UserRole + 2) == "file":
-        excel_path = perf_items[0].data(0, Qt.UserRole + 1)
-        sheet_name = perf_items[0].data(0, Qt.UserRole + 4)
-        
-        app.file_view.setText("Extracting Excel Preview...")
-        app.repaint()
-        
-        file_path = _extract_live_excel_preview(excel_path, sheet_name)
-
-    if not file_path or not os.path.exists(file_path):
-        app.file_view.clear()
-        return
-
-    v = get_ui_crop_values(app)
-    cropped_path = crop_and_save(file_path, v['left'], v['top'], v['right'], v['bottom'], "temp_preview")
-    
-    if cropped_path:
-        pixmap = QPixmap(cropped_path)
-        scaled = pixmap.scaled(app.file_view.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        app.file_view.setPixmap(scaled)
-    else:
-        app.file_view.clear()
-
-
-def show_file_preview(app):
-    sender = app.sender()
-    crop = {'left': '0', 'top': '0', 'right': '0', 'bottom': '0'}
-    
-    if sender == app.performance_tree and app.performance_tree.selectedItems():
-        app.waveform_tree.clearSelection()
-        item = app.performance_tree.selectedItems()[0]
-    elif sender == app.waveform_tree and app.waveform_tree.selectedItems():
-        app.performance_tree.clearSelection()
-        item = app.waveform_tree.selectedItems()[0]
-    else:
-        return
-        
-    current = item
-    while current:
-        saved_crop = current.data(0, Qt.UserRole + 3)
-        if saved_crop:
-            crop = saved_crop
-            break
-        current = current.parent()
-
-    app.left_input.setText(str(crop['left']))
-    app.upper_input.setText(str(crop['top']))
-    app.right_input.setText(str(crop['right']))
-    app.lower_input.setText(str(crop['bottom']))
-        
-    crop_and_update_preview(app)
+<file path="Performance Data/metadata.json">
+{"C:\\Users\\almir\\Desktop\\ADE-Project-experimental-test\\ADE-Project-experimental-test\\ADE-Project-main\\DocuApp.ver3\\src\\Performance Data\\No-Load Input Power\\No-load (Graph).png": {"type": "graph", "excel_path": "C:/Users/almir/Downloads/2. Test Data/6. Performance Data ATE (graphs & tables)/6. Performance Data & Graphs (ATE).xlsx", "sheet_name": "No-load (Graph)", "voltage": null, "original_name": "No-load (Graph).png"}, "C:\\Users\\almir\\Desktop\\ADE-Project-experimental-test\\ADE-Project-experimental-test\\ADE-Project-main\\DocuApp.ver3\\src\\Performance Data\\Full Load Efficiency vs. Line\\Line Eff (Graph).png": {"type": "graph", "excel_path": "C:/Users/almir/Downloads/2. Test Data/6. Performance Data ATE (graphs & tables)/6. Performance Data & Graphs (ATE).xlsx", "sheet_name": "Line Eff (Graph)", "voltage": null, "original_name": "Line Eff (Graph).png"}, "C:\\Users\\almir\\Desktop\\ADE-Project-experimental-test\\ADE-Project-experimental-test\\ADE-Project-main\\DocuApp.ver3\\src\\Performance Data\\Line Regulation\\Line Reg (Graph).png": {"type": "graph", "excel_path": "C:/Users/almir/Downloads/2. Test Data/6. Performance Data ATE (graphs & tables)/6. Performance Data & Graphs (ATE).xlsx", "sheet_name": "Line Reg (Graph)", "voltage": null, "original_name": "Line Reg (Graph).png"}, "C:\\Users\\almir\\Desktop\\ADE-Project-experimental-test\\ADE-Project-experimental-test\\ADE-Project-main\\DocuApp.ver3\\src\\Performance Data\\Efficiency vs. Load\\Load Eff (Graph).png": {"type": "graph", "excel_path": "C:/Users/almir/Downloads/2. Test Data/6. Performance Data ATE (graphs & tables)/6. Performance Data & Graphs (ATE).xlsx", "sheet_name": "Load Eff (Graph)", "voltage": null, "original_name": "Load Eff (Graph).png"}, "C:\\Users\\almir\\Desktop\\ADE-Project-experimental-test\\ADE-Project-experimental-test\\ADE-Project-main\\DocuApp.ver3\\src\\Performance Data\\Load Regulation\\Load Reg (Graph).png": {"type": "graph", "excel_path": "C:/Users/almir/Downloads/2. Test Data/6. Performance Data ATE (graphs & tables)/6. Performance Data & Graphs (ATE).xlsx", "sheet_name": "Load Reg (Graph)", "voltage": null, "original_name": "Load Reg (Graph).png"}, "C:\\Users\\almir\\Desktop\\ADE-Project-experimental-test\\ADE-Project-experimental-test\\ADE-Project-main\\DocuApp.ver3\\src\\Performance Data\\Ripple\\Ripple (Graph).png": {"type": "graph", "excel_path": "C:/Users/almir/Downloads/2. Test Data/6. Performance Data ATE (graphs & tables)/6. Performance Data & Graphs (ATE).xlsx", "sheet_name": "Ripple (Graph)", "voltage": null, "original_name": "Ripple (Graph).png"}, "C:\\Users\\almir\\Desktop\\ADE-Project-experimental-test\\ADE-Project-experimental-test\\ADE-Project-main\\DocuApp.ver3\\src\\Performance Data\\Average and 10% Efficiency\\Eff (Table) - 85 VAC.png": {"type": "table", "excel_path": "C:/Users/almir/Downloads/2. Test Data/6. Performance Data ATE (graphs & tables)/6. Performance Data & Graphs (ATE).xlsx", "sheet_name": "Eff (Table)", "voltage": "85", "original_name": "Eff (Table) - 85 VAC.png"}, "C:\\Users\\almir\\Desktop\\ADE-Project-experimental-test\\ADE-Project-experimental-test\\ADE-Project-main\\DocuApp.ver3\\src\\Performance Data\\Average and 10% Efficiency\\Eff (Table) - 115 VAC.png": {"type": "table", "excel_path": "C:/Users/almir/Downloads/2. Test Data/6. Performance Data ATE (graphs & tables)/6. Performance Data & Graphs (ATE).xlsx", "sheet_name": "Eff (Table)", "voltage": "115", "original_name": "Eff (Table) - 115 VAC.png"}, "C:\\Users\\almir\\Desktop\\ADE-Project-experimental-test\\ADE-Project-experimental-test\\ADE-Project-main\\DocuApp.ver3\\src\\Performance Data\\Average and 10% Efficiency\\Eff (Table) - 230 VAC.png": {"type": "table", "excel_path": "C:/Users/almir/Downloads/2. Test Data/6. Performance Data ATE (graphs & tables)/6. Performance Data & Graphs (ATE).xlsx", "sheet_name": "Eff (Table)", "voltage": "230", "original_name": "Eff (Table) - 230 VAC.png"}, "C:\\Users\\almir\\Desktop\\ADE-Project-experimental-test\\ADE-Project-experimental-test\\ADE-Project-main\\DocuApp.ver3\\src\\Performance Data\\Average and 10% Efficiency\\Eff (Table) - 265 VAC.png": {"type": "table", "excel_path": "C:/Users/almir/Downloads/2. Test Data/6. Performance Data ATE (graphs & tables)/6. Performance Data & Graphs (ATE).xlsx", "sheet_name": "Eff (Table)", "voltage": "265", "original_name": "Eff (Table) - 265 VAC.png"}, "C:\\Users\\almir\\Desktop\\ADE-Project-experimental-test\\ADE-Project-experimental-test\\ADE-Project-main\\DocuApp.ver3\\src\\Performance Data\\Stby Eff\\Stby Eff (Graph).png": {"type": "graph", "excel_path": "C:/Users/almir/Downloads/2. Test Data/6. Performance Data ATE (graphs & tables)/6. Performance Data & Graphs (ATE).xlsx", "sheet_name": "Stby Eff (Graph)", "voltage": null, "original_name": "Stby Eff (Graph).png"}, "C:\\Users\\almir\\Desktop\\ADE-Project-experimental-test\\ADE-Project-experimental-test\\ADE-Project-main\\DocuApp.ver3\\src\\Performance Data\\Stby Pin\\Stby Pin (Graph).png": {"type": "graph", "excel_path": "C:/Users/almir/Downloads/2. Test Data/6. Performance Data ATE (graphs & tables)/6. Performance Data & Graphs (ATE).xlsx", "sheet_name": "Stby Pin (Graph)", "voltage": null, "original_name": "Stby Pin (Graph).png"}}
 </file>
 
 <file path="SAMPLE.PY">
@@ -2548,176 +1508,6 @@ def show_popup(parent, title, text, icon_type="info"):
         msg_box.setIcon(QMessageBox.Critical)
     
     msg_box.exec_()
-</file>
-
-<file path="waveform_section.py">
-import os
-import re
-from PyQt5.QtCore import Qt
-from docx.shared import Pt, Inches, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.text.paragraph import Paragraph
-from utils import log_message
-from word_utils import add_caption_field, format_value_units
-from image_utils import crop_and_save
-
-class WaveformSection:
-    def __init__(self, app, temp_dir):
-        self.app = app
-        self.temp_dir = temp_dir
-        self.waveforms_start_idx = 0
-
-    def add_section(self, doc, last_element):
-        self.waveforms_start_idx, main_wave_anchor = self._get_main_waveforms_anchor(doc)
-        
-        if main_wave_anchor:
-            last_element = main_wave_anchor._element
-            self._wipe_template_waveforms_section(doc, last_element)
-        else:
-            new_para = doc.add_paragraph("Waveforms", style='Heading 1')
-            last_element.getparent().insert(last_element.getparent().index(last_element) + 1, new_para._element)
-            last_element = new_para._element
-            self.waveforms_start_idx = len(doc.paragraphs) - 1
-
-        root = self.app.waveform_tree.invisibleRootItem()
-        return self._process_node(root, doc, last_element, current_heading_level=2)
-
-    def _get_main_waveforms_anchor(self, doc):
-        """Finds the main 'Waveforms' chapter heading."""
-        for idx, p in enumerate(doc.paragraphs):
-            if p.style and p.style.name.startswith('Heading'):
-                clean_p_text = re.sub(r'^\d+(\.\d+)*\s*[-\._]*\s*', '', p.text.lower()).strip()
-                if "waveform" in clean_p_text:
-                    return idx, p
-        return 0, None
-
-    def _wipe_template_waveforms_section(self, doc, start_element):
-        """
-        Deletes all paragraphs and tables occurring after the 'Waveforms' heading
-        until it hits the next Chapter (Heading 1) or the end of the document.
-        """
-        parent = start_element.getparent()
-        found_start = False
-        elements_to_remove = []
-        
-        for child in parent:
-            if not found_start:
-                if child == start_element:
-                    found_start = True
-                continue
-            
-            # If it's a paragraph, check if it's the start of the next chapter
-            if child.tag.endswith('p'):
-                p = Paragraph(child, doc)
-                if p.style and p.style.name == 'Heading 1':
-                    break # Stop wiping, we reached the next section!
-            
-            elements_to_remove.append(child)
-            
-        for el in elements_to_remove:
-            parent.remove(el)
-            
-        log_message(f"Wiped {len(elements_to_remove)} legacy elements from the Waveforms template section.")
-
-    def _process_node(self, node, doc, last_element, current_heading_level):
-        is_root = (node == self.app.waveform_tree.invisibleRootItem())
-
-        if not is_root and node.checkState(0) == Qt.Unchecked:
-            return last_element
-
-        current_anchor = last_element
-
-        # 1. PROCESS FOLDER HEADINGS
-        if not is_root and node.data(0, Qt.UserRole + 2) == "folder":
-            clean_name = node.text(0).replace(" [CROP SET]", "")
-            
-            level = min(current_heading_level, 9)
-            
-            # Write JUST the clean text. Word's native style adds the "7.1" automatically.
-            new_para = doc.add_paragraph(clean_name, style=f'Heading {level}')
-            
-            # Apply slight visual styling for root headings if needed
-            if level == 2 and new_para.runs:
-                new_para.runs[0].font.size = Pt(14)
-            elif level == 3 and new_para.runs:
-                new_para.runs[0].font.size = Pt(12)
-            
-            current_anchor.getparent().insert(current_anchor.getparent().index(current_anchor) + 1, new_para._element)
-            current_anchor = new_para._element 
-            current_heading_level += 1
-
-        # 2. GATHER FILES IN CURRENT FOLDER
-        files_at_this_level = []
-        for i in range(node.childCount()):
-            child = node.child(i)
-            if child.checkState(0) != Qt.Unchecked and child.data(0, Qt.UserRole + 2) == "file":
-                files_at_this_level.append(child)
-
-        # 3. RENDER FILES INTO TABLE
-        if files_at_this_level:
-            current_anchor = self._render_image_table(files_at_this_level, doc, current_anchor)
-
-        # 4. RECURSE DEEPER INTO SUBFOLDERS
-        for i in range(node.childCount()):
-            child = node.child(i)
-            if child.checkState(0) != Qt.Unchecked and child.data(0, Qt.UserRole + 2) == "folder":
-                current_anchor = self._process_node(child, doc, current_anchor, current_heading_level)
-
-        return current_anchor
-
-    def _get_crop_for_node(self, node):
-        current = node
-        while current:
-            data = current.data(0, Qt.UserRole + 3)
-            if data: return data
-            current = current.parent()
-        return {'left': '0', 'top': '0', 'right': '0', 'bottom': '0'}
-
-    def _render_image_table(self, file_nodes, doc, last_element):
-        table = doc.add_table(rows=1, cols=2)
-        table.autofit = False
-        table.columns[0].width = Inches(3.5)
-        table.columns[1].width = Inches(3.5)
-        table.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        
-        current_row = 0
-        current_col = 0
-        
-        for node in file_nodes:
-            original_path = node.data(0, Qt.UserRole + 1)
-            
-            crop_settings = self._get_crop_for_node(node)
-            c_left = int(crop_settings.get('left', 0))
-            c_top = int(crop_settings.get('top', 0))
-            c_right = int(crop_settings.get('right', 0))
-            c_bottom = int(crop_settings.get('bottom', 0))
-            
-            cropped_path = crop_and_save(original_path, c_left, c_top, c_right, c_bottom, self.temp_dir)
-            if not cropped_path: continue
-
-            if current_col >= 2:
-                current_col = 0
-                current_row += 1
-                table.add_row()
-            
-            cell = table.cell(current_row, current_col)
-            
-            cell_para = cell.paragraphs[0]
-            run = cell_para.add_run()
-            run.add_picture(cropped_path, width=Inches(3.4))
-            
-            # LINK THE UI RENAME TO THE WORD CAPTION
-            clean_base_name = node.text(0).replace(" [CROP SET]", "")
-            main_cap_text = format_value_units(clean_base_name)
-
-            caption_cell = cell.add_paragraph()
-            add_caption_field(caption_cell, main_cap_text, "Figure")
-            caption_cell.alignment = WD_ALIGN_PARAGRAPH.LEFT
-
-            current_col += 1
-        
-        last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
-        return table._element
 </file>
 
 <file path="word_utils.py">
@@ -2902,6 +1692,1939 @@ def format_value_units(text: str) -> str:
     if not isinstance(text, str) or not text:
         return text
     return re.sub(r'(?<=\d)(?P<unit>[A-Za-z%°µΩ]+)', r' \g<unit>', text)
+</file>
+
+<file path="DocuApp_ver6.ui">
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1000</width>
+    <height>650</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>TARDIS</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">
+    QMainWindow { background: transparent; }
+    QWidget#centralwidget { background: #16161a; border: 1px solid #3a3a40; border-radius: 12px; }
+    QFrame#headerr, QFrame#footer { background: transparent; border: none; }
+    QFrame#selectionframe, QFrame#generate_frame { background: #202025; border: 1px solid #3a3a40; border-radius: 8px; }
+    
+    #centralwidget QPushButton { padding: 0px 15px; background: #0085ca; color: white; border-radius: 5px; font-weight: bold; min-height: 28px; }
+    #centralwidget QPushButton:hover { background: #3c649f; }
+    #centralwidget QPushButton:disabled { background: #333333; color: #777777; }
+    
+    #headerr QPushButton { padding: 0px; }
+    #crop_button { padding: 0px; }
+    
+    QPushButton#btn_tab_perf, QPushButton#btn_tab_wave {
+        padding: 0px; background-color: transparent; color: #777777; border: none; border-bottom: 3px solid transparent; border-radius: 0px; font-size: 14px;
+    }
+    QPushButton#btn_tab_perf:hover, QPushButton#btn_tab_wave:hover { background-color: #2a2a30; }
+    QPushButton#btn_tab_perf:checked, QPushButton#btn_tab_wave:checked { color: white; border-bottom: 3px solid #0085ca; }
+
+    #centralwidget QLineEdit { background: #1a1a1e; color: #e0e0e0; border-radius: 4px; padding-left: 5px; border: 1px solid #3a3a40; }
+    #centralwidget QLineEdit:disabled { background: #2a2a2e; color: #777777; }
+    
+    /* --- TREE VIEW AND LIST IMPROVEMENTS --- */
+    #centralwidget QListWidget, #centralwidget QTreeWidget { 
+        background: #121214; 
+        color: #f0f0f0; 
+        border: 1px solid #3a3a40; 
+        border-radius: 5px; 
+        font-size: 13px; 
+    }
+    #centralwidget QTreeWidget::item {
+        padding: 4px 8px; 
+        min-height: 20px; 
+    }
+    #centralwidget QTreeWidget::item:selected {
+        background-color: #0085ca;
+        color: white;
+    }
+    #centralwidget QTreeWidget::item:hover:!selected {
+        background-color: #2a2a30;
+    }
+
+    #centralwidget QLabel { color: white; border: none; }
+    
+    /* PERFECT ALIGNMENT: 15px left (matches bottom container), 6px top (centers it) */
+    QLabel#data_exporter { padding-left: 6px; padding-top: 12px; }
+   </string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_main">
+    <property name="spacing"><number>0</number></property>
+    <property name="margin"><number>0</number></property>
+    <item>
+     <widget class="QFrame" name="headerr">
+      <property name="minimumSize"><size><width>0</width><height>50</height></size></property>
+      <layout class="QHBoxLayout" name="horizontalLayout_header">
+       <item><widget class="QLabel" name="data_exporter"><property name="font"><font><family>Bahnschrift</family><pointsize>18</pointsize><bold>true</bold></font></property><property name="text"><string>T.A.R.D.I.S.</string></property></widget></item>
+       <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+       <item><widget class="QPushButton" name="minimize_button"><property name="maximumSize"><size><width>30</width><height>30</height></size></property><property name="text"><string>—</string></property></widget></item>
+       <item><widget class="QPushButton" name="maximize_button"><property name="maximumSize"><size><width>30</width><height>30</height></size></property><property name="text"><string>▢</string></property></widget></item>
+       <item><widget class="QPushButton" name="exit_button"><property name="maximumSize"><size><width>30</width><height>30</height></size></property><property name="text"><string>✕</string></property></widget></item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_body">
+      <property name="margin"><number>15</number></property>
+      <property name="spacing"><number>15</number></property>
+      
+      <item>
+       <widget class="QFrame" name="selectionframe">
+        <layout class="QVBoxLayout" name="verticalLayout_selection">
+         <property name="margin"><number>15</number></property>
+         <property name="spacing"><number>15</number></property>
+         
+         <item>
+          <layout class="QHBoxLayout" name="tab_layout">
+           <item>
+            <widget class="QPushButton" name="btn_tab_perf">
+             <property name="minimumSize"><size><width>0</width><height>40</height></size></property>
+             <property name="text"><string>PERFORMANCE DATA</string></property>
+             <property name="checkable"><bool>true</bool></property>
+             <property name="checked"><bool>true</bool></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btn_tab_wave">
+             <property name="minimumSize"><size><width>0</width><height>40</height></size></property>
+             <property name="text"><string>WAVEFORMS</string></property>
+             <property name="checkable"><bool>true</bool></property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         
+         <item>
+          <widget class="QStackedWidget" name="stackedWidget">
+           <property name="currentIndex"><number>0</number></property>
+           
+           <!-- PAGE 0: PERFORMANCE DATA -->
+           <widget class="QWidget" name="page_perf">
+            <layout class="QVBoxLayout" name="layout_page_perf">
+             <property name="margin"><number>0</number></property>
+             <item>
+              <layout class="QHBoxLayout">
+               <item><widget class="QPushButton" name="performancedata_sel">
+                <property name="minimumSize"><size><width>90</width><height>0</height></size></property>
+                <property name="text"><string>Add File</string></property>
+               </widget></item>
+               <item><widget class="QLineEdit" name="performancedata_path"></widget></item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QTreeWidget" name="performance_tree">
+               <property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>1</horstretch><verstretch>1</verstretch></sizepolicy></property>
+               <property name="headerHidden"><bool>true</bool></property>
+               <column><property name="text"><string>Name</string></property></column>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout">
+               <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+               <item><widget class="QPushButton" name="refresh_button_perf">
+                <property name="minimumSize"><size><width>120</width><height>30</height></size></property>
+                <property name="text"><string>REFRESH LIST</string></property>
+               </widget></item>
+               <item><widget class="QPushButton" name="clear_perf_button">
+                <property name="minimumSize"><size><width>120</width><height>30</height></size></property>
+                <property name="text"><string>CLEAR DATA</string></property>
+               </widget></item>
+               <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+           
+           <!-- PAGE 1: WAVEFORMS -->
+           <widget class="QWidget" name="page_wave">
+            <layout class="QVBoxLayout" name="layout_page_wave">
+             <property name="margin"><number>0</number></property>
+             <item>
+              <layout class="QHBoxLayout">
+               <item><widget class="QPushButton" name="waveforms_add_folder">
+                <property name="minimumSize"><size><width>90</width><height>0</height></size></property>
+                <property name="text"><string>Add File</string></property>
+               </widget></item>
+               <item><widget class="QLineEdit" name="waveforms_path"></widget></item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QTreeWidget" name="waveform_tree">
+               <property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>1</horstretch><verstretch>1</verstretch></sizepolicy></property>
+               <property name="headerHidden"><bool>true</bool></property>
+               <column><property name="text"><string>Name</string></property></column>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout">
+               <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+               <item><widget class="QPushButton" name="refresh_button_wave">
+                <property name="minimumSize"><size><width>120</width><height>30</height></size></property>
+                <property name="text"><string>REFRESH LIST</string></property>
+               </widget></item>
+               <item><widget class="QPushButton" name="waveforms_clear_folders">
+                <property name="minimumSize"><size><width>120</width><height>30</height></size></property>
+                <property name="text"><string>CLEAR WAVEFORMS</string></property>
+               </widget></item>
+               <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+           
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      
+      <!-- RIGHT PANEL (Fixed Preview) -->
+      <item>
+       <widget class="QFrame" name="generate_frame">
+        <property name="maximumSize"><size><width>400</width><height>16777215</height></size></property>
+        <layout class="QVBoxLayout" name="verticalLayout_gen">
+         <property name="margin"><number>15</number></property>
+         <item><widget class="QLabel" name="images_preview_text">
+          <property name="font"><font><bold>true</bold><pointsize>11</pointsize></font></property>
+          <property name="text"><string>PREVIEW</string></property>
+          <property name="alignment"><set>Qt::AlignCenter</set></property>
+         </widget></item>
+         <item><widget class="QLabel" name="file_view">
+          <property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>0</horstretch><verstretch>1</verstretch></sizepolicy></property>
+          <property name="minimumSize"><size><width>0</width><height>150</height></size></property>
+          <property name="styleSheet"><string>background: #0b0b0d; border-radius: 4px; border: 1px solid #3a3a40;</string></property>
+         </widget></item>
+         <item>
+          <layout class="QGridLayout" name="gridLayout_crop">
+           <item row="0" column="0"><widget class="QLabel" name="tl"><property name="text"><string>Up/Down:</string></property></widget></item>
+           <item row="0" column="1"><widget class="QLineEdit" name="upper_input"></widget></item>
+           <item row="0" column="2"><widget class="QLineEdit" name="lower_input"></widget></item>
+           <item row="1" column="0"><widget class="QLabel" name="tr"><property name="text"><string>Left/Right:</string></property></widget></item>
+           <item row="1" column="1"><widget class="QLineEdit" name="left_input"></widget></item>
+           <item row="1" column="2"><widget class="QLineEdit" name="right_input"></widget></item>
+           <item row="0" column="3" rowspan="2"><widget class="QPushButton" name="crop_button"><property name="minimumSize"><size><width>45</width><height>45</height></size></property><property name="text"><string>CROP</string></property></widget></item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="layout_template">
+           <item><widget class="QLabel" name="template_label"><property name="text"><string>Template:</string></property></widget></item>
+           <item><widget class="QComboBox" name="template_dropdown">
+            <property name="minimumSize"><size><width>0</width><height>25</height></size></property>
+            <property name="styleSheet"><string>QComboBox { background: #1a1a1e; color: white; border: 1px solid #3a3a40; border-radius: 4px; padding-left: 5px; } QComboBox::drop-down { border: none; }</string></property>
+           </widget></item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="layout_bom_sel">
+           <item><widget class="QPushButton" name="select_bom_button">
+            <property name="minimumSize"><size><width>80</width><height>0</height></size></property>
+            <property name="maximumSize"><size><width>80</width><height>16777215</height></size></property>
+            <property name="text"><string>BOM</string></property>
+           </widget></item>
+           <item><widget class="QLineEdit" name="bom_path_display"><property name="placeholderText"><string>Optional: Selected BOM file...</string></property><property name="readOnly"><bool>true</bool></property></widget></item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="layout_pixls_sel">
+           <item><widget class="QPushButton" name="select_pixls_button">
+            <property name="minimumSize"><size><width>80</width><height>0</height></size></property>
+            <property name="maximumSize"><size><width>80</width><height>16777215</height></size></property>
+            <property name="text"><string>PIXLs</string></property>
+           </widget></item>
+           <item><widget class="QLineEdit" name="pix_path_display"><property name="placeholderText"><string>Optional: Selected PIXLs file...</string></property><property name="readOnly"><bool>true</bool></property></widget></item>
+          </layout>
+         </item>
+         <item><widget class="QPushButton" name="generate_document_button"><property name="minimumSize"><size><width>0</width><height>40</height></size></property><property name="font"><font><bold>true</bold></font></property><property name="text"><string>Generate Document</string></property></widget></item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QFrame" name="footer">
+      <property name="minimumSize"><size><width>0</width><height>30</height></size></property>
+      <layout class="QHBoxLayout" name="horizontalLayout_footer">
+       <item><widget class="QLabel" name="l_copy"><property name="styleSheet"><string>color: #777;</string></property><property name="text"><string>© 2025 Power Integrations</string></property></widget></item>
+       <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
+</file>
+
+<file path="performance_section.py">
+import os
+import openpyxl
+import re
+from docx.shared import Pt, Inches, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.text.paragraph import Paragraph
+from PyQt5.QtCore import Qt
+
+from utils import log_message, ensure_directory
+from word_utils import add_styled_table, add_caption_field, format_value_units
+from image_utils import crop_and_save
+
+class PerformanceSection:
+    def __init__(self, app, temp_dir):
+        self.app = app
+        self.temp_dir = temp_dir
+        self.perf_start_idx = 0
+
+    def _strip_chapter_numbering(self, text):
+        pattern = r'^(?:\d+\.(?:\d+\.?)*\s+|\d+(?:\.\d+)*\s*[-_]+\s+)(?![vV][aA]?[cCdD]?\b|[aA]\b|[mM][aA]\b|[wW]\b|[hH][zZ]\b|%)'
+        return re.sub(pattern, '', text).strip()
+
+    def add_section(self, doc, last_element, _=None):
+        self.perf_start_idx, main_perf_anchor = self._get_main_performance_anchor(doc)
+        
+        if main_perf_anchor: 
+            last_element = main_perf_anchor._element
+            self._wipe_template_performance_section(doc, last_element)
+        else:
+            new_para = doc.add_paragraph("Performance Data", style='Heading 1')
+            last_element.getparent().insert(last_element.getparent().index(last_element) + 1, new_para._element)
+            last_element = new_para._element
+            self.perf_start_idx = len(doc.paragraphs) - 1
+
+        root = self.app.performance_tree.invisibleRootItem()
+        return self._process_node(root, doc, last_element)
+
+    def _get_main_performance_anchor(self, doc):
+        for idx, p in enumerate(doc.paragraphs):
+            if p.style and p.style.name.startswith('Heading'):
+                clean_p_text = self._strip_chapter_numbering(p.text).lower()
+                if "performance data" in clean_p_text:
+                    return idx, p
+        return 0, None
+
+    def _wipe_template_performance_section(self, doc, start_element):
+        parent = start_element.getparent()
+        found_start = False
+        elements_to_remove = []
+        for child in parent:
+            if not found_start:
+                if child == start_element: found_start = True
+                continue
+            if child.tag.endswith('p'):
+                p = Paragraph(child, doc)
+                if p.style and p.style.name == 'Heading 1': break
+            elements_to_remove.append(child)
+        for el in elements_to_remove: parent.remove(el)
+
+    def _process_node(self, node, doc, last_element):
+        is_root = (node == self.app.performance_tree.invisibleRootItem())
+
+        if not is_root and node.checkState(0) == Qt.Unchecked: return last_element
+
+        current_anchor = last_element
+
+        if not is_root and node.data(0, Qt.UserRole + 2) == "folder":
+            clean_name = self._strip_chapter_numbering(node.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip())
+            
+            # Print Category Heading
+            new_para = doc.add_paragraph(clean_name, style='Heading 2')
+            current_anchor.getparent().insert(current_anchor.getparent().index(current_anchor) + 1, new_para._element)
+            current_anchor = new_para._element 
+            
+            # Check if user enabled the Setup Table for this folder
+            include_setup = node.data(0, Qt.UserRole + 11)
+            if include_setup is None: include_setup = False
+            
+            if include_setup:
+                setup_para = doc.add_paragraph("Test Set-up", style='Heading 3')
+                current_anchor.getparent().insert(current_anchor.getparent().index(current_anchor) + 1, setup_para._element)
+                current_anchor = setup_para._element
+                
+                # Automatically build the standard test setup table
+                current_anchor = self._add_test_setup_table(doc, current_anchor, clean_name)
+            
+            res_para = doc.add_paragraph("Test Results", style='Heading 3')
+            current_anchor.getparent().insert(current_anchor.getparent().index(current_anchor) + 1, res_para._element)
+            current_anchor = res_para._element
+
+        # Iterate children
+        for i in range(node.childCount()):
+            child = node.child(i)
+            if child.checkState(0) == Qt.Unchecked: continue
+            
+            if child.data(0, Qt.UserRole + 2) == "file":
+                current_anchor = self._render_file_item(child, doc, current_anchor)
+            elif child.data(0, Qt.UserRole + 2) == "folder":
+                current_anchor = self._process_node(child, doc, current_anchor)
+
+        return current_anchor
+
+    def _add_test_setup_table(self, doc, last_element, clean_name):
+        data = [
+            ["Parameter", "Value"],
+            ["Input Voltage", "85 VAC, 115 VAC, 230 VAC"],
+            ["Output Voltage", "5 V, 9 V, 12 V, 15 V, 20 V"],
+            ["Output Load", "50%, 100%"],
+            ["Soak Time per Line", "15 minutes"],
+            ["Integration time", "1 minute"],
+            ["Output Voltage Measurement", "On-board"]
+        ]
+        
+        table = add_styled_table(
+            doc, len(data), 2, data, 
+            header_color='#5DA7E9', font_name='Calibri', font_size=10,
+            num_header_rows=1, widths=[2.5, 3.5]
+        )
+        
+        for r_idx, row in enumerate(table.rows):
+            if r_idx == 0: continue
+            for p in row.cells[0].paragraphs:
+                for run in p.runs:
+                    run.font.bold = True
+                    
+        last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
+        last_element = table._element
+        
+        cap_para = doc.add_paragraph()
+        add_caption_field(cap_para, f"{clean_name} Test Set-up", "Table")
+        last_element.getparent().insert(last_element.getparent().index(last_element) + 1, cap_para._element)
+        
+        return cap_para._element
+
+    def _render_file_item(self, node, doc, last_element):
+        item_type = node.data(0, Qt.UserRole + 7) 
+        excel_path = node.data(0, Qt.UserRole + 8)
+        sheet_name = node.data(0, Qt.UserRole + 9)
+        voltage = node.data(0, Qt.UserRole + 10)
+        custom_cap = node.data(0, Qt.UserRole)
+        
+        clean_name = self._strip_chapter_numbering(node.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip())
+
+        if item_type == "table":
+            if excel_path and os.path.exists(excel_path):
+                split_tables = self._parse_split_table(excel_path, sheet_name)
+                
+                tb_data = None
+                if voltage and voltage in split_tables: tb_data = split_tables[voltage]
+                elif "" in split_tables: tb_data = split_tables[""]
+                
+                if tb_data:
+                    table = add_styled_table(
+                        doc, len(tb_data['data']), len(tb_data['data'][0]), 
+                        tb_data['data'], tb_data['merged_cells'], 
+                        header_color='#0085CA', font_name='Calibri', font_size=9,
+                        num_header_rows=tb_data.get('header_rows', 1),
+                        widths=tb_data.get('widths', None) 
+                    )
+                    last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
+                    last_element = table._element
+                    
+                    cap_para = doc.add_paragraph()
+                    add_caption_field(cap_para, format_value_units(clean_name), "Table")
+                    last_element.getparent().insert(last_element.getparent().index(last_element) + 1, cap_para._element)
+                    last_element = cap_para._element
+
+        elif item_type == "graph":
+            image_path = node.data(0, Qt.UserRole + 1)
+            crop_data = self._get_crop_for_node(node)
+            c_l = int(crop_data.get('left', 0)); c_t = int(crop_data.get('top', 0))
+            c_r = int(crop_data.get('right', 0)); c_b = int(crop_data.get('bottom', 0))
+
+            cropped_path = crop_and_save(image_path, c_l, c_t, c_r, c_b, self.temp_dir)
+            if cropped_path:
+                img_para = doc.add_paragraph()
+                img_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                run = img_para.add_run()
+                run.add_picture(cropped_path, width=Inches(6.0))
+                last_element.getparent().insert(last_element.getparent().index(last_element) + 1, img_para._element)
+                last_element = img_para._element
+                
+                cap_para = doc.add_paragraph()
+                add_caption_field(cap_para, format_value_units(clean_name), "Figure")
+                last_element.getparent().insert(last_element.getparent().index(last_element) + 1, cap_para._element)
+                last_element = cap_para._element
+
+        if isinstance(custom_cap, dict):
+            for key in ['ch_info', 'zoom_info', 'meas_info']:
+                text_val = custom_cap.get(key, "")
+                if text_val:
+                    p = doc.add_paragraph(text_val)
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    p.paragraph_format.space_after = Pt(2)
+                    p.paragraph_format.space_before = Pt(0)
+                    last_element.getparent().insert(last_element.getparent().index(last_element) + 1, p._element)
+                    last_element = p._element
+
+        return last_element
+
+    def _get_crop_for_node(self, node):
+        current = node
+        while current:
+            data = current.data(0, Qt.UserRole + 3)
+            if data: return data
+            current = current.parent()
+        return {'left': '0', 'top': '0', 'right': '0', 'bottom': '0'}
+
+    def _parse_split_table(self, file_path, sheet_name):
+        wb = openpyxl.load_workbook(file_path, data_only=True)
+        ws = wb[sheet_name]
+        
+        raw_data = [list(row) for row in ws.iter_rows(values_only=True)]
+        raw_merges = [(m.min_row - 1, m.min_col - 1, m.max_row - 1, m.max_col - 1) for m in ws.merged_cells.ranges]
+        wb.close()
+
+        valid_rows = [i for i, row in enumerate(raw_data) if any(c is not None and str(c).strip() != "" for c in row)]
+        if not valid_rows: return {}
+
+        valid_cols = []
+        for j in range(len(raw_data[0])):
+            col_cells = [raw_data[i][j] for i in valid_rows]
+            is_empty = not any(c is not None and str(c).strip() != "" for c in col_cells)
+            is_margin_col = any(c is not None and "margin" in str(c).lower() for c in col_cells)
+            
+            if not is_empty and not is_margin_col:
+                valid_cols.append(j)
+
+        if not valid_cols: return {}
+
+        row_mapping = {old_i: new_i for new_i, old_i in enumerate(valid_rows)}
+        col_mapping = {old_j: new_j for new_j, old_j in enumerate(valid_cols)}
+        
+        trimmed_data = []
+        for old_i in valid_rows:
+            trimmed_data.append([raw_data[old_i][old_j] for old_j in valid_cols])
+            
+        trimmed_merges = []
+        for r_min, c_min, r_max, c_max in raw_merges:
+            new_r_min = next((row_mapping[r] for r in range(r_min, r_max+1) if r in row_mapping), None)
+            new_r_max = next((row_mapping[r] for r in range(r_max, r_min-1, -1) if r in row_mapping), None)
+            new_c_min = next((col_mapping[c] for c in range(c_min, c_max+1) if c in col_mapping), None)
+            new_c_max = next((col_mapping[c] for c in range(c_max, c_min-1, -1) if c in col_mapping), None)
+            
+            if new_r_min is not None and new_r_max is not None and new_c_min is not None and new_c_max is not None:
+                if new_r_min <= new_r_max and new_c_min <= new_c_max:
+                    trimmed_merges.append((new_r_min, new_c_min, new_r_max, new_c_max))
+
+        raw_data = trimmed_data
+        raw_merges = trimmed_merges
+
+        group_col_idx = -1
+        header_end_idx = -1
+        
+        header_keywords = ['vac', 'vin', 'v_in', 'input', 'input voltage', 'input (vac)', 'line voltage']
+        for i, row in enumerate(raw_data[:10]):
+            for j, cell in enumerate(row):
+                val = str(cell).strip().lower()
+                if val in header_keywords or 'input voltage' in val or 'input (vac)' in val:
+                    group_col_idx = j
+                    break
+            if group_col_idx != -1: break
+
+        if group_col_idx == -1:
+            safe_pattern = re.compile(r'^(85|90|100|115|132|180|230|264|265|277)(\.0)?\s*(vac|v)?$', re.IGNORECASE)
+            for i, row in enumerate(raw_data):
+                for j, cell in enumerate(row):
+                    val = str(cell).strip() if cell is not None else ""
+                    if safe_pattern.match(val):
+                        group_col_idx = j
+                        header_end_idx = i
+                        break
+                if group_col_idx != -1: break
+
+        if group_col_idx == -1:
+            return {"": { "data": self._format_data(raw_data), "merged_cells": raw_merges, "header_rows": 2 }}
+
+        generic_pattern = re.compile(r'^(\d{2,3}(\.\d+)?)\s*(vac|v)?$', re.IGNORECASE)
+        if header_end_idx == -1:
+            for i in range(len(raw_data)):
+                val = str(raw_data[i][group_col_idx]).strip() if raw_data[i][group_col_idx] is not None else ""
+                if generic_pattern.match(val):
+                    header_end_idx = i
+                    break
+
+        if header_end_idx == -1:
+            return {"": { "data": self._format_data(raw_data), "merged_cells": raw_merges, "header_rows": 2 }}
+
+        headers = raw_data[:header_end_idx]
+        groups = {}
+        current_group = None
+        for i in range(header_end_idx, len(raw_data)):
+            row = raw_data[i]
+            if not any(v is not None for v in row): continue 
+            
+            val = str(row[group_col_idx]).strip() if row[group_col_idx] is not None else ""
+            match = generic_pattern.match(val)
+            if match: current_group = match.group(1)
+            
+            if current_group not in groups: groups[current_group] = []
+            if current_group: groups[current_group].append((i, row))
+                
+        split_tables = {}
+        is_eff_table = "eff" in sheet_name.lower()
+        
+        for group_name, rows_with_idx in groups.items():
+            if is_eff_table:
+                group_data = [
+                    ["Load", "Design Performance", "", "", "", "", "", "Efficiency Standards", "", "Remarks"],
+                    ["", "PIN", "VOUT at\nPCB", "IOUT", "POUT", "Efficiency\nat PCB", "Average\nEfficiency", "DOE6\nLimit", "CoC v5\nTier 2", ""],
+                    ["(A)", "(W)", "(VDC)", "(mADC)", "(W)", "(%)", "(%)", "(%)", "(%)", ""]
+                ]
+                group_merges = [(0,0,1,0), (0,1,0,6), (0,7,0,8), (0,9,2,9)]
+                
+                start_old_row_idx = rows_with_idx[0][0]
+                for old_idx, row in rows_with_idx:
+                    clean_row = list(row[:group_col_idx] + row[group_col_idx+1:])
+                    while len(clean_row) < 10: clean_row.append("")
+                    clean_row = clean_row[:10]
+                    
+                    load_val = str(clean_row[0]).strip()
+                    if load_val.isdigit() or load_val.replace('.', '', 1).isdigit():
+                        val = float(load_val)
+                        clean_row[0] = f"{int(val)}%" if val.is_integer() else f"{val}%"
+                        
+                    clean_row[9] = ""
+                    group_data.append(clean_row)
+
+                for r_min, c_min, r_max, c_max in raw_merges:
+                    new_c_min = c_min if c_min <= group_col_idx else c_min - 1
+                    new_c_max = c_max if c_max < group_col_idx else c_max - 1
+                    
+                    if c_min == group_col_idx and c_max == group_col_idx: continue
+                        
+                    if r_min >= start_old_row_idx and r_max <= rows_with_idx[-1][0]:
+                        new_r_min = (r_min - start_old_row_idx) + 3
+                        new_r_max = (r_max - start_old_row_idx) + 3
+                        
+                        if new_c_min <= 9 <= new_c_max: continue
+                            
+                        if new_c_max >= new_c_min:
+                            group_merges.append((new_r_min, new_c_min, new_r_max, new_c_max))
+                    
+                split_tables[group_name] = {
+                    "data": self._format_data(group_data),
+                    "merged_cells": group_merges,
+                    "header_rows": 3,
+                    "widths": [0.6, 0.55, 0.7, 0.6, 0.55, 0.7, 0.7, 0.6, 0.6, 0.8] 
+                }
+            else:
+                group_data = []
+                group_merges = []
+                
+                for h_row in headers:
+                    group_data.append(h_row[:group_col_idx] + h_row[group_col_idx+1:])
+                    
+                start_old_row_idx = rows_with_idx[0][0]
+                for old_idx, row in rows_with_idx:
+                    group_data.append(row[:group_col_idx] + row[group_col_idx+1:])
+                    
+                for r_min, c_min, r_max, c_max in raw_merges:
+                    new_c_min = c_min if c_min <= group_col_idx else c_min - 1
+                    new_c_max = c_max if c_max < group_col_idx else c_max - 1
+                    
+                    if c_min == group_col_idx and c_max == group_col_idx: continue
+                        
+                    if r_max < header_end_idx:
+                        if new_c_max >= new_c_min:
+                            group_merges.append((r_min, new_c_min, r_max, new_c_max))
+                    elif r_min >= start_old_row_idx and r_max <= rows_with_idx[-1][0]:
+                        new_r_min = (r_min - start_old_row_idx) + len(headers)
+                        new_r_max = (r_max - start_old_row_idx) + len(headers)
+                        if new_c_max >= new_c_min:
+                            group_merges.append((new_r_min, new_c_min, new_r_max, new_c_max))
+                            
+                split_tables[group_name] = {
+                    "data": self._format_data(group_data), 
+                    "merged_cells": group_merges,
+                    "header_rows": len(headers),
+                    "widths": None
+                }
+            
+        return split_tables
+
+    def _format_data(self, data):
+        formatted = []
+        for row in data:
+            new_row = []
+            for cell in row:
+                if isinstance(cell, float):
+                    if cell == 0.0: new_row.append("0")
+                    else:
+                        try:
+                            val_str = f"{cell:.3g}"
+                            if 'e' in val_str.lower(): val_str = f"{float(val_str):g}"
+                            new_row.append(val_str)
+                        except:
+                            new_row.append(str(cell))
+                elif cell is None: new_row.append("")
+                else: new_row.append(str(cell))
+            formatted.append(new_row)
+        return formatted
+</file>
+
+<file path="waveform_section.py">
+import os
+import re
+from PyQt5.QtCore import Qt
+from docx.shared import Pt, Inches, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.text.paragraph import Paragraph
+from utils import log_message
+from word_utils import add_caption_field, format_value_units, add_styled_table
+from image_utils import crop_and_save
+
+class WaveformSection:
+    def __init__(self, app, temp_dir):
+        self.app = app
+        self.temp_dir = temp_dir
+        self.waveforms_start_idx = 0
+
+    def _strip_chapter_numbering(self, text):
+        """
+        Safely strips section numbers like "7.1 ", "1.2.3 ", "1. ", or "1 - " 
+        so Word's auto-numbering doesn't double them up. 
+        It safely ignores technical values like "85 VAC", "1.5V", or "100%".
+        """
+        pattern = r'^(?:\d+\.(?:\d+\.?)*\s+|\d+(?:\.\d+)*\s*[-_]+\s+)(?![vV][aA]?[cCdD]?\b|[aA]\b|[mM][aA]\b|[wW]\b|[hH][zZ]\b|%)'
+        return re.sub(pattern, '', text).strip()
+
+    def add_section(self, doc, last_element):
+        self.waveforms_start_idx, main_wave_anchor = self._get_main_waveforms_anchor(doc)
+        
+        if main_wave_anchor:
+            last_element = main_wave_anchor._element
+            self._wipe_template_waveforms_section(doc, last_element)
+        else:
+            new_para = doc.add_paragraph("Waveforms", style='Heading 1')
+            last_element.getparent().insert(last_element.getparent().index(last_element) + 1, new_para._element)
+            last_element = new_para._element
+            self.waveforms_start_idx = len(doc.paragraphs) - 1
+
+        root = self.app.waveform_tree.invisibleRootItem()
+        return self._process_node(root, doc, last_element, current_heading_level=2)
+
+    def _get_main_waveforms_anchor(self, doc):
+        """Finds the main 'Waveforms' chapter heading."""
+        for idx, p in enumerate(doc.paragraphs):
+            if p.style and p.style.name.startswith('Heading'):
+                clean_p_text = re.sub(r'^\d+(\.\d+)*\s*[-\._]*\s*', '', p.text.lower()).strip()
+                if "waveform" in clean_p_text:
+                    return idx, p
+        return 0, None
+
+    def _wipe_template_waveforms_section(self, doc, start_element):
+        """
+        Deletes all paragraphs and tables occurring after the 'Waveforms' heading
+        until it hits the next Chapter (Heading 1) or the end of the document.
+        """
+        parent = start_element.getparent()
+        found_start = False
+        elements_to_remove = []
+        
+        for child in parent:
+            if not found_start:
+                if child == start_element:
+                    found_start = True
+                continue
+            
+            # If it's a paragraph, check if it's the start of the next chapter
+            if child.tag.endswith('p'):
+                p = Paragraph(child, doc)
+                if p.style and p.style.name == 'Heading 1':
+                    break # Stop wiping, we reached the next section!
+            
+            elements_to_remove.append(child)
+            
+        for el in elements_to_remove:
+            parent.remove(el)
+            
+        log_message(f"Wiped {len(elements_to_remove)} legacy elements from the Waveforms template section.")
+
+    def _process_node(self, node, doc, last_element, current_heading_level):
+        is_root = (node == self.app.waveform_tree.invisibleRootItem())
+
+        if not is_root and node.checkState(0) == Qt.Unchecked:
+            return last_element
+
+        current_anchor = last_element
+
+        # 1. PROCESS FOLDER HEADINGS
+        if not is_root and node.data(0, Qt.UserRole + 2) == "folder":
+            clean_name = node.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
+            
+            # Strip physical numbering (7.1, 7.2) so Word's auto-numbering doesn't double it
+            clean_name = self._strip_chapter_numbering(clean_name)
+            
+            level = min(current_heading_level, 9)
+            
+            # Write JUST the clean text. Word's native style adds the "7.1" automatically.
+            new_para = doc.add_paragraph(clean_name, style=f'Heading {level}')
+            
+            # Apply slight visual styling for root headings if needed
+            if level == 2 and new_para.runs:
+                new_para.runs[0].font.size = Pt(14)
+            elif level == 3 and new_para.runs:
+                new_para.runs[0].font.size = Pt(12)
+            
+            current_anchor.getparent().insert(current_anchor.getparent().index(current_anchor) + 1, new_para._element)
+            current_anchor = new_para._element 
+            
+            # Check if user enabled the Setup Table for this folder
+            include_setup = node.data(0, Qt.UserRole + 11)
+            if include_setup is None: include_setup = False
+            
+            if include_setup:
+                setup_level = min(level + 1, 9)
+                setup_para = doc.add_paragraph("Test Set-up", style=f'Heading {setup_level}')
+                current_anchor.getparent().insert(current_anchor.getparent().index(current_anchor) + 1, setup_para._element)
+                current_anchor = setup_para._element
+                
+                # Automatically build the standard test setup table
+                current_anchor = self._add_test_setup_table(doc, current_anchor, clean_name)
+            
+                res_para = doc.add_paragraph("Test Results", style=f'Heading {setup_level}')
+                current_anchor.getparent().insert(current_anchor.getparent().index(current_anchor) + 1, res_para._element)
+                current_anchor = res_para._element
+                
+            current_heading_level += 1
+
+        # 2. GATHER FILES IN CURRENT FOLDER
+        files_at_this_level = []
+        for i in range(node.childCount()):
+            child = node.child(i)
+            if child.checkState(0) != Qt.Unchecked and child.data(0, Qt.UserRole + 2) == "file":
+                files_at_this_level.append(child)
+
+        # 3. RENDER FILES INTO TABLE
+        if files_at_this_level:
+            current_anchor = self._render_image_table(files_at_this_level, doc, current_anchor)
+
+        # 4. RECURSE DEEPER INTO SUBFOLDERS
+        for i in range(node.childCount()):
+            child = node.child(i)
+            if child.checkState(0) != Qt.Unchecked and child.data(0, Qt.UserRole + 2) == "folder":
+                current_anchor = self._process_node(child, doc, current_anchor, current_heading_level)
+
+        return current_anchor
+
+    def _add_test_setup_table(self, doc, last_element, clean_name):
+        data = [
+            ["Parameter", "Value"],
+            ["Input Voltage", "85 VAC, 115 VAC, 230 VAC"],
+            ["Output Voltage", "5 V, 9 V, 12 V, 15 V, 20 V"],
+            ["Output Load", "50%, 100%"],
+            ["Soak Time per Line", "15 minutes"],
+            ["Integration time", "1 minute"],
+            ["Output Voltage Measurement", "On-board"]
+        ]
+        
+        table = add_styled_table(
+            doc, len(data), 2, data, 
+            header_color='#5DA7E9', font_name='Calibri', font_size=10,
+            num_header_rows=1, widths=[2.5, 3.5]
+        )
+        
+        for r_idx, row in enumerate(table.rows):
+            if r_idx == 0: continue
+            for p in row.cells[0].paragraphs:
+                for run in p.runs:
+                    run.font.bold = True
+                    
+        last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
+        last_element = table._element
+        
+        cap_para = doc.add_paragraph()
+        add_caption_field(cap_para, f"{clean_name} Test Set-up", "Table")
+        last_element.getparent().insert(last_element.getparent().index(last_element) + 1, cap_para._element)
+        
+        return cap_para._element
+
+    def _get_crop_for_node(self, node):
+        current = node
+        while current:
+            data = current.data(0, Qt.UserRole + 3)
+            if data: return data
+            current = current.parent()
+        return {'left': '0', 'top': '0', 'right': '0', 'bottom': '0'}
+
+    def _render_image_table(self, file_nodes, doc, last_element):
+        table = doc.add_table(rows=1, cols=2)
+        table.autofit = False
+        table.columns[0].width = Inches(3.5)
+        table.columns[1].width = Inches(3.5)
+        table.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        current_row = 0
+        current_col = 0
+        
+        for node in file_nodes:
+            original_path = node.data(0, Qt.UserRole + 1)
+            
+            crop_settings = self._get_crop_for_node(node)
+            c_left = int(crop_settings.get('left', 0))
+            c_top = int(crop_settings.get('top', 0))
+            c_right = int(crop_settings.get('right', 0))
+            c_bottom = int(crop_settings.get('bottom', 0))
+            
+            cropped_path = crop_and_save(original_path, c_left, c_top, c_right, c_bottom, self.temp_dir)
+            if not cropped_path: continue
+
+            if current_col >= 2:
+                current_col = 0
+                current_row += 1
+                table.add_row()
+            
+            cell = table.cell(current_row, current_col)
+            
+            cell_para = cell.paragraphs[0]
+            run = cell_para.add_run()
+            run.add_picture(cropped_path, width=Inches(3.4))
+            
+            # LINK THE UI RENAME TO THE WORD CAPTION
+            clean_base_name = node.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
+            
+            # Strip physical numbering so image captions aren't prefixed with "7.2.1 "
+            clean_base_name = self._strip_chapter_numbering(clean_base_name)
+            
+            main_cap_text = format_value_units(clean_base_name)
+
+            caption_cell = cell.add_paragraph()
+            add_caption_field(caption_cell, main_cap_text, "Figure")
+            caption_cell.alignment = WD_ALIGN_PARAGRAPH.LEFT
+
+            current_col += 1
+        
+        last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
+        return table._element
+</file>
+
+<file path="list_updater.py">
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QBrush, QColor, QFont
+from PyQt5.QtWidgets import QListWidgetItem, QTreeWidgetItem
+import os
+import re
+import json
+
+global_perf_state = {}
+
+def capture_perf_state(app):
+    global global_perf_state
+    def process_item(item):
+        item_path = item.data(0, Qt.UserRole + 1)
+        is_folder = item.data(0, Qt.UserRole + 2) == "folder"
+        if item_path:
+            global_perf_state[item_path] = {
+                "check_state": item.checkState(0), 
+                "crop": item.data(0, Qt.UserRole + 3), 
+                "caption": item.data(0, Qt.UserRole),
+                "custom_name": item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip(),
+                "expanded": item.isExpanded(),
+                "setup_table": item.data(0, Qt.UserRole + 11)
+            }
+            if is_folder:
+                order = [item.child(i).data(0, Qt.UserRole + 4) for i in range(item.childCount()) if item.child(i).data(0, Qt.UserRole + 4)]
+                global_perf_state[item_path]["order"] = order
+                for i in range(item.childCount()): process_item(item.child(i))
+
+    root_paths = {os.path.dirname(app.performance_tree.topLevelItem(i).data(0, Qt.UserRole + 1)) 
+                  for i in range(app.performance_tree.topLevelItemCount()) if app.performance_tree.topLevelItem(i).data(0, Qt.UserRole + 1)}
+            
+    for rp in root_paths:
+        if rp not in global_perf_state: global_perf_state[rp] = {}
+        global_perf_state[rp]["order"] = [app.performance_tree.topLevelItem(i).data(0, Qt.UserRole + 4) 
+                                          for i in range(app.performance_tree.topLevelItemCount()) 
+                                          if app.performance_tree.topLevelItem(i).data(0, Qt.UserRole + 1) and os.path.dirname(app.performance_tree.topLevelItem(i).data(0, Qt.UserRole + 1)) == rp]
+    
+    for i in range(app.performance_tree.topLevelItemCount()): process_item(app.performance_tree.topLevelItem(i))
+
+def update_performance_tree(app, capture=True):
+    if capture: capture_perf_state(app)
+    
+    perf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Performance Data")
+    if not os.path.exists(perf_dir): return
+    
+    meta_path = os.path.join(perf_dir, "metadata.json")
+    metadata = {}
+    if os.path.exists(meta_path):
+        with open(meta_path, 'r') as f: metadata = json.load(f)
+
+    app.performance_tree.blockSignals(True)
+    app.performance_tree.clear()
+    
+    build_perf_tree(app.performance_tree, perf_dir, metadata)
+    app.performance_tree.blockSignals(False)
+
+def build_perf_tree(parent_widget, current_path, metadata):
+    try: items = os.listdir(current_path)
+    except PermissionError: return False
+
+    saved_order = global_perf_state.get(current_path, {}).get("order", [])
+    items.sort(key=lambda x: saved_order.index(x) if x in saved_order else 999999)
+
+    for item_name in items:
+        if item_name == "metadata.json": continue
+        
+        item_path = os.path.join(current_path, item_name)
+        item_state = global_perf_state.get(item_path, {}) 
+        is_dir = os.path.isdir(item_path)
+        is_img = item_name.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp'))
+        
+        if not is_dir and not is_img: continue
+
+        display_name = item_state.get("custom_name")
+        if not display_name:
+            if is_dir: display_name = item_name
+            else:
+                display_name = os.path.splitext(item_name)[0]
+                if not display_name: display_name = item_name
+
+        new_item = QTreeWidgetItem([display_name])
+        
+        base_flags = new_item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsDragEnabled | Qt.ItemIsEditable
+        if is_dir: new_item.setFlags(base_flags | Qt.ItemIsAutoTristate | Qt.ItemIsDropEnabled)
+        else: new_item.setFlags(base_flags & ~Qt.ItemIsDropEnabled)
+        
+        new_item.setCheckState(0, item_state.get("check_state", Qt.Checked))
+            
+        if item_state.get("crop"):
+            new_item.setData(0, Qt.UserRole + 3, item_state["crop"])
+            tag = " [FOLDER CROPPED]" if is_dir else " [IMAGE CROPPED]"
+            new_item.setText(0, f"{display_name}{tag}") 
+            
+        cap = item_state.get("caption")
+        if cap:
+            new_item.setData(0, Qt.UserRole, cap)
+            new_item.setBackground(0, Qt.darkBlue)
+
+        new_item.setData(0, Qt.UserRole + 1, item_path)
+        new_item.setData(0, Qt.UserRole + 2, "folder" if is_dir else "file")
+        new_item.setData(0, Qt.UserRole + 4, item_name) 
+        new_item.setData(0, Qt.UserRole + 6, display_name) 
+
+        if item_path in metadata:
+            meta = metadata[item_path]
+            new_item.setData(0, Qt.UserRole + 7, meta.get("type"))
+            new_item.setData(0, Qt.UserRole + 8, meta.get("excel_path"))
+            new_item.setData(0, Qt.UserRole + 9, meta.get("sheet_name"))
+            new_item.setData(0, Qt.UserRole + 10, meta.get("voltage"))
+            if is_dir: new_item.setData(0, Qt.UserRole + 11, meta.get("include_setup_table", False))
+        else:
+            if is_dir: new_item.setData(0, Qt.UserRole + 11, item_state.get("setup_table", False))
+
+        if isinstance(parent_widget, QTreeWidgetItem): parent_widget.addChild(new_item)
+        else: parent_widget.addTopLevelItem(new_item)
+
+        if is_dir:
+            build_perf_tree(new_item, item_path, metadata)
+            # Expand after children are added
+            new_item.setExpanded(item_state.get("expanded", False))
+            
+    return True
+
+global_wave_state = {}
+
+def capture_wave_state(app):
+    global global_wave_state
+    def process_item(item):
+        item_path = item.data(0, Qt.UserRole + 1)
+        is_folder = item.data(0, Qt.UserRole + 2) == "folder"
+        if item_path:
+            global_wave_state[item_path] = {
+                "check_state": item.checkState(0), 
+                "crop": item.data(0, Qt.UserRole + 3), 
+                "caption": item.data(0, Qt.UserRole),
+                "custom_name": item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip(),
+                "expanded": item.isExpanded(),
+                "setup_table": item.data(0, Qt.UserRole + 11)
+            }
+            if is_folder:
+                order = [item.child(i).data(0, Qt.UserRole + 4) for i in range(item.childCount()) if item.child(i).data(0, Qt.UserRole + 4)]
+                global_wave_state[item_path]["order"] = order
+                for i in range(item.childCount()): process_item(item.child(i))
+
+    root_paths = {os.path.dirname(app.waveform_tree.topLevelItem(i).data(0, Qt.UserRole + 1)) 
+                  for i in range(app.waveform_tree.topLevelItemCount()) if app.waveform_tree.topLevelItem(i).data(0, Qt.UserRole + 1)}
+            
+    for rp in root_paths:
+        if rp not in global_wave_state: global_wave_state[rp] = {}
+        global_wave_state[rp]["order"] = [app.waveform_tree.topLevelItem(i).data(0, Qt.UserRole + 4) 
+                                          for i in range(app.waveform_tree.topLevelItemCount()) 
+                                          if app.waveform_tree.topLevelItem(i).data(0, Qt.UserRole + 1) and os.path.dirname(app.waveform_tree.topLevelItem(i).data(0, Qt.UserRole + 1)) == rp]
+    
+    for i in range(app.waveform_tree.topLevelItemCount()): process_item(app.waveform_tree.topLevelItem(i))
+
+def update_waveform_tree(app, capture=True):
+    if capture: capture_wave_state(app)
+    app.waveform_tree.blockSignals(True)
+    app.waveform_tree.clear()
+    valid_paths = [p.strip() for p in app.waveforms_path.text().split(';') if p.strip() and os.path.isdir(p.strip())]
+    for path in valid_paths: build_tree(app.waveform_tree, path)
+    app.waveform_tree.blockSignals(False)
+
+def build_tree(parent_widget, current_path):
+    try: items = os.listdir(current_path)
+    except PermissionError: return False
+
+    saved_order = global_wave_state.get(current_path, {}).get("order", [])
+    items.sort(key=lambda x: saved_order.index(x) if x in saved_order else 999999)
+
+    for item_name in items:
+        item_path = os.path.join(current_path, item_name)
+        item_state = global_wave_state.get(item_path, {}) 
+        is_dir = os.path.isdir(item_path)
+        is_img = item_name.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp'))
+        
+        if not is_dir and not is_img: continue
+
+        display_name = item_state.get("custom_name")
+        if not display_name:
+            if is_dir: display_name = item_name
+            else:
+                display_name = os.path.splitext(item_name)[0]
+                if not display_name: display_name = item_name
+
+        new_item = QTreeWidgetItem([display_name])
+        
+        base_flags = new_item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsDragEnabled | Qt.ItemIsEditable
+        if is_dir: new_item.setFlags(base_flags | Qt.ItemIsAutoTristate | Qt.ItemIsDropEnabled)
+        else: new_item.setFlags(base_flags & ~Qt.ItemIsDropEnabled)
+        
+        new_item.setCheckState(0, item_state.get("check_state", Qt.Checked))
+            
+        if item_state.get("crop"):
+            new_item.setData(0, Qt.UserRole + 3, item_state["crop"])
+            tag = " [FOLDER CROPPED]" if is_dir else " [IMAGE CROPPED]"
+            new_item.setText(0, f"{display_name}{tag}") 
+            
+        cap = item_state.get("caption")
+        if cap:
+            new_item.setData(0, Qt.UserRole, cap)
+            new_item.setBackground(0, Qt.darkBlue)
+
+        new_item.setData(0, Qt.UserRole + 1, item_path)
+        new_item.setData(0, Qt.UserRole + 2, "folder" if is_dir else "file")
+        new_item.setData(0, Qt.UserRole + 4, item_name) 
+        new_item.setData(0, Qt.UserRole + 6, display_name) 
+        
+        if is_dir:
+            setup_val = item_state.get("setup_table", False)
+            if setup_val is None: setup_val = False
+            new_item.setData(0, Qt.UserRole + 11, setup_val)
+
+        if isinstance(parent_widget, QTreeWidgetItem): parent_widget.addChild(new_item)
+        else: parent_widget.addTopLevelItem(new_item)
+
+        if is_dir:
+            build_tree(new_item, item_path)
+            # Expand after children are added
+            new_item.setExpanded(item_state.get("expanded", False))
+
+    return True
+
+# --- STATE AND METADATA SYNC HELPERS ---
+
+def sync_state_on_rename(tree_type, old_path, new_path, old_name, new_name, parent_path):
+    state = global_perf_state if tree_type == "perf" else global_wave_state
+    
+    if parent_path in state and "order" in state[parent_path]:
+        order_list = state[parent_path]["order"]
+        if old_name in order_list:
+            order_list[order_list.index(old_name)] = new_name
+            
+    new_state = {}
+    for k, v in state.items():
+        if k == old_path or k.startswith(old_path + os.sep):
+            new_k = k.replace(old_path, new_path, 1)
+            new_state[new_k] = v
+        else:
+            new_state[k] = v
+    state.clear()
+    state.update(new_state)
+
+def sync_metadata_on_rename(old_path, new_path):
+    perf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Performance Data")
+    meta_path = os.path.join(perf_dir, "metadata.json")
+    if not os.path.exists(meta_path): return
+    
+    with open(meta_path, 'r') as f: meta = json.load(f)
+    new_meta = {}
+    changed = False
+    
+    for k, v in meta.items():
+        if k == old_path or k.startswith(old_path + os.sep):
+            new_k = k.replace(old_path, new_path, 1)
+            new_meta[new_k] = v
+            changed = True
+        else:
+            new_meta[k] = v
+            
+    if changed:
+        with open(meta_path, 'w') as f: json.dump(new_meta, f)
+
+def sync_metadata_on_delete(paths_to_delete):
+    perf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Performance Data")
+    meta_path = os.path.join(perf_dir, "metadata.json")
+    if not os.path.exists(meta_path): return
+    
+    with open(meta_path, 'r') as f: meta = json.load(f)
+    new_meta = {}
+    changed = False
+    
+    for k, v in meta.items():
+        if any(k == p or k.startswith(p + os.sep) for p in paths_to_delete):
+            changed = True
+        else:
+            new_meta[k] = v
+            
+    if changed:
+        with open(meta_path, 'w') as f: json.dump(new_meta, f)
+</file>
+
+<file path="preview.py">
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QFont
+import os
+from utils import ensure_directory
+from image_utils import crop_and_save
+
+def get_ui_crop_values(app):
+    try:
+        return {
+            'left': int(app.left_input.text()) if app.left_input.text() else 0,
+            'top': int(app.upper_input.text()) if app.upper_input.text() else 0,
+            'right': int(app.right_input.text()) if app.right_input.text() else 0,
+            'bottom': int(app.lower_input.text()) if app.lower_input.text() else 0
+        }
+    except ValueError:
+        return {'left': 0, 'top': 0, 'right': 0, 'bottom': 0}
+
+def _get_first_image_path(item):
+    """Recursively search a folder item to find the first available image file."""
+    for i in range(item.childCount()):
+        child = item.child(i)
+        if child.data(0, Qt.UserRole + 2) == "file":
+            return child.data(0, Qt.UserRole + 1)
+        elif child.data(0, Qt.UserRole + 2) == "folder":
+            res = _get_first_image_path(child)
+            if res: return res
+    return None
+
+def crop_and_update_preview(app):
+    wave_items = app.waveform_tree.selectedItems()
+    perf_items = app.performance_tree.selectedItems()
+    
+    item = None
+    if wave_items: item = wave_items[0]
+    elif perf_items: item = perf_items[0]
+
+    file_path = None
+    if item:
+        is_folder = item.data(0, Qt.UserRole + 2) == "folder"
+        if is_folder:
+            file_path = _get_first_image_path(item)
+        else:
+            file_path = item.data(0, Qt.UserRole + 1)
+
+    if not file_path or not os.path.exists(file_path):
+        app.file_view.clear()
+        return
+
+    v = get_ui_crop_values(app)
+    cropped_path = crop_and_save(file_path, v['left'], v['top'], v['right'], v['bottom'], "temp_preview")
+    
+    if cropped_path:
+        pixmap = QPixmap(cropped_path)
+        scaled = pixmap.scaled(app.file_view.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        app.file_view.setPixmap(scaled)
+    else:
+        app.file_view.clear()
+
+def show_file_preview(app):
+    sender = app.sender()
+    crop = {'left': '0', 'top': '0', 'right': '0', 'bottom': '0'}
+    
+    if sender == app.performance_tree and app.performance_tree.selectedItems():
+        app.waveform_tree.clearSelection()
+        item = app.performance_tree.selectedItems()[0]
+    elif sender == app.waveform_tree and app.waveform_tree.selectedItems():
+        app.performance_tree.clearSelection()
+        item = app.waveform_tree.selectedItems()[0]
+    else:
+        app.images_preview_text.setText("PREVIEW")
+        return
+        
+    # --- Update Preview Label Dynamically with instructions ---
+    clean_name = item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
+    app.images_preview_text.setText(f"PREVIEW: {clean_name} ")
+
+    current = item
+    while current:
+        saved_crop = current.data(0, Qt.UserRole + 3)
+        if saved_crop:
+            crop = saved_crop
+            break
+        current = current.parent()
+
+    app.left_input.setText(str(crop['left']))
+    app.upper_input.setText(str(crop['top']))
+    app.right_input.setText(str(crop['right']))
+    app.lower_input.setText(str(crop['bottom']))
+        
+    crop_and_update_preview(app)
+
+# ==========================================
+# EXPANDED PREVIEW DIALOG LOGIC
+# ==========================================
+
+class ExpandedPreviewDialog(QtWidgets.QDialog):
+    def __init__(self, main_app, file_path, current_crop, item_name, allow_crop=True):
+        super().__init__(main_app)
+        self.main_app = main_app
+        self.file_path = file_path
+        self.current_pixmap = None
+        
+        self.setWindowTitle(f"Expanded Preview - {item_name}")
+        self.resize(1000, 800)
+        self.setStyleSheet("background-color: #16161a; color: white;")
+        
+        # Main Layout
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        
+        # Title Label
+        title_text = f"Cropping: {item_name}" if allow_crop else f"Preview: {item_name}"
+        self.title_label = QtWidgets.QLabel(title_text)
+        self.title_label.setAlignment(Qt.AlignCenter)
+        font = QFont("Arial", 14, QFont.Bold)
+        self.title_label.setFont(font)
+        self.title_label.setStyleSheet("color: #0085ca; margin-bottom: 10px;")
+        layout.addWidget(self.title_label)
+        
+        # Image Display
+        self.image_label = QtWidgets.QLabel()
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.image_label.setMinimumSize(50, 50)
+        self.image_label.setStyleSheet("background: #0b0b0d; border: 2px solid #3a3a40; border-radius: 8px;")
+        layout.addWidget(self.image_label, 1) # Expanding vertically
+        
+        # Bottom Controls
+        ctrl_layout = QtWidgets.QHBoxLayout()
+        ctrl_layout.setContentsMargins(0, 15, 0, 0)
+        
+        self.inp_top = QtWidgets.QLineEdit(str(current_crop.get('top', 0)))
+        self.inp_bottom = QtWidgets.QLineEdit(str(current_crop.get('bottom', 0)))
+        self.inp_left = QtWidgets.QLineEdit(str(current_crop.get('left', 0)))
+        self.inp_right = QtWidgets.QLineEdit(str(current_crop.get('right', 0)))
+        
+        input_style = "background: #1a1a1e; color: #e0e0e0; border: 1px solid #3a3a40; border-radius: 4px; padding: 5px;"
+        disabled_style = "background: #2a2a2e; color: #777777; border: 1px solid #3a3a40; border-radius: 4px; padding: 5px;"
+        
+        for inp in [self.inp_top, self.inp_bottom, self.inp_left, self.inp_right]:
+            inp.setStyleSheet(input_style if allow_crop else disabled_style)
+            inp.setMaximumWidth(70)
+            inp.setAlignment(Qt.AlignCenter)
+            if not allow_crop:
+                inp.setEnabled(False)
+            
+        ctrl_layout.addStretch()
+        ctrl_layout.addWidget(QtWidgets.QLabel("Top:"))
+        ctrl_layout.addWidget(self.inp_top)
+        ctrl_layout.addSpacing(15)
+        ctrl_layout.addWidget(QtWidgets.QLabel("Bottom:"))
+        ctrl_layout.addWidget(self.inp_bottom)
+        ctrl_layout.addSpacing(15)
+        ctrl_layout.addWidget(QtWidgets.QLabel("Left:"))
+        ctrl_layout.addWidget(self.inp_left)
+        ctrl_layout.addSpacing(15)
+        ctrl_layout.addWidget(QtWidgets.QLabel("Right:"))
+        ctrl_layout.addWidget(self.inp_right)
+        ctrl_layout.addSpacing(20)
+        
+        self.btn_crop = QtWidgets.QPushButton("APPLY CROP")
+        if allow_crop:
+            self.btn_crop.setStyleSheet("background: #0085ca; color: white; border-radius: 4px; padding: 8px 25px; font-weight: bold;")
+            self.btn_crop.setCursor(Qt.PointingHandCursor)
+            self.btn_crop.clicked.connect(self.apply_crop)
+        else:
+            self.btn_crop.setStyleSheet("background: #333333; color: #777777; border-radius: 4px; padding: 8px 25px; font-weight: bold;")
+            self.btn_crop.setEnabled(False)
+            
+        ctrl_layout.addWidget(self.btn_crop)
+        ctrl_layout.addStretch()
+        
+        layout.addLayout(ctrl_layout)
+        
+        # Initial Render
+        self.refresh_image(current_crop)
+        
+    def refresh_image(self, crop_dict):
+        # We ensure inputs are integers before saving
+        c_top = int(crop_dict.get('top') or 0)
+        c_bottom = int(crop_dict.get('bottom') or 0)
+        c_left = int(crop_dict.get('left') or 0)
+        c_right = int(crop_dict.get('right') or 0)
+
+        cropped_path = crop_and_save(self.file_path, c_left, c_top, c_right, c_bottom, "temp_preview")
+        if cropped_path:
+            self.current_pixmap = QPixmap(cropped_path)
+            self.update_image_display()
+            
+    def update_image_display(self):
+        """Scales the existing pixmap smoothly when the window resizes, without having to re-crop."""
+        if self.current_pixmap:
+            scaled = self.current_pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.image_label.setPixmap(scaled)
+            
+    def apply_crop(self):
+        # 1. Sync values back to main window line edits
+        self.main_app.upper_input.setText(self.inp_top.text() or '0')
+        self.main_app.lower_input.setText(self.inp_bottom.text() or '0')
+        self.main_app.left_input.setText(self.inp_left.text() or '0')
+        self.main_app.right_input.setText(self.inp_right.text() or '0')
+        
+        # 2. Trigger the main app's save function (updates trees & main preview)
+        self.main_app.save_crop_to_selected()
+        
+        # 3. Refresh our local high-res image
+        crop_dict = {
+            'top': self.inp_top.text(), 'bottom': self.inp_bottom.text(),
+            'left': self.inp_left.text(), 'right': self.inp_right.text()
+        }
+        self.refresh_image(crop_dict)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.update_image_display()
+
+def open_expanded_preview(app):
+    wave_items = app.waveform_tree.selectedItems()
+    perf_items = app.performance_tree.selectedItems()
+    
+    item = None
+    if wave_items: item = wave_items[0]
+    elif perf_items: item = perf_items[0]
+    
+    if not item: return
+    
+    file_path = None
+    is_folder = item.data(0, Qt.UserRole + 2) == "folder"
+    if is_folder:
+        file_path = _get_first_image_path(item)
+    else:
+        file_path = item.data(0, Qt.UserRole + 1)
+        
+    if not file_path or not os.path.exists(file_path): return
+    
+    clean_name = item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
+    crop = get_ui_crop_values(app)
+    
+    allow_crop = getattr(app, 'is_cropping_enabled', True)
+    
+    dialog = ExpandedPreviewDialog(app, file_path, crop, clean_name, allow_crop)
+    dialog.exec_()
+</file>
+
+<file path="app.py">
+import os
+import sys
+import shutil
+import json
+from PyQt5 import QtWidgets, uic, QtCore, QtGui
+from PyQt5.QtCore import Qt, QPoint
+import resource_rc
+
+from handlers import (
+    select_bom_file, select_pixls_file, select_performance_file, 
+    add_waveform_folder, clear_waveform_folders, clear_performance_folders
+)
+from document_handler import generate_document
+from utils import get_resource_path
+from preview import show_file_preview, crop_and_update_preview, open_expanded_preview
+from list_updater import (
+    update_performance_tree, update_waveform_tree,
+    capture_wave_state, capture_perf_state,
+    sync_state_on_rename, sync_metadata_on_rename, sync_metadata_on_delete
+)
+
+class DocuApp(QtWidgets.QMainWindow):
+    def __init__(self):
+        super(DocuApp, self).__init__()
+        uic.loadUi(get_resource_path('DocuApp_ver6.ui'), self)
+        
+        # Free up layout constraints drastically for small laptops
+        self.setMinimumSize(700, 500)
+        
+        icon_path = get_resource_path(os.path.join('resources', 'icons', 'tardis_icon.ico'))
+        self.setWindowIcon(QtGui.QIcon(icon_path))
+        
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.old_pos = None
+
+        for line_edit in [self.upper_input, self.lower_input, self.left_input, self.right_input]:
+            line_edit.setText("0")
+
+        self.tab_group = QtWidgets.QButtonGroup(self)
+        self.tab_group.addButton(self.btn_tab_perf, 0)
+        self.tab_group.addButton(self.btn_tab_wave, 1)
+        self.btn_tab_perf.clicked.connect(lambda: self.switch_tab(0))
+        self.btn_tab_wave.clicked.connect(lambda: self.switch_tab(1))
+
+        self.performancedata_sel.clicked.connect(lambda: select_performance_file(self))
+        self.waveforms_add_folder.clicked.connect(lambda: add_waveform_folder(self))
+        
+        self.refresh_button_perf.clicked.connect(lambda: update_performance_tree(self))
+        self.clear_perf_button.clicked.connect(lambda: clear_performance_folders(self))
+        self.refresh_button_wave.clicked.connect(lambda: update_waveform_tree(self))
+        self.waveforms_clear_folders.clicked.connect(lambda: clear_waveform_folders(self))
+
+        self.exit_button.clicked.connect(self.close)
+        self.minimize_button.clicked.connect(self.showMinimized)
+        self.maximize_button.clicked.connect(self.toggle_maximize)
+        
+        self.crop_button.clicked.connect(self.save_crop_to_selected)
+        self.generate_document_button.clicked.connect(lambda: generate_document(self))
+
+        # --- PREVIEW CLICK LOGIC ---
+        self.file_view.installEventFilter(self)
+        self.file_view.setCursor(Qt.PointingHandCursor)
+        self.file_view.setToolTip("Double-click to expand")
+
+        # --- SET INITIAL CROPPING STATE (Disabled for Performance Tab) ---
+        self.is_cropping_enabled = False
+        for w in [self.upper_input, self.lower_input, self.left_input, self.right_input, self.crop_button]:
+            w.setEnabled(False)
+
+        # --- UNIFIED TREE SETUP ---
+        for tree in [self.performance_tree, self.waveform_tree]:
+            tree.itemSelectionChanged.connect(lambda: show_file_preview(self))
+            tree.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+            tree.setDragEnabled(True)
+            tree.setAcceptDrops(True)
+            tree.setDropIndicatorShown(True)
+            tree.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+            tree.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked | QtWidgets.QAbstractItemView.EditKeyPressed)
+            
+            tree.setAutoScroll(True)
+            tree.setAutoScrollMargin(35)
+            tree.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+            
+            tree.itemChanged.connect(self.on_tree_item_changed)
+            tree.setContextMenuPolicy(Qt.CustomContextMenu)
+            tree.customContextMenuRequested.connect(self.show_context_menu)
+
+        # Override Drag and Drop 
+        self.original_waveform_drop_event = self.waveform_tree.dropEvent
+        self.waveform_tree.dropEvent = lambda event: self.custom_drop_event(event, self.waveform_tree, self.original_waveform_drop_event)
+        
+        self.original_performance_drop_event = self.performance_tree.dropEvent
+        self.performance_tree.dropEvent = lambda event: self.custom_drop_event(event, self.performance_tree, self.original_performance_drop_event)
+
+        if hasattr(self, 'select_bom_button'):
+            self.select_bom_button.clicked.connect(lambda: select_bom_file(self))
+            self.select_pixls_button.clicked.connect(lambda: select_pixls_file(self))
+
+        self.waveforms_path.editingFinished.connect(lambda: update_waveform_tree(self))
+        self.populate_templates_dropdown()
+
+    def eventFilter(self, source, event):
+        if source == self.file_view and event.type() == QtCore.QEvent.MouseButtonDblClick:
+            # Allow double click on both tabs, the expanded dialog will read 'is_cropping_enabled'
+            open_expanded_preview(self)
+            return True
+        return super(DocuApp, self).eventFilter(source, event)
+
+    # --- PHYSICAL DRAG AND DROP (RELOCATION) ---
+    def custom_drop_event(self, event, tree_widget, original_event_call):
+        dragged_items = tree_widget.selectedItems()
+        if not dragged_items:
+            return original_event_call(event)
+
+        target_item = tree_widget.itemAt(event.pos())
+        indicator = tree_widget.dropIndicatorPosition()
+        
+        target_dir = None
+        
+        if target_item:
+            is_folder = target_item.data(0, Qt.UserRole + 2) == "folder"
+            if indicator == QtWidgets.QAbstractItemView.OnItem:
+                if is_folder:
+                    target_dir = target_item.data(0, Qt.UserRole + 1)
+                else:
+                    parent = target_item.parent()
+                    if parent: target_dir = parent.data(0, Qt.UserRole + 1)
+            elif indicator in [QtWidgets.QAbstractItemView.AboveItem, QtWidgets.QAbstractItemView.BelowItem]:
+                parent = target_item.parent()
+                if parent:
+                    target_dir = parent.data(0, Qt.UserRole + 1)
+        
+        if not target_dir:
+            if tree_widget == self.waveform_tree:
+                valid_paths = [p.strip() for p in self.waveforms_path.text().split(';') if p.strip() and os.path.isdir(p.strip())]
+                if valid_paths: target_dir = valid_paths[0]
+            else:
+                target_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Performance Data")
+
+        if not target_dir or not os.path.isdir(target_dir):
+            return original_event_call(event)
+
+        tree_type = "wave" if tree_widget == self.waveform_tree else "perf"
+        if tree_type == "wave": capture_wave_state(self)
+        else: capture_perf_state(self)
+
+        # Before drop, collect expanded state recursively for dragged items
+        expanded_states = {}
+        def collect_expanded(it):
+            path = it.data(0, Qt.UserRole + 1)
+            if path:
+                expanded_states[path] = it.isExpanded()
+            for i in range(it.childCount()):
+                collect_expanded(it.child(i))
+                
+        for item in dragged_items:
+            collect_expanded(item)
+
+        physically_moved = False
+        
+        for item in dragged_items:
+            old_path = item.data(0, Qt.UserRole + 1)
+            if not old_path or not os.path.exists(old_path): continue
+            
+            if os.path.dirname(old_path) != target_dir:
+                new_path = os.path.join(target_dir, os.path.basename(old_path))
+                if os.path.isdir(old_path) and new_path.startswith(old_path):
+                    continue 
+
+                try:
+                    old_name = os.path.basename(old_path)
+                    new_name = os.path.basename(new_path)
+                    parent_path = os.path.dirname(old_path)
+                    
+                    shutil.move(old_path, new_path)
+                    sync_state_on_rename(tree_type, old_path, new_path, old_name, new_name, parent_path)
+                    if tree_type == "perf":
+                        sync_metadata_on_rename(old_path, new_path)
+                    physically_moved = True
+                except Exception as e:
+                    print(f"Error moving {old_path}: {e}")
+
+        original_event_call(event)
+
+        # After drop, restore expanded states recursively
+        def restore_expanded(it):
+            path = it.data(0, Qt.UserRole + 1)
+            if path and path in expanded_states:
+                it.setExpanded(expanded_states[path])
+            for i in range(it.childCount()):
+                restore_expanded(it.child(i))
+
+        for item in dragged_items:
+            restore_expanded(item)
+        
+        if physically_moved:
+            if tree_widget == self.waveform_tree: QtCore.QTimer.singleShot(50, lambda: update_waveform_tree(self, capture=False))
+            else: QtCore.QTimer.singleShot(50, lambda: update_performance_tree(self, capture=False))
+        else:
+            # If purely visual reorder, capture the new state immediately so the new order persists
+            if tree_widget == self.waveform_tree: QtCore.QTimer.singleShot(50, lambda: capture_wave_state(self))
+            else: QtCore.QTimer.singleShot(50, lambda: capture_perf_state(self))
+
+    # --- PHYSICAL RENAME ---
+    def on_tree_item_changed(self, item, column):
+        if column != 0: return
+        tree_widget = item.treeWidget()
+        old_path = item.data(0, Qt.UserRole + 1)
+        if not old_path or not os.path.exists(old_path): return
+        
+        original_ui_name = item.data(0, Qt.UserRole + 6)
+        
+        new_display_name = item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
+        
+        if new_display_name == original_ui_name: return
+
+        is_folder = item.data(0, Qt.UserRole + 2) == "folder"
+        old_display_name = original_ui_name
+        forbidden = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
+        if any(c in new_display_name for c in forbidden):
+            QtWidgets.QMessageBox.warning(self, "Invalid Name", "File name contains invalid characters.")
+            self.revert_item_text(tree_widget, item, old_display_name)
+            return
+        
+        ext = os.path.splitext(old_path)[1] if not is_folder else ""
+        new_filename = new_display_name + ext
+        new_path = os.path.join(os.path.dirname(old_path), new_filename)
+        
+        if os.path.exists(new_path) and new_path.lower() != old_path.lower():
+            QtWidgets.QMessageBox.warning(self, "Exists", "A file or folder with this name already exists.")
+            self.revert_item_text(tree_widget, item, old_display_name)
+            return
+
+        try:
+            tree_type = "wave" if tree_widget == self.waveform_tree else "perf"
+            if tree_type == "wave": capture_wave_state(self)
+            else: capture_perf_state(self)
+            
+            old_filename = os.path.basename(old_path)
+            parent_path = os.path.dirname(old_path)
+            
+            os.rename(old_path, new_path)
+            
+            sync_state_on_rename(tree_type, old_path, new_path, old_filename, new_filename, parent_path)
+            if tree_type == "perf":
+                sync_metadata_on_rename(old_path, new_path)
+                
+            item.setData(0, Qt.UserRole + 1, new_path)
+            item.setData(0, Qt.UserRole + 4, new_filename)
+            item.setData(0, Qt.UserRole + 6, new_display_name) 
+            
+            if is_folder:
+                if tree_type == "wave": QtCore.QTimer.singleShot(50, lambda: update_waveform_tree(self, capture=False))
+                else: QtCore.QTimer.singleShot(50, lambda: update_performance_tree(self, capture=False))
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(self, "Rename Error", f"Could not rename:\n{str(e)}")
+            self.revert_item_text(tree_widget, item, old_display_name)
+            
+    def revert_item_text(self, tree_widget, item, old_display_name):
+        revert_text = old_display_name
+        if item.data(0, Qt.UserRole + 3): 
+            is_folder = item.data(0, Qt.UserRole + 2) == "folder"
+            revert_text += " [FOLDER CROPPED]" if is_folder else " [IMAGE CROPPED]"
+            
+        tree_widget.blockSignals(True)
+        item.setText(0, revert_text)
+        tree_widget.blockSignals(False)
+
+    # --- CONTEXT MENU LOGIC ---
+    def show_context_menu(self, position):
+        tree_widget = self.sender()
+        item = tree_widget.itemAt(position)
+        if not item: return
+        
+        is_folder = item.data(0, Qt.UserRole + 2) == "folder"
+        item_path = item.data(0, Qt.UserRole + 1)
+
+        menu = QtWidgets.QMenu()
+        menu.setStyleSheet("""
+            QMenu { background-color: #202025; color: white; border: 1px solid #3a3a40; }
+            QMenu::item { padding: 5px 25px; }
+            QMenu::item:selected { background-color: #0085ca; }
+            QMenu::separator { background-color: #3a3a40; height: 1px; margin: 4px 0px; }
+        """)
+        
+        add_folder_action = None
+        add_file_action = None
+        toggle_setup_action = None
+        
+        if is_folder:
+            # Enable Test Setup table for both Performance AND Waveforms
+            include_setup = item.data(0, Qt.UserRole + 11)
+            if include_setup is None: include_setup = False
+            
+            selected_folders = [i for i in tree_widget.selectedItems() if i.data(0, Qt.UserRole + 2) == "folder"]
+            suffix = " (Selected)" if len(selected_folders) > 1 and item in selected_folders else ""
+            
+            toggle_setup_action = menu.addAction(f"Remove Test Set-up Table{suffix}" if include_setup else f"Add Test Set-up Table{suffix}")
+            menu.addSeparator()
+
+            add_folder_action = menu.addAction("Add New Folder")
+            add_file_action = menu.addAction("Add New File(s)")
+            menu.addSeparator()
+            
+        rename_action = menu.addAction("Rename")
+        delete_action = menu.addAction("Delete")
+        
+        action = menu.exec_(tree_widget.viewport().mapToGlobal(position))
+        if not action: return
+        
+        if action == add_folder_action: self.create_physical_folder(tree_widget, item_path)
+        elif action == add_file_action: self.add_physical_files(tree_widget, item_path)
+        elif action == rename_action: tree_widget.editItem(item, 0)
+        elif action == delete_action: self.delete_physical_item(tree_widget, item)
+        elif action == toggle_setup_action: self.toggle_test_setup(tree_widget, item)
+
+    def toggle_test_setup(self, tree_widget, clicked_item):
+        current = clicked_item.data(0, Qt.UserRole + 11)
+        new_val = False if current in [True] else True
+        
+        selected_items = tree_widget.selectedItems()
+        if clicked_item not in selected_items:
+            targets = [clicked_item]
+        else:
+            targets = [i for i in selected_items if i.data(0, Qt.UserRole + 2) == "folder"]
+            
+        for t_item in targets:
+            t_item.setData(0, Qt.UserRole + 11, new_val)
+            
+        if tree_widget == self.performance_tree:
+            perf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Performance Data")
+            meta_path = os.path.join(perf_dir, "metadata.json")
+            
+            meta = {}
+            if os.path.exists(meta_path):
+                try:
+                    with open(meta_path, 'r') as f: meta = json.load(f)
+                except: pass
+                
+            for t_item in targets:
+                folder_path = t_item.data(0, Qt.UserRole + 1)
+                if folder_path not in meta: meta[folder_path] = {}
+                meta[folder_path]["include_setup_table"] = new_val
+                
+            with open(meta_path, 'w') as f: json.dump(meta, f)
+        else:
+            capture_wave_state(self)
+
+    def delete_physical_item(self, tree_widget, item):
+        selected_items = tree_widget.selectedItems()
+        if not selected_items or item not in selected_items:
+            selected_items = [item]
+
+        msg = f"Are you sure you want to permanently delete {len(selected_items)} item(s)?\n\nThis cannot be undone!"
+        reply = QtWidgets.QMessageBox.question(self, "Confirm Delete", msg, QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        
+        if reply == QtWidgets.QMessageBox.Yes:
+            paths_to_delete = []
+            for sel_item in selected_items:
+                path = sel_item.data(0, Qt.UserRole + 1)
+                if path and os.path.exists(path):
+                    paths_to_delete.append(path)
+                    is_folder = sel_item.data(0, Qt.UserRole + 2) == "folder"
+                    try:
+                        if is_folder: shutil.rmtree(path)
+                        else: os.remove(path)
+                    except Exception as e:
+                        print(f"Error deleting {path}: {e}")
+
+            tree_type = "wave" if tree_widget == self.waveform_tree else "perf"
+            if tree_type == "perf" and paths_to_delete:
+                sync_metadata_on_delete(paths_to_delete)
+                
+            if tree_type == "wave": update_waveform_tree(self)
+            else: update_performance_tree(self)
+
+    def create_physical_folder(self, tree_widget, parent_path):
+        if not parent_path or not os.path.exists(parent_path): return
+        new_path = os.path.join(parent_path, "New Folder")
+        counter = 1
+        while os.path.exists(new_path):
+            new_path = os.path.join(parent_path, f"New Folder ({counter})")
+            counter += 1
+        try:
+            os.makedirs(new_path)
+            if tree_widget == self.waveform_tree: update_waveform_tree(self)
+            else: update_performance_tree(self)
+        except Exception as e: print(f"Error creating folder: {e}")
+
+    def add_physical_files(self, tree_widget, parent_path):
+        if not parent_path or not os.path.exists(parent_path): return
+        files, _ = QtWidgets.QFileDialog.getOpenFileNames(self, "Select Images", "", "Images (*.png *.jpg *.jpeg *.bmp)")
+        if not files: return
+        for f in files:
+            try: shutil.copy(f, parent_path)
+            except Exception as e: print(f"Error copying {f}: {e}")
+        if tree_widget == self.waveform_tree: update_waveform_tree(self)
+        else: update_performance_tree(self)
+
+    def switch_tab(self, index):
+        if self.stackedWidget.currentIndex() == index: return
+        
+        # --- TAB SPECIFIC LOGIC ---
+        self.is_cropping_enabled = (index == 1)
+        for w in [self.upper_input, self.lower_input, self.left_input, self.right_input, self.crop_button]:
+            w.setEnabled(self.is_cropping_enabled)
+            
+        self.file_view.clear()
+        self.images_preview_text.setText("PREVIEW")
+        
+        # --- ANIMATION LOGIC ---
+        current_widget = self.stackedWidget.currentWidget()
+        next_widget = self.stackedWidget.widget(index)
+        width = self.stackedWidget.width()
+        height = self.stackedWidget.height()
+        offset_x = width if self.stackedWidget.currentIndex() < index else -width
+
+        next_widget.setGeometry(0, 0, width, height)
+        next_widget.move(offset_x, 0)
+        next_widget.show()
+        next_widget.raise_()
+
+        self.anim_group = QtCore.QParallelAnimationGroup()
+        anim_out = QtCore.QPropertyAnimation(current_widget, b"pos")
+        anim_out.setDuration(300); anim_out.setEasingCurve(QtCore.QEasingCurve.InOutQuart)
+        anim_out.setStartValue(QtCore.QPoint(0, 0)); anim_out.setEndValue(QtCore.QPoint(-offset_x, 0))
+        anim_in = QtCore.QPropertyAnimation(next_widget, b"pos")
+        anim_in.setDuration(300); anim_in.setEasingCurve(QtCore.QEasingCurve.InOutQuart)
+        anim_in.setStartValue(QtCore.QPoint(offset_x, 0)); anim_in.setEndValue(QtCore.QPoint(0, 0))
+        self.anim_group.addAnimation(anim_out); self.anim_group.addAnimation(anim_in)
+        self.anim_group.finished.connect(lambda: self.stackedWidget.setCurrentIndex(index))
+        self.anim_group.start()
+
+    def save_crop_to_selected(self):
+        wave_items = self.waveform_tree.selectedItems()
+        perf_items = self.performance_tree.selectedItems()
+        crop_data = {
+            'left': self.left_input.text() or '0',
+            'top': self.upper_input.text() or '0',
+            'right': self.right_input.text() or '0',
+            'bottom': self.lower_input.text() or '0'
+        }
+        items = wave_items + perf_items
+        if items:
+            for item in items:
+                item.setData(0, Qt.UserRole + 3, crop_data) 
+                
+                # Apply the correct tag based on type
+                base_text = item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
+                is_folder = item.data(0, Qt.UserRole + 2) == "folder"
+                tag = " [FOLDER CROPPED]" if is_folder else " [IMAGE CROPPED]"
+                item.setText(0, f"{base_text}{tag}")
+                
+            crop_and_update_preview(self)
+        else:
+            QtWidgets.QMessageBox.warning(self, "Selection", "Select a folder or file to apply crop.")
+
+    def populate_templates_dropdown(self):
+        if getattr(sys, 'frozen', False): base_path = sys._MEIPASS
+        else: base_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+        templates_folder = os.path.join(base_path, "templates")
+        self.template_dropdown.clear()
+        if os.path.exists(templates_folder):
+            template_files = [f for f in os.listdir(templates_folder) if f.endswith('.docx')]
+            if template_files: self.template_dropdown.addItems(template_files)
+            else: self.template_dropdown.addItem("No templates found"); self.template_dropdown.setEnabled(False)
+        else:
+            self.template_dropdown.addItem("Templates folder missing!"); self.template_dropdown.setEnabled(False)
+
+    def toggle_maximize(self):
+        if self.isMaximized(): self.showNormal()
+        else: self.showMaximized()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            if self.headerr.underMouse(): self.old_pos = event.globalPos()
+
+    def mouseMoveEvent(self, event):
+        if self.old_pos:
+            delta = QPoint(event.globalPos() - self.old_pos)
+            self.move(self.x() + delta.x(), self.y() + delta.y())
+            self.old_pos = event.globalPos()
+
+    def mouseReleaseEvent(self, event):
+        self.old_pos = None
 </file>
 
 </files>

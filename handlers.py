@@ -21,11 +21,22 @@ def select_template_file(app):
         app.template_path_display.setToolTip(file)
 
 def add_waveform_folder(app):
-    folder = QFileDialog.getExistingDirectory(app, "Add Waveform Folder")
+    # Restored to Native Windows Explorer. 
+    # Note: Native Windows limits to 1 folder per selection, but we append them smoothly.
+    folder = QFileDialog.getExistingDirectory(app, "Select Waveform Folder", "")
+    
     if folder:
+        folder = os.path.normpath(folder)
         current = app.waveforms_path.text().strip()
-        if current: app.waveforms_path.setText(f"{current}; {folder}")
-        else: app.waveforms_path.setText(folder)
+        
+        if current:
+            existing_folders = [p.strip() for p in current.split(';') if p.strip()]
+            if folder not in existing_folders:
+                existing_folders.append(folder)
+            app.waveforms_path.setText("; ".join(existing_folders))
+        else:
+            app.waveforms_path.setText(folder)
+            
         update_waveform_tree(app)
 
 def clear_waveform_folders(app):
@@ -37,7 +48,7 @@ def select_bom_file(app):
     if file: app.bom_path_display.setText(file)
 
 def select_pixls_file(app):
-    file, _ = QFileDialog.getOpenFileName(app, "Select Design Spreadsheet (PIXls)", "", "Excel Files (*.xlsx *.xls)")
+    file, _ = QFileDialog.getOpenFileName(app, "Select Design Spreadsheet (PIXLs)", "", "Excel Files (*.xlsx *.xls)")
     if file: app.pix_path_display.setText(file)
 
 def clear_performance_folders(app):
@@ -64,77 +75,106 @@ class PerfImportWorker(QThread):
     progress = pyqtSignal(int, str)
     finished = pyqtSignal(bool, str)
 
-    def __init__(self, excel_path, perf_dir):
+    def __init__(self, excel_paths, perf_dir):
         super().__init__()
-        self.excel_path = excel_path
+        # Allow handling a single path or a list of paths
+        if isinstance(excel_paths, str):
+            self.excel_paths = [excel_paths]
+        else:
+            self.excel_paths = excel_paths
         self.perf_dir = perf_dir
 
     def run(self):
         pythoncom.CoInitialize()
         excel = None
         try:
-            self.progress.emit(10, "Opening Excel...")
+            self.progress.emit(5, "Opening Excel...")
             excel = win32com.client.DispatchEx("Excel.Application")
             excel.Visible = False
             excel.DisplayAlerts = False
-            wb = excel.Workbooks.Open(os.path.abspath(self.excel_path), ReadOnly=True)
-            
-            sheets = [s for s in wb.Sheets if re.search(r'\((Graph|Table)\)', s.Name, re.IGNORECASE)]
-            if not sheets:
-                raise Exception("No sheets containing '(Graph)' or '(Table)' found.")
             
             os.makedirs(self.perf_dir, exist_ok=True)
             metadata = {}
             
-            for i, sheet in enumerate(sheets):
-                pct = int(10 + (i / len(sheets)) * 80)
-                self.progress.emit(pct, f"Extracting {sheet.Name}...")
+            total_files = len(self.excel_paths)
+            if total_files == 0:
+                raise Exception("No files selected.")
                 
-                category = _map_sheet_to_category(sheet.Name)
-                cat_dir = os.path.join(self.perf_dir, category)
-                os.makedirs(cat_dir, exist_ok=True)
+            for file_idx, excel_path in enumerate(self.excel_paths):
+                base_pct = 5 + (file_idx / total_files) * 90
+                next_pct = 5 + ((file_idx + 1) / total_files) * 90
                 
-                is_table = "(Table)" in sheet.Name
+                filename = os.path.basename(excel_path)
+                self.progress.emit(int(base_pct), f"Processing {filename}...")
                 
-                png_path = os.path.abspath(os.path.join(cat_dir, f"{sheet.Name}.png"))
-                try:
-                    if is_table:
-                        rng = sheet.UsedRange
-                        rng.CopyPicture(Appearance=1, Format=2)
-                        chart_obj = sheet.ChartObjects().Add(0, 0, rng.Width, rng.Height)
-                        chart_obj.Chart.Paste()
-                        chart_obj.Chart.Export(png_path, "PNG")
-                        chart_obj.Delete()
-                    else:
-                        if sheet.Type in [-4169, 3]: sheet.Export(png_path, "PNG")
-                        elif sheet.ChartObjects().Count > 0: sheet.ChartObjects(1).Chart.Export(png_path, "PNG")
-                except Exception as e:
-                    print(f"Failed to export png for {sheet.Name}: {e}")
+                wb = excel.Workbooks.Open(os.path.abspath(excel_path), ReadOnly=True)
+                sheets = [s for s in wb.Sheets if re.search(r'\((Graph|Table)\)', s.Name, re.IGNORECASE)]
+                
+                if not sheets:
+                    wb.Close(SaveChanges=False)
+                    continue
+                
+                for i, sheet in enumerate(sheets):
+                    pct = int(base_pct + (i / len(sheets)) * (next_pct - base_pct))
+                    self.progress.emit(pct, f"Extracting {sheet.Name} from {filename}...")
                     
-                if not os.path.exists(png_path): continue
-
-                if is_table:
-                    voltages = peek_table_voltages(self.excel_path, sheet.Name)
-                    if voltages:
-                        for volt in voltages:
-                            split_name = f"{sheet.Name} - {volt} VAC"
-                            split_png = os.path.abspath(os.path.join(cat_dir, f"{split_name}.png"))
-                            shutil.copy(png_path, split_png) 
-                            metadata[split_png] = {
-                                "type": "table", "excel_path": self.excel_path,
-                                "sheet_name": sheet.Name, "voltage": volt,
-                                "original_name": f"{split_name}.png"
-                            }
-                        os.remove(png_path) 
-                        continue
+                    category = _map_sheet_to_category(sheet.Name)
+                    cat_dir = os.path.join(self.perf_dir, category)
+                    os.makedirs(cat_dir, exist_ok=True)
+                    
+                    is_table = "(Table)" in sheet.Name
+                    
+                    png_name = f"{sheet.Name}.png"
+                    if total_files > 1:
+                        base_filename = os.path.splitext(filename)[0]
+                        png_name = f"{base_filename} - {sheet.Name}.png"
                         
-                metadata[png_path] = {
-                    "type": "table" if is_table else "graph",
-                    "excel_path": self.excel_path,
-                    "sheet_name": sheet.Name,
-                    "voltage": None,
-                    "original_name": f"{sheet.Name}.png"
-                }
+                    png_path = os.path.abspath(os.path.join(cat_dir, png_name))
+                    
+                    try:
+                        if is_table:
+                            rng = sheet.UsedRange
+                            rng.CopyPicture(Appearance=1, Format=2)
+                            chart_obj = sheet.ChartObjects().Add(0, 0, rng.Width, rng.Height)
+                            chart_obj.Chart.Paste()
+                            chart_obj.Chart.Export(png_path, "PNG")
+                            chart_obj.Delete()
+                        else:
+                            if sheet.Type in [-4169, 3]: sheet.Export(png_path, "PNG")
+                            elif sheet.ChartObjects().Count > 0: sheet.ChartObjects(1).Chart.Export(png_path, "PNG")
+                    except Exception as e:
+                        print(f"Failed to export png for {sheet.Name}: {e}")
+                        
+                    if not os.path.exists(png_path): continue
+
+                    if is_table:
+                        voltages = peek_table_voltages(excel_path, sheet.Name)
+                        if voltages:
+                            for volt in voltages:
+                                split_name = f"{sheet.Name} - {volt} VAC"
+                                if total_files > 1:
+                                    base_filename = os.path.splitext(filename)[0]
+                                    split_name = f"{base_filename} - {split_name}"
+                                    
+                                split_png = os.path.abspath(os.path.join(cat_dir, f"{split_name}.png"))
+                                shutil.copy(png_path, split_png) 
+                                metadata[split_png] = {
+                                    "type": "table", "excel_path": excel_path,
+                                    "sheet_name": sheet.Name, "voltage": volt,
+                                    "original_name": f"{split_name}.png"
+                                }
+                            os.remove(png_path) 
+                            continue
+                            
+                    metadata[png_path] = {
+                        "type": "table" if is_table else "graph",
+                        "excel_path": excel_path,
+                        "sheet_name": sheet.Name,
+                        "voltage": None,
+                        "original_name": png_name
+                    }
+                    
+                wb.Close(SaveChanges=False)
                 
             with open(os.path.join(self.perf_dir, "metadata.json"), "w") as f:
                 json.dump(metadata, f)
@@ -145,21 +185,23 @@ class PerfImportWorker(QThread):
             self.finished.emit(False, str(e))
         finally:
             if excel:
-                wb.Close(SaveChanges=False)
-                excel.Quit()
+                try:
+                    excel.Quit()
+                except:
+                    pass
             pythoncom.CoUninitialize()
 
 
 def update_perf_progress(app, val, text):
-    """Helper to safely unpack the signal and update the UI"""
     if hasattr(app, 'progress_dialog'):
         app.progress_dialog.setValue(val)
         app.progress_dialog.setLabelText(text)
 
 def select_performance_file(app):
-    file, _ = QFileDialog.getOpenFileName(app, "Select Performance Data File", "", "Excel Files (*.xlsx *.xls *.xlsm)")
-    if file:
-        app.performancedata_path.setText(file)
+    # Native Multiple selection works perfectly here because these are FILES, not folders.
+    files, _ = QFileDialog.getOpenFileNames(app, "Select Performance Data File(s)", "", "Excel Files (*.xlsx *.xls *.xlsm)")
+    if files:
+        app.performancedata_path.setText("; ".join(files))
         
         perf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Performance Data")
         if os.path.exists(perf_dir): shutil.rmtree(perf_dir)
@@ -170,8 +212,7 @@ def select_performance_file(app):
         app.progress_dialog.setMinimumDuration(0)
         app.progress_dialog.show()
         
-        app.perf_worker = PerfImportWorker(file, perf_dir)
-        # Properly route the emitted integers and strings
+        app.perf_worker = PerfImportWorker(files, perf_dir)
         app.perf_worker.progress.connect(lambda val, text: update_perf_progress(app, val, text))
         app.perf_worker.finished.connect(lambda s, m: on_perf_import_finished(app, s, m))
         app.perf_worker.start()

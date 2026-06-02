@@ -95,13 +95,13 @@ def show_file_preview(app):
 # ==========================================
 
 class ExpandedPreviewDialog(QtWidgets.QDialog):
-    def __init__(self, main_app, file_path, current_crop, item_name):
+    def __init__(self, main_app, file_path, current_crop, item_name, allow_crop=True):
         super().__init__(main_app)
         self.main_app = main_app
         self.file_path = file_path
         self.current_pixmap = None
         
-        self.setWindowTitle(f"Preview & Crop - {item_name}")
+        self.setWindowTitle(f"Expanded Preview - {item_name}")
         self.resize(1000, 800)
         self.setStyleSheet("background-color: #16161a; color: white;")
         
@@ -110,7 +110,8 @@ class ExpandedPreviewDialog(QtWidgets.QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
         
         # Title Label
-        self.title_label = QtWidgets.QLabel(f"Cropping: {item_name}")
+        title_text = f"Cropping: {item_name}" if allow_crop else f"Preview: {item_name}"
+        self.title_label = QtWidgets.QLabel(title_text)
         self.title_label.setAlignment(Qt.AlignCenter)
         font = QFont("Arial", 14, QFont.Bold)
         self.title_label.setFont(font)
@@ -134,10 +135,14 @@ class ExpandedPreviewDialog(QtWidgets.QDialog):
         self.inp_right = QtWidgets.QLineEdit(str(current_crop.get('right', 0)))
         
         input_style = "background: #1a1a1e; color: #e0e0e0; border: 1px solid #3a3a40; border-radius: 4px; padding: 5px;"
+        disabled_style = "background: #2a2a2e; color: #777777; border: 1px solid #3a3a40; border-radius: 4px; padding: 5px;"
+        
         for inp in [self.inp_top, self.inp_bottom, self.inp_left, self.inp_right]:
-            inp.setStyleSheet(input_style)
+            inp.setStyleSheet(input_style if allow_crop else disabled_style)
             inp.setMaximumWidth(70)
             inp.setAlignment(Qt.AlignCenter)
+            if not allow_crop:
+                inp.setEnabled(False)
             
         ctrl_layout.addStretch()
         ctrl_layout.addWidget(QtWidgets.QLabel("Top:"))
@@ -154,9 +159,14 @@ class ExpandedPreviewDialog(QtWidgets.QDialog):
         ctrl_layout.addSpacing(20)
         
         self.btn_crop = QtWidgets.QPushButton("APPLY CROP")
-        self.btn_crop.setStyleSheet("background: #0085ca; color: white; border-radius: 4px; padding: 8px 25px; font-weight: bold;")
-        self.btn_crop.setCursor(Qt.PointingHandCursor)
-        self.btn_crop.clicked.connect(self.apply_crop)
+        if allow_crop:
+            self.btn_crop.setStyleSheet("background: #0085ca; color: white; border-radius: 4px; padding: 8px 25px; font-weight: bold;")
+            self.btn_crop.setCursor(Qt.PointingHandCursor)
+            self.btn_crop.clicked.connect(self.apply_crop)
+        else:
+            self.btn_crop.setStyleSheet("background: #333333; color: #777777; border-radius: 4px; padding: 8px 25px; font-weight: bold;")
+            self.btn_crop.setEnabled(False)
+            
         ctrl_layout.addWidget(self.btn_crop)
         ctrl_layout.addStretch()
         
@@ -226,5 +236,7 @@ def open_expanded_preview(app):
     clean_name = item.text(0).replace(" [FOLDER CROPPED]", "").replace(" [IMAGE CROPPED]", "").strip()
     crop = get_ui_crop_values(app)
     
-    dialog = ExpandedPreviewDialog(app, file_path, crop, clean_name)
+    allow_crop = getattr(app, 'is_cropping_enabled', True)
+    
+    dialog = ExpandedPreviewDialog(app, file_path, crop, clean_name, allow_crop)
     dialog.exec_()

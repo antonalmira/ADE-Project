@@ -5,7 +5,7 @@ from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.text.paragraph import Paragraph
 from utils import log_message
-from word_utils import add_caption_field, format_value_units
+from word_utils import add_caption_field, format_value_units, add_styled_table
 from image_utils import crop_and_save
 
 class WaveformSection:
@@ -103,6 +103,24 @@ class WaveformSection:
             
             current_anchor.getparent().insert(current_anchor.getparent().index(current_anchor) + 1, new_para._element)
             current_anchor = new_para._element 
+            
+            # Check if user enabled the Setup Table for this folder
+            include_setup = node.data(0, Qt.UserRole + 11)
+            if include_setup is None: include_setup = False
+            
+            if include_setup:
+                setup_level = min(level + 1, 9)
+                setup_para = doc.add_paragraph("Test Set-up", style=f'Heading {setup_level}')
+                current_anchor.getparent().insert(current_anchor.getparent().index(current_anchor) + 1, setup_para._element)
+                current_anchor = setup_para._element
+                
+                # Automatically build the standard test setup table
+                current_anchor = self._add_test_setup_table(doc, current_anchor, clean_name)
+            
+                res_para = doc.add_paragraph("Test Results", style=f'Heading {setup_level}')
+                current_anchor.getparent().insert(current_anchor.getparent().index(current_anchor) + 1, res_para._element)
+                current_anchor = res_para._element
+                
             current_heading_level += 1
 
         # 2. GATHER FILES IN CURRENT FOLDER
@@ -123,6 +141,38 @@ class WaveformSection:
                 current_anchor = self._process_node(child, doc, current_anchor, current_heading_level)
 
         return current_anchor
+
+    def _add_test_setup_table(self, doc, last_element, clean_name):
+        data = [
+            ["Parameter", "Value"],
+            ["Input Voltage", "85 VAC, 115 VAC, 230 VAC"],
+            ["Output Voltage", "5 V, 9 V, 12 V, 15 V, 20 V"],
+            ["Output Load", "50%, 100%"],
+            ["Soak Time per Line", "15 minutes"],
+            ["Integration time", "1 minute"],
+            ["Output Voltage Measurement", "On-board"]
+        ]
+        
+        table = add_styled_table(
+            doc, len(data), 2, data, 
+            header_color='#5DA7E9', font_name='Calibri', font_size=10,
+            num_header_rows=1, widths=[2.5, 3.5]
+        )
+        
+        for r_idx, row in enumerate(table.rows):
+            if r_idx == 0: continue
+            for p in row.cells[0].paragraphs:
+                for run in p.runs:
+                    run.font.bold = True
+                    
+        last_element.getparent().insert(last_element.getparent().index(last_element) + 1, table._element)
+        last_element = table._element
+        
+        cap_para = doc.add_paragraph()
+        add_caption_field(cap_para, f"{clean_name} Test Set-up", "Table")
+        last_element.getparent().insert(last_element.getparent().index(last_element) + 1, cap_para._element)
+        
+        return cap_para._element
 
     def _get_crop_for_node(self, node):
         current = node

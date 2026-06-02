@@ -24,6 +24,9 @@ class DocuApp(QtWidgets.QMainWindow):
         super(DocuApp, self).__init__()
         uic.loadUi(get_resource_path('DocuApp_ver6.ui'), self)
         
+        # Free up layout constraints drastically for small laptops
+        self.setMinimumSize(700, 500)
+        
         icon_path = get_resource_path(os.path.join('resources', 'icons', 'tardis_icon.ico'))
         self.setWindowIcon(QtGui.QIcon(icon_path))
         
@@ -58,7 +61,12 @@ class DocuApp(QtWidgets.QMainWindow):
         # --- PREVIEW CLICK LOGIC ---
         self.file_view.installEventFilter(self)
         self.file_view.setCursor(Qt.PointingHandCursor)
-        self.file_view.setToolTip("Double-click to expand and edit")
+        self.file_view.setToolTip("Double-click to expand")
+
+        # --- SET INITIAL CROPPING STATE (Disabled for Performance Tab) ---
+        self.is_cropping_enabled = False
+        for w in [self.upper_input, self.lower_input, self.left_input, self.right_input, self.crop_button]:
+            w.setEnabled(False)
 
         # --- UNIFIED TREE SETUP ---
         for tree in [self.performance_tree, self.waveform_tree]:
@@ -94,6 +102,7 @@ class DocuApp(QtWidgets.QMainWindow):
 
     def eventFilter(self, source, event):
         if source == self.file_view and event.type() == QtCore.QEvent.MouseButtonDblClick:
+            # Allow double click on both tabs, the expanded dialog will read 'is_cropping_enabled'
             open_expanded_preview(self)
             return True
         return super(DocuApp, self).eventFilter(source, event)
@@ -136,6 +145,18 @@ class DocuApp(QtWidgets.QMainWindow):
         if tree_type == "wave": capture_wave_state(self)
         else: capture_perf_state(self)
 
+        # Before drop, collect expanded state recursively for dragged items
+        expanded_states = {}
+        def collect_expanded(it):
+            path = it.data(0, Qt.UserRole + 1)
+            if path:
+                expanded_states[path] = it.isExpanded()
+            for i in range(it.childCount()):
+                collect_expanded(it.child(i))
+                
+        for item in dragged_items:
+            collect_expanded(item)
+
         physically_moved = False
         
         for item in dragged_items:
@@ -161,10 +182,25 @@ class DocuApp(QtWidgets.QMainWindow):
                     print(f"Error moving {old_path}: {e}")
 
         original_event_call(event)
+
+        # After drop, restore expanded states recursively
+        def restore_expanded(it):
+            path = it.data(0, Qt.UserRole + 1)
+            if path and path in expanded_states:
+                it.setExpanded(expanded_states[path])
+            for i in range(it.childCount()):
+                restore_expanded(it.child(i))
+
+        for item in dragged_items:
+            restore_expanded(item)
         
         if physically_moved:
             if tree_widget == self.waveform_tree: QtCore.QTimer.singleShot(50, lambda: update_waveform_tree(self, capture=False))
             else: QtCore.QTimer.singleShot(50, lambda: update_performance_tree(self, capture=False))
+        else:
+            # If purely visual reorder, capture the new state immediately so the new order persists
+            if tree_widget == self.waveform_tree: QtCore.QTimer.singleShot(50, lambda: capture_wave_state(self))
+            else: QtCore.QTimer.singleShot(50, lambda: capture_perf_state(self))
 
     # --- PHYSICAL RENAME ---
     def on_tree_item_changed(self, item, column):
@@ -253,15 +289,15 @@ class DocuApp(QtWidgets.QMainWindow):
         toggle_setup_action = None
         
         if is_folder:
-            if tree_widget == self.performance_tree:
-                include_setup = item.data(0, Qt.UserRole + 11)
-                if include_setup is None: include_setup = False
-                
-                selected_folders = [i for i in tree_widget.selectedItems() if i.data(0, Qt.UserRole + 2) == "folder"]
-                suffix = " (Selected)" if len(selected_folders) > 1 and item in selected_folders else ""
-                
-                toggle_setup_action = menu.addAction(f"Remove Test Set-up Table{suffix}" if include_setup else f"Add Test Set-up Table{suffix}")
-                menu.addSeparator()
+            # Enable Test Setup table for both Performance AND Waveforms
+            include_setup = item.data(0, Qt.UserRole + 11)
+            if include_setup is None: include_setup = False
+            
+            selected_folders = [i for i in tree_widget.selectedItems() if i.data(0, Qt.UserRole + 2) == "folder"]
+            suffix = " (Selected)" if len(selected_folders) > 1 and item in selected_folders else ""
+            
+            toggle_setup_action = menu.addAction(f"Remove Test Set-up Table{suffix}" if include_setup else f"Add Test Set-up Table{suffix}")
+            menu.addSeparator()
 
             add_folder_action = menu.addAction("Add New Folder")
             add_file_action = menu.addAction("Add New File(s)")
@@ -289,22 +325,27 @@ class DocuApp(QtWidgets.QMainWindow):
         else:
             targets = [i for i in selected_items if i.data(0, Qt.UserRole + 2) == "folder"]
             
-        perf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Performance Data")
-        meta_path = os.path.join(perf_dir, "metadata.json")
-        
-        meta = {}
-        if os.path.exists(meta_path):
-            try:
-                with open(meta_path, 'r') as f: meta = json.load(f)
-            except: pass
-            
         for t_item in targets:
             t_item.setData(0, Qt.UserRole + 11, new_val)
-            folder_path = t_item.data(0, Qt.UserRole + 1)
-            if folder_path not in meta: meta[folder_path] = {}
-            meta[folder_path]["include_setup_table"] = new_val
             
-        with open(meta_path, 'w') as f: json.dump(meta, f)
+        if tree_widget == self.performance_tree:
+            perf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Performance Data")
+            meta_path = os.path.join(perf_dir, "metadata.json")
+            
+            meta = {}
+            if os.path.exists(meta_path):
+                try:
+                    with open(meta_path, 'r') as f: meta = json.load(f)
+                except: pass
+                
+            for t_item in targets:
+                folder_path = t_item.data(0, Qt.UserRole + 1)
+                if folder_path not in meta: meta[folder_path] = {}
+                meta[folder_path]["include_setup_table"] = new_val
+                
+            with open(meta_path, 'w') as f: json.dump(meta, f)
+        else:
+            capture_wave_state(self)
 
     def delete_physical_item(self, tree_widget, item):
         selected_items = tree_widget.selectedItems()
@@ -359,6 +400,16 @@ class DocuApp(QtWidgets.QMainWindow):
 
     def switch_tab(self, index):
         if self.stackedWidget.currentIndex() == index: return
+        
+        # --- TAB SPECIFIC LOGIC ---
+        self.is_cropping_enabled = (index == 1)
+        for w in [self.upper_input, self.lower_input, self.left_input, self.right_input, self.crop_button]:
+            w.setEnabled(self.is_cropping_enabled)
+            
+        self.file_view.clear()
+        self.images_preview_text.setText("PREVIEW")
+        
+        # --- ANIMATION LOGIC ---
         current_widget = self.stackedWidget.currentWidget()
         next_widget = self.stackedWidget.widget(index)
         width = self.stackedWidget.width()
