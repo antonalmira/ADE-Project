@@ -4,3 +4,5 @@ __pycache__/
 templates/
 temp_preview/
 Performance Data/
+venv/
+.venv/
